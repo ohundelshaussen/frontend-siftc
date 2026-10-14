@@ -1,6 +1,6 @@
-// src/services/mockData.js
+// src/services/mocks/ohlcMocks.js
+// Serie de datos OHLC diaria (Open, High, Low, Close) para la gráfica de velas y líneas (HU-FE-02)
 
-// Serie de datos OHLC diaria (Apertura, Máximo, Mínimo, Cierre) para la gráfica de velas y líneas
 export const mockOhlcData = [
   { time: '2026-09-01', open: 73.0, high: 74.5, low: 72.8, close: 74.2 },
   { time: '2026-09-02', open: 74.2, high: 75.1, low: 73.9, close: 74.8 },
@@ -18,3 +18,5 @@ export const mockOhlcData = [
   { time: '2026-09-16', open: 77.5, high: 79.0, low: 77.2, close: 78.9 },
   { time: '2026-10-07', open: 77.3, high: 79.3, low: 76.8, close: 78.5 }
 ];
+
+export default mockOhlcData;

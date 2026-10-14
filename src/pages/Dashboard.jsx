@@ -1,5 +1,5 @@
 import React from 'react';
-import { GraficaEntidad } from '../components/Graficas/GraficaEntidad';
+import { FinancialChart } from '../components/charts/FinancialChart';
 
 export const Dashboard = () => {
   return (
@@ -15,7 +15,7 @@ export const Dashboard = () => {
 
       <main style={{ maxWidth: '1200px', margin: '0 auto' }}>
         {/* Componente de la Tarea HU-FE-02 */}
-        <GraficaEntidad entidadNombre="Entidad Beta" ticker="ENT-02" />
+        <FinancialChart entidadNombre="Entidad Beta" ticker="ENT-02" />
       </main>
     </div>
   );

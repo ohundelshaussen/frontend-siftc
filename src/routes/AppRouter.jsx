@@ -2,7 +2,7 @@ import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import Dashboard from '../pages/Dashboard';
 import Login from '../pages/Login';
-import GraficaEntidad from '../components/Graficas/GraficaEntidad';
+import FinancialChart from '../components/charts/FinancialChart';
 
 export const AppRouter = () => {
   return (
@@ -17,7 +17,7 @@ export const AppRouter = () => {
           Entra a http://localhost:5173/grafica para ver sólo tu tarea directamente */}
       <Route path="/grafica" element={
         <div style={{ padding: '40px', backgroundColor: '#151D33', minHeight: '100vh' }}>
-          <GraficaEntidad entidadNombre="Entidad Beta (Prueba RF-FE02)" ticker="ENT-02" />
+          <FinancialChart entidadNombre="Entidad Beta (Prueba RF-FE02)" ticker="ENT-02" />
         </div>
       } />
 

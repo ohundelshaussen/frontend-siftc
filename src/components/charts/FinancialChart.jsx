@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { createChart, ColorType, CandlestickSeries, AreaSeries } from 'lightweight-charts';
-import { mockOhlcData } from '../../services/mockData';
-import './GraficaEntidad.css';
+import { mockOhlcData } from '../../services/mocks/ohlcMocks';
+import './FinancialChart.css';
 
 const PALETTE = {
   azulNoche: '#151D33',
@@ -11,7 +11,7 @@ const PALETTE = {
   textoGris: '#5A6375'
 };
 
-export const GraficaEntidad = ({ entidadNombre = 'Entidad Beta', ticker = 'ENT-02' }) => {
+export const FinancialChart = ({ entidadNombre = 'Entidad Beta', ticker = 'ENT-02' }) => {
   const chartContainerRef = useRef(null);
   const chartRef = useRef(null);
 
@@ -197,4 +197,5 @@ export const GraficaEntidad = ({ entidadNombre = 'Entidad Beta', ticker = 'ENT-0
   );
 };
 
-export default GraficaEntidad;
+export const GraficaEntidad = FinancialChart;
+export default FinancialChart;

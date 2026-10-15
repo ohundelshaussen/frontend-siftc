@@ -18,9 +18,17 @@
 
   /* 03. Verde alza: Acento, subidas (▲), éxito y llamadas a la acción */
   --color-verde-alza: #24A460;
+<<<<<<< HEAD
   --color-verde-alza-rgb: 36, 164, 96;
   --color-verde-alza-hover: #1E874E;
   --color-verde-alza-bg: #E8F7EF;
+=======
+  --color-bullish: #187A45;
+  --color-bullish-bg: #E3F4EA;
+  --color-bearish: #B83232;
+  --color-bearish-bg: #FBE8E6;
+  --color-text-muted: #5A6379;
+>>>>>>> origin/Rafael
 
   /* 04. Blanco hueso: Fondo claro, tarjetas y superficies */
   --color-blanco-hueso: #F6F5F3;

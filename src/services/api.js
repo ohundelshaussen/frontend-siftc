@@ -1,7 +1,7 @@
 import axios from 'axios'
 import { mockOhlcData } from './mocks/ohlcMocks'
 import { entidades, indiceGeneral } from './mocks/marketMocks'
-import { consultarRanking, catalogoDimensiones, catalogoPeriodos } from './mocks/rankingMocks'
+import { consultarRanking, catalogoSectores, catalogoDimensiones, catalogoPeriodos } from './mocks/rankingMocks'
 
 const USE_MOCK = import.meta.env.VITE_USE_MOCK !== 'false'
 
@@ -33,7 +33,7 @@ const respuesta = (dato) => new Promise((ok) => setTimeout(() => ok(dato), 150))
 export async function login(usuario, password) {
   if (USE_MOCK) {
     if (!usuario || !password) throw new Error('Credenciales inválidas')
-    return respuesta({ token: 'token-de-ejemplo', usuario: { usuario, rol: 'Consulta' } })
+    return respuesta({ token: 'token-de-ejemplo', expiraEn: 3600, usuario: { id: 1, nombre: usuario, rol: 'Gerente' } })
   }
   return (await http.post('/auth/login', { usuario, password })).data
 }
@@ -67,10 +67,7 @@ export async function getRanking(filtros = {}) {
 }
 
 export async function getSectores() {
-  if (USE_MOCK) {
-    const lista = [...new Set(entidades.map((e) => e.sector))].sort((a, b) => a.localeCompare(b, 'es'))
-    return respuesta(lista)
-  }
+  if (USE_MOCK) return respuesta(catalogoSectores)
   return (await http.get('/sectores')).data
 }
 

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import logoAlza from '../assets/logo-alza.png';
 import '../styles/Login.css';
 import { useAuth } from '../context/AuthContext';
@@ -11,13 +11,14 @@ export const Login = () => {
   const [password, setPassword] = useState('');
   const [mostrarPassword, setMostrarPassword] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
 
   const handleSubmit = async (e) => {
   e.preventDefault();
   setError('');
   try {
     await login(usuario, password);
-    navigate('/dashboard');
+    navigate(location.state?.desde ?? '/dashboard', { replace: true });
   } catch {
     setError('Usuario o contraseña incorrectos.');
   }

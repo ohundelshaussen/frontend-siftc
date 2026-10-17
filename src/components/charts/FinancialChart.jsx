@@ -34,7 +34,7 @@ export const FinancialChart = ({ entidadNombre = 'Entidad Beta', ticker = 'ENT-0
         horzLines: { color: '#F1F5F9' },
       },
       rightPriceScale: { borderColor: '#E2E8F0' },
-      timeScale: { borderColor: '#E2E8F0', timeVisible: true },
+      timeScale: { borderColor: '#E2E8F0', timeVisible: true, rightOffset: 2 }, // para que no se corte la ultima fecha
       crosshair: {
         vertLine: { color: PALETTE.azulAcero, labelBackgroundColor: PALETTE.azulNoche },
         horzLine: { color: PALETTE.azulAcero, labelBackgroundColor: PALETTE.azulNoche },

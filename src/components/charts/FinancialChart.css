@@ -248,3 +248,45 @@
   .grafica-main-value { font-size: 30px; }
   .grafica-cards-grid { grid-template-columns: 1fr; }
 }
+
+
+
+
+
+
+
+
+/* Fondo general de la página idéntico al mockup */
+.grafica-wrapper {
+  background-color: #F6F5F3; /* Blanco hueso / Gris suave del mockup */
+  padding: 24px 40px;
+  min-height: 100vh;
+  box-sizing: border-box;
+}
+
+/* Tarjeta contenedora de la gráfica */
+.grafica-card-container {
+  background-color: #FFFFFF;
+  border-radius: 20px;
+  padding: 32px 36px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.02);
+  border: 1px solid #E2E0DC;
+  max-width: 1280px;
+  margin: 0 auto;
+}
+
+/* Botones Activos Oscuros */
+.grafica-toggle-btn.active,
+.grafica-period-btn.active {
+  background-color: #151D33 !important; /* Azul Noche del mockup */
+  color: #FFFFFF !important;
+  border-radius: 8px;
+}
+
+/* Formato de la nota de pie */
+.grafica-footer-note {
+  margin-top: 20px;
+  font-size: 13px;
+  color: #6B7280;
+  text-align: left;
+}

@@ -1,6 +1,5 @@
 import { createContext, useContext, useState } from 'react'
 import { login as loginApi } from '../services/api'
-
 const AuthContext = createContext(null)
 
 export function AuthProvider({ children }) {
@@ -29,4 +28,7 @@ export function AuthProvider({ children }) {
 }
 
 // eslint-disable-next-line react-refresh/only-export-components
-export const useAuth = () => useContext(AuthContext)
+//export const useAuth = () => useContext(AuthContext)
+export const useAuth = () => {
+  return useContext(AuthContext);
+};

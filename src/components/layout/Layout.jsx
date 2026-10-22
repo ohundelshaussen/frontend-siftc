@@ -1,5 +1,5 @@
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
-import { useAuth } from '../../context/AuthContext'
+import { useAuth } from '../../context/AuthContext';
 import logoAlza from '../../assets/logo-alza.png'
 import './Layout.css'
 import Ticker from '../ticker/Ticker'

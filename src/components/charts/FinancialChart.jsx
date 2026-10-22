@@ -22,7 +22,7 @@ export const FinancialChart = ({ entidadNombre = 'Entidad Beta', ticker = 'ENT-0
   useEffect(() => {
     if (!chartContainerRef.current) return;
 
-    const chart = createChart(chartContainerRef.current, {
+    /*const chart = createChart(chartContainerRef.current, {
       width: chartContainerRef.current.clientWidth,
       height: 400,
       layout: {
@@ -39,7 +39,37 @@ export const FinancialChart = ({ entidadNombre = 'Entidad Beta', ticker = 'ENT-0
         vertLine: { color: PALETTE.azulAcero, labelBackgroundColor: PALETTE.azulNoche },
         horzLine: { color: PALETTE.azulAcero, labelBackgroundColor: PALETTE.azulNoche },
       },
-    });
+    });*/
+
+  const chart = createChart(chartContainerRef.current, {
+    width: chartContainerRef.current.clientWidth,
+    height: 420,
+    layout: {
+      background: { type: ColorType.Solid, color: '#FFFFFF' },
+      textColor: '#6B7280',
+      fontFamily: "'Inter', sans-serif",
+    },
+    grid: {
+      vertLines: { color: '#F1F5F9' },
+      horzLines: { color: '#F1F5F9' },
+    },
+  rightPriceScale: { borderColor: 'transparent',},
+  timeScale: { borderColor: '#E2E8F0', timeVisible: false },
+  crosshair: {
+      vertLine: { 
+        color: '#264E7A', 
+        width: 1, 
+        style: 3, // Línea punteada como el mockup
+        labelBackgroundColor: '#151D33' 
+      },
+      horzLine: { 
+        color: '#264E7A', 
+        width: 1, 
+        style: 3, 
+        labelBackgroundColor: '#151D33' 
+      },
+    },
+  });
 
     chartRef.current = chart;
 

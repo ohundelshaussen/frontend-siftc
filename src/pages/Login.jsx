@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import logoAlza from '../assets/logo-alza.png';
+import logoAlzaOscuro from '../assets/logo-alza-oscuro.png';
+import BotonTema from '../components/common/BotonTema';
 import '../styles/Login.css';
 import { useAuth } from '../context/AuthContext';
 
@@ -11,13 +13,14 @@ export const Login = () => {
   const [password, setPassword] = useState('');
   const [mostrarPassword, setMostrarPassword] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
 
   const handleSubmit = async (e) => {
   e.preventDefault();
   setError('');
   try {
     await login(usuario, password);
-    navigate('/dashboard');
+    navigate(location.state?.desde ?? '/dashboard', { replace: true });
   } catch {
     setError('Usuario o contraseña incorrectos.');
   }
@@ -25,6 +28,7 @@ export const Login = () => {
 
   return (
     <div className="login-container">
+      <BotonTema className="tema-flotante" />
       {/* Panel Izquierdo Oscuro */}
       <div className="login-panel-left">
         <span className="login-tag">SIFTC · PORTAL WEB</span>
@@ -60,7 +64,8 @@ export const Login = () => {
       {/* Panel Derecho Claro */}
       <div className="login-panel-right">
         <div className="login-card">
-          <img src={logoAlza} alt="Logo ALZA" className="login-logo-img" />
+          <img src={logoAlza} alt="Logo ALZA" className="login-logo-img logo-claro" />
+          <img src={logoAlzaOscuro} alt="Logo ALZA" className="login-logo-img logo-oscuro" />
 
           <h2 className="login-card-title">Iniciar sesión</h2>
           <p className="login-card-subtitle">Ingresa con tu usuario y contraseña del sistema.</p>

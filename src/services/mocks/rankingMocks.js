@@ -1,70 +1,75 @@
 import { entidades } from './marketMocks'
 
-// Catálogos (en la API real vienen de /dimensiones y /periodos).
+// datos de prueba del ranking, con el mismo formato que va a mandar backend
+
+// GET /sectores
+export const catalogoSectores = [...new Set(entidades.map((e) => e.sector))]
+  .sort((a, b) => a.localeCompare(b, 'es'))
+  .map((nombre, i) => ({ id: i + 1, nombre }))
+
+// GET /dimensiones
 export const catalogoDimensiones = [
-  { id: 'general', nombre: 'IC general' },
-  { id: 'rentabilidad', nombre: 'Rentabilidad' },
-  { id: 'liquidez', nombre: 'Liquidez' },
-  { id: 'solvencia', nombre: 'Solvencia' },
-  { id: 'crecimiento', nombre: 'Crecimiento' },
+  { id: 1, nombre: 'Rentabilidad' },
+  { id: 2, nombre: 'Liquidez' },
+  { id: 3, nombre: 'Solvencia' },
+  { id: 4, nombre: 'Crecimiento' },
 ]
 
+// GET /periodos
 export const catalogoPeriodos = [
-  { id: '2026-09', nombre: 'Septiembre 2026' },
-  { id: '2026-08', nombre: 'Agosto 2026' },
-  { id: '2026-07', nombre: 'Julio 2026' },
+  { id: 'diario', nombre: 'Diario' },
+  { id: 'mensual', nombre: 'Mensual' },
+  { id: 'trimestral', nombre: 'Trimestral' },
 ]
 
-const CAMPO_DIMENSION = {
-  general: 'indice_competitividad',
-  rentabilidad: 'dimension_rentabilidad',
-  liquidez: 'dimension_liquidez',
-  solvencia: 'dimension_solvencia',
-  crecimiento: 'dimension_crecimiento',
-}
-
-const ORDENABLES = [
-  'posicion', 'nombre_entidad', 'sector', 'indice_competitividad', 'dimension_rentabilidad',
-  'dimension_liquidez', 'dimension_solvencia', 'dimension_crecimiento', 'variacion_porcentual',
-]
+const ORDENABLES = ['posicion', 'entidad', 'sector', 'ic', 'variacionPct']
+const TEXTO = ['entidad', 'sector']
 
 const limitar = (n) => Math.round(Math.min(99, Math.max(1, n)) * 10) / 10
-const ajuste = (i, k) => (((i * 7 + k * 3) % 9) - 4) * 1.2
+const ajuste = (i, k) => (((i * 7 + k * 3) % 9) - 4) * 1.6
 
-function filasDelPeriodo(indicePeriodo, periodo) {
-  return entidades.map((e, i) => {
-    const mover = indicePeriodo * (((i * 5) % 7) - 3) * 0.5
-    const ic = limitar(e.indice_competitividad + mover)
-    return {
-      codigo_entidad: e.codigo_entidad,
-      nombre_entidad: e.nombre_entidad,
-      sector: e.sector,
-      periodo,
-      indice_competitividad: ic,
-      variacion_porcentual: e.variacion_porcentual,
-      dimension_rentabilidad: limitar(ic + ajuste(i, 1)),
-      dimension_liquidez: limitar(ic + ajuste(i, 2)),
-      dimension_solvencia: limitar(ic + ajuste(i, 3)),
-      dimension_crecimiento: limitar(ic + ajuste(i, 4)),
-    }
-  })
+function puntaje(e, i, dimension, periodo) {
+  const p = Math.max(0, catalogoPeriodos.findIndex((x) => x.id === periodo))
+  const k = Math.max(0, catalogoDimensiones.findIndex((d) => d.nombre === dimension) + 1)
+  const base = e.indice_competitividad + p * (((i * 5) % 7) - 3) * 0.6
+  return limitar(k ? base + ajuste(i, k) : base)
 }
 
-// Simula GET /ranking?sector&dimension&periodo&orden&dir
-export function consultarRanking({ sector, dimension = 'general', periodo, orden = 'posicion', dir = 'asc' } = {}) {
-  const indice = Math.max(0, catalogoPeriodos.findIndex((p) => p.id === periodo))
-  const campoDim = CAMPO_DIMENSION[dimension] ?? CAMPO_DIMENSION.general
+// simula GET /ranking
+export function consultarRanking({ sector = '', dimension = '', periodo = 'mensual', orden = 'ic', dir = 'desc' } = {}) {
+  const filtradas = entidades
+    .map((e, i) => ({ e, i }))
+    .filter(({ e }) => !sector || e.sector === sector)
 
-  const lista = filasDelPeriodo(indice, catalogoPeriodos[indice].id)
-    .filter((f) => !sector || f.sector === sector)
-    .sort((a, b) => b[campoDim] - a[campoDim])
-    .map((f, i) => ({ ...f, posicion: i + 1 }))
+  const p = Math.max(0, catalogoPeriodos.findIndex((x) => x.id === periodo))
+  const periodoAnterior = catalogoPeriodos[(p + 1) % catalogoPeriodos.length].id
+  const anterior = [...filtradas]
+    .sort((a, b) => puntaje(b.e, b.i, dimension, periodoAnterior) - puntaje(a.e, a.i, dimension, periodoAnterior))
+    .map(({ e }) => e.codigo_entidad)
 
-  const campo = ORDENABLES.includes(orden) ? orden : 'posicion'
-  const signo = dir === 'desc' ? -1 : 1
-  return lista.sort((a, b) => {
+  const items = filtradas
+    .map(({ e, i }) => ({
+      entidadId: i + 1,
+      entidad: e.nombre_entidad,
+      sector: e.sector,
+      ic: puntaje(e, i, dimension, periodo),
+      variacionPct: e.variacion_porcentual,
+      _codigo: e.codigo_entidad,
+    }))
+    .sort((a, b) => b.ic - a.ic)
+    .map(({ _codigo, ...item }, idx) => ({
+      posicion: idx + 1,
+      cambioPosicion: anterior.indexOf(_codigo) - idx,
+      ...item,
+    }))
+
+  const campo = ORDENABLES.includes(orden) ? orden : 'ic'
+  const signo = dir === 'asc' ? 1 : -1
+  items.sort((a, b) => {
     const x = a[campo]
     const y = b[campo]
-    return (typeof x === 'string' ? x.localeCompare(y, 'es') : x - y) * signo
+    return (TEXTO.includes(campo) ? x.localeCompare(y, 'es') : x - y) * signo
   })
+
+  return { periodo, total: items.length, items }
 }

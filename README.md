@@ -42,17 +42,18 @@ En este modo puedes ingresar con cualquier correo/usuario válido (ej. `analista
 
 Mientras el equipo de Backend incorpora en su repositorio los ajustes reportados en Docker (`SIFTC.Api.dll`) y el script de semilla UTF-8, incluimos un asistente automático en `docs/setup-backend/` para que cualquier compañero levante todo con un solo comando sin tocar código C#:
 
-#### Paso 1: Clonar el Backend al lado de `frontend-siftc` (si aún no lo tienes)
-Ubicado dentro de `frontend-siftc`, ejecuta:
+#### Paso 1: Descargar la rama `Oscar` en `frontend-siftc`
 ```powershell
-git clone -b feat_entidades https://github.com/Jramosd-lang/SIFTC.git ..\SIFTC
+git fetch origin
+git checkout Oscar
+git pull origin Oscar
 ```
 
 #### Paso 2: Ejecutar el script automático de preparación (con Docker Desktop abierto)
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\docs\setup-backend\preparar-backend.ps1
 ```
-*(Este script crea `..\SIFTC\.env`, ajusta localmente `SIFTC.Api.dll` en el `dockerfile`, levanta los contenedores `siftc_database` y `siftc_api_csharp`, carga los roles y usuarios en UTF-8 puro y configura `.env` del frontend con `VITE_USE_MOCK=false`).*
+*(Si aún no tienes clonado `SIFTC`, el script lo clona automáticamente en `..\SIFTC`, crea `..\SIFTC\.env`, ajusta localmente `SIFTC.Api.dll` en el `dockerfile`, levanta los contenedores `siftc_database` y `siftc_api_csharp`, carga los roles y usuarios en UTF-8 puro y configura `.env` del frontend con `VITE_USE_MOCK=false`).*
 
 #### Paso 3: Iniciar el Frontend
 ```powershell

@@ -1,14 +1,15 @@
 import axios from 'axios'
 import { aEntidades, aTop, aIndiceGeneral, aSesion } from './adaptadores'
-import { mockOhlcData } from './mocks/ohlcMocks'
+import { obtenerOhlcMock } from './mocks/ohlcMocks'
 import { entidades, indiceGeneral } from './mocks/marketMocks'
 import { consultarRanking, catalogoSectores, catalogoDimensiones, catalogoPeriodos } from './mocks/rankingMocks'
 import { esTokenVigente } from '../utils/jwt'
+import { normalizarIdentificador, normalizarPassword } from '../utils/texto'
 
 const USE_MOCK = import.meta.env.VITE_USE_MOCK !== 'false'
 
-// Para avisar en pantalla cuando los datos son de ejemplo.
-export const USA_DATOS_DE_EJEMPLO = USE_MOCK
+// Para avisar en pantalla cuando los datos provienen de simulación o respaldo local.
+export let USA_DATOS_DE_EJEMPLO = USE_MOCK
 
 // Puerto por defecto: 7123 para Docker Compose (.NET), 5057 para dotnet run local
 export const API_BASE_URL = `${import.meta.env.VITE_API_URL ?? 'http://localhost:7123'}${import.meta.env.VITE_API_PREFIX ?? '/api/v1'}`
@@ -54,71 +55,117 @@ http.interceptors.response.use(
 
 const respuesta = (dato) => new Promise((ok) => setTimeout(() => ok(dato), 150))
 
+// Si un endpoint analítico aún no está implementado en el backend (404/5xx/red),
+// usa los datos simulados de respaldo sin ocultar errores de autorización (401/403).
+async function conRespaldoMock(peticionReal, obtenerMock) {
+  if (USE_MOCK) return respuesta(obtenerMock())
+  try {
+    const dato = await peticionReal()
+    if (Array.isArray(dato) && dato.length === 0) {
+      USA_DATOS_DE_EJEMPLO = true
+      return obtenerMock()
+    }
+    return dato
+  } catch (err) {
+    const status = err?.response?.status
+    if (status === 401 || status === 403) throw err
+    USA_DATOS_DE_EJEMPLO = true
+    return obtenerMock()
+  }
+}
+
+function calcularTopMock() {
+  const orden = [...entidades].sort((a, b) => b.variacion_porcentual - a.variacion_porcentual)
+  return { ganadores: orden.slice(0, 5), perdedores: orden.slice(-5).reverse() }
+}
+
 // Autentica contra el Backend .NET (POST /api/v1/auth/login) o Mock, devolviendo la sesión normalizada
 export async function login(identificador, password) {
+  const usuarioNormalizado = normalizarIdentificador(identificador)
+  const passwordNormalizado = normalizarPassword(password)
+
   if (USE_MOCK) {
-    if (!identificador || !password) throw new Error('Credenciales inválidas')
-    const rolSimulado = identificador.toLowerCase().includes('admin')
+    if (!usuarioNormalizado || !passwordNormalizado) throw new Error('Credenciales inválidas')
+    const rolSimulado = usuarioNormalizado.includes('admin')
       ? 'Administrador'
-      : identificador.toLowerCase().includes('gerente')
+      : usuarioNormalizado.includes('gerente')
       ? 'Gerente'
       : 'Analista financiero'
 
     return aSesion({
       idUsuario: '01966f2a-4c3b-7a10-9e21-8b3d4c5e6f70',
-      email: identificador.includes('@') ? identificador : `${identificador}@siftc.edu.co`,
-      nombreCompleto: identificador.includes('@') ? identificador.split('@')[0] : identificador,
+      email: usuarioNormalizado.includes('@') ? usuarioNormalizado : `${usuarioNormalizado}@siftc.edu.co`,
+      nombreCompleto: usuarioNormalizado.includes('@') ? usuarioNormalizado.split('@')[0] : identificador.trim(),
       rol: rolSimulado,
       token: 'mock-jwt-token-siftc-alza-2026',
     })
   }
 
-  // Backend C# recibe AutenticarUsuarioCommand { email, password }
-  const email = identificador.includes('@') ? identificador : `${identificador}@siftc.edu.co`
-  const res = await http.post('/auth/login', { email, password })
+  // Backend C# recibe AutenticarUsuarioCommand { email, password } (en PostgreSQL email se guarda en minúsculas)
+  const email = usuarioNormalizado.includes('@') ? usuarioNormalizado : `${usuarioNormalizado}@siftc.edu.co`
+  const res = await http.post('/auth/login', { email, password: passwordNormalizado })
   return aSesion(res.data)
 }
 
 export async function getEntidades() {
-  if (USE_MOCK) return respuesta(entidades)
-  return aEntidades((await http.get('/entidades')).data)
+  return conRespaldoMock(
+    async () => aEntidades((await http.get('/entidades')).data),
+    () => entidades,
+  )
 }
 
 export async function getIndiceGeneral() {
-  if (USE_MOCK) return respuesta(indiceGeneral)
-  return aIndiceGeneral((await http.get('/indice-general')).data)
+  return conRespaldoMock(
+    async () => aIndiceGeneral((await http.get('/indice-general')).data),
+    () => indiceGeneral,
+  )
 }
 
 export async function getTop() {
-  if (USE_MOCK) {
-    const orden = [...entidades].sort((a, b) => b.variacion_porcentual - a.variacion_porcentual)
-    return respuesta({ ganadores: orden.slice(0, 5), perdedores: orden.slice(-5).reverse() })
-  }
-  const [top, lista] = await Promise.all([http.get('/mercado/top', { params: { limite: 5 } }), getEntidades()])
-  return aTop(top.data, lista)
+  return conRespaldoMock(
+    async () => {
+      const [top, lista] = await Promise.all([
+        http.get('/mercado/top', { params: { limite: 5 } }),
+        getEntidades(),
+      ])
+      return aTop(top.data, lista)
+    },
+    calcularTopMock,
+  )
 }
 
 export async function getOhlc(id, periodo = '1M') {
-  if (USE_MOCK) return respuesta(mockOhlcData)
-  return (await http.get(`/entidades/${id}/ohlc`, { params: { periodo } })).data
+  const periodoApi = periodo === 'Máx.' ? 'MAX' : periodo
+  return conRespaldoMock(
+    async () => (await http.get(`/entidades/${id}/ohlc`, { params: { periodo: periodoApi } })).data,
+    () => obtenerOhlcMock(id, periodoApi),
+  )
 }
 
 export async function getRanking(filtros = {}) {
-  if (USE_MOCK) return respuesta(consultarRanking(filtros))
-  return (await http.get('/ranking', { params: filtros })).data
+  return conRespaldoMock(
+    async () => (await http.get('/ranking', { params: filtros })).data,
+    () => consultarRanking(filtros),
+  )
 }
 
 export async function getSectores() {
-  if (USE_MOCK) return respuesta(catalogoSectores)
-  return (await http.get('/sectores')).data
+  return conRespaldoMock(
+    async () => (await http.get('/sectores')).data,
+    () => catalogoSectores,
+  )
 }
 
 export async function getDimensiones() {
-  if (USE_MOCK) return respuesta(catalogoDimensiones)
-  return (await http.get('/dimensiones')).data
+  return conRespaldoMock(
+    async () => (await http.get('/dimensiones')).data,
+    () => catalogoDimensiones,
+  )
 }
 
 export async function getPeriodos() {
-  if (USE_MOCK) return respuesta(catalogoPeriodos)
-  return (await http.get('/periodos')).data
+  return conRespaldoMock(
+    async () => (await http.get('/periodos')).data,
+    () => catalogoPeriodos,
+  )
 }

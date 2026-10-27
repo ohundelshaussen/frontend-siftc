@@ -1,25 +1,57 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react'
 import { login as loginApi } from '../services/api'
-import { esTokenVigente, extraerRolJwt } from '../utils/jwt'
+import { decodificarJwt, esTokenVigente, extraerRolJwt } from '../utils/jwt'
 
 const AuthContext = createContext(null)
 
-export function AuthProvider({ children }) {
-  const [token, setToken] = useState(() => localStorage.getItem('token') || null)
-  const [usuario, setUsuario] = useState(() => {
-    try {
-      const guardado = localStorage.getItem('usuario')
-      const tokenGuardado = localStorage.getItem('token')
-      if (!tokenGuardado || !esTokenVigente(tokenGuardado)) {
+// Detecta cadenas con corrupción de codificación previa (ej: 'P?rez' o carácter de reemplazo U+FFFD)
+function tieneTextoCorrupto(texto = '') {
+  const s = String(texto)
+  return s.includes('\uFFFD') || /[A-Za-zÁÉÍÓÚáéíóúÑñ]\?[A-Za-zÁÉÍÓÚáéíóúÑñ]/.test(s)
+}
+
+function leerSesionGuardada() {
+  try {
+    const guardado = localStorage.getItem('usuario')
+    const tokenGuardado = localStorage.getItem('token')
+    if (!tokenGuardado || !esTokenVigente(tokenGuardado) || !guardado) {
+      localStorage.removeItem('token')
+      localStorage.removeItem('usuario')
+      return { token: null, usuario: null }
+    }
+
+    const usuarioParsed = JSON.parse(guardado)
+
+    // Si en localStorage quedó una sesión antigua con mojibake ('Juan P?rez'), se fuerza reautenticación limpia UTF-8
+    if (
+      tieneTextoCorrupto(usuarioParsed?.nombre) ||
+      tieneTextoCorrupto(usuarioParsed?.nombreCompleto) ||
+      tieneTextoCorrupto(usuarioParsed?.rol)
+    ) {
+      const payload = decodificarJwt(tokenGuardado)
+      if (payload?.name && !tieneTextoCorrupto(payload.name)) {
+        usuarioParsed.nombre = payload.name
+        usuarioParsed.nombreCompleto = payload.name
+        localStorage.setItem('usuario', JSON.stringify(usuarioParsed))
+      } else {
         localStorage.removeItem('token')
         localStorage.removeItem('usuario')
-        return null
+        return { token: null, usuario: null }
       }
-      return guardado ? JSON.parse(guardado) : null
-    } catch {
-      return null
     }
-  })
+
+    return { token: tokenGuardado, usuario: usuarioParsed }
+  } catch {
+    localStorage.removeItem('token')
+    localStorage.removeItem('usuario')
+    return { token: null, usuario: null }
+  }
+}
+
+export function AuthProvider({ children }) {
+  const [sesionInicial] = useState(leerSesionGuardada)
+  const [token, setToken] = useState(sesionInicial.token)
+  const [usuario, setUsuario] = useState(sesionInicial.usuario)
 
   const logout = useCallback(() => {
     localStorage.removeItem('token')
@@ -42,7 +74,6 @@ export function AuthProvider({ children }) {
   }, [logout])
 
   const login = async (identificador, password) => {
-    // loginApi retorna { token, usuario: { idUsuario, email, nombreCompleto, nombre, rol } }
     const sesion = await loginApi(identificador, password)
 
     // Si el backend no envió el rol en el JSON pero sí en el JWT, se rescata del token

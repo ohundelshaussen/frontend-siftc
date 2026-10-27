@@ -9,8 +9,10 @@ export const ROLES = {
 
 export const ROLES_LISTA = Object.values(ROLES);
 
+// Comparación exacta normalizada en UTF-8 NFC (estándar OWASP de control de acceso basado en roles)
 export const tieneRol = (usuario, rolesPermitidos) => {
   if (!usuario || !usuario.rol) return false;
   if (!rolesPermitidos || rolesPermitidos.length === 0) return true;
-  return rolesPermitidos.includes(usuario.rol);
+  const rolActual = String(usuario.rol).normalize('NFC').trim();
+  return rolesPermitidos.some((r) => String(r).normalize('NFC').trim() === rolActual);
 };

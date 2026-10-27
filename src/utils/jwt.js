@@ -1,4 +1,4 @@
-// Decodificador seguro de JWT compatible con RFC 7519 y UTF-8
+// Decodificador seguro de JWT compatible con RFC 7519 y UTF-8 completo (ñ, tildes y símbolos)
 export function decodificarJwt(token) {
   if (!token || typeof token !== 'string') return null;
 
@@ -6,16 +6,18 @@ export function decodificarJwt(token) {
     const partes = token.split('.');
     if (partes.length !== 3) return null;
 
-    // Normalizar base64url a base64 estándar
-    const base64Url = partes[1];
-    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-    const jsonPayload = decodeURIComponent(
-      atob(base64)
-        .split('')
-        .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
-        .join('')
-    );
+    // Normalizar Base64URL a Base64 estándar y restaurar el relleno '=' obligatorio para atob()
+    const base64SinPad = partes[1].replace(/-/g, '+').replace(/_/g, '/');
+    const padNecesario = (4 - (base64SinPad.length % 4)) % 4;
+    const base64 = base64SinPad + '='.repeat(padNecesario);
 
+    const binario = atob(base64);
+    const bytes = new Uint8Array(binario.length);
+    for (let i = 0; i < binario.length; i += 1) {
+      bytes[i] = binario.charCodeAt(i);
+    }
+
+    const jsonPayload = new TextDecoder('utf-8').decode(bytes);
     return JSON.parse(jsonPayload);
   } catch {
     return null;

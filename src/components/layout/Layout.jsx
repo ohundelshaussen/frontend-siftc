@@ -21,16 +21,23 @@ export default function Layout() {
       <header className="nav">
         <img src={logoAlza} alt="ALZA" className="nav-logo logo-claro" />
         <img src={logoAlzaOscuro} alt="ALZA" className="nav-logo logo-oscuro" />
-        <nav className="nav-links">
+        <nav className="nav-links" aria-label="Navegación principal">
           <NavLink to="/dashboard">Tablero</NavLink>
           <NavLink to="/grafica">Gráficas</NavLink>
           <NavLink to="/ranking">Ranking</NavLink>
         </nav>
-        <BotonTema />
-        <div className="nav-user">
-          <span className="nav-avatar">{nombre[0]?.toUpperCase()}</span>
-          <span>{nombre}<small>{usuario?.rol}</small></span>
-          <button onClick={salir} className="nav-salir">Salir</button>
+        <div className="nav-acciones">
+          <BotonTema />
+          <div className="nav-user">
+            <span className="nav-avatar" title={`${nombre}${usuario?.rol ? ` · ${usuario.rol}` : ''}`}>
+              {nombre[0]?.toUpperCase()}
+            </span>
+            <span className="nav-user-info">
+              {nombre}
+              <small>{usuario?.rol}</small>
+            </span>
+            <button onClick={salir} className="nav-salir">Salir</button>
+          </div>
         </div>
       </header>
       <Ticker />

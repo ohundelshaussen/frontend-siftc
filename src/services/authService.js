@@ -1,4 +1,5 @@
 import { http } from './api'
+import { normalizarIdentificador, normalizarPassword } from '../utils/texto'
 
 // Extrae el mensaje de error legible para el usuario soportando RFC 9457 (Problem Details de .NET)
 export function extraerMensajeError(err, mensajeFallback = 'Ocurrió un error inesperado.') {
@@ -36,10 +37,10 @@ export function extraerMensajeError(err, mensajeFallback = 'Ocurrió un error in
 // Endpoint de registro (solo permitido para rol Administrador según UsuariosController.cs)
 export async function registrarUsuario({ email, password, primerNombre, primerApellido, idRol }) {
   const res = await http.post('/usuarios/registrar', {
-    email,
-    password,
-    primerNombre,
-    primerApellido,
+    email: normalizarIdentificador(email),
+    password: normalizarPassword(password),
+    primerNombre: String(primerNombre ?? '').normalize('NFC').trim(),
+    primerApellido: String(primerApellido ?? '').normalize('NFC').trim(),
     idRol,
   })
   return res.data

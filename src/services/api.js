@@ -1,34 +1,52 @@
 import axios from 'axios'
-import { aEntidades, aTop, aIndiceGeneral } from './adaptadores'
+import { aEntidades, aTop, aIndiceGeneral, aSesion } from './adaptadores'
 import { mockOhlcData } from './mocks/ohlcMocks'
 import { entidades, indiceGeneral } from './mocks/marketMocks'
 import { consultarRanking, catalogoSectores, catalogoDimensiones, catalogoPeriodos } from './mocks/rankingMocks'
+import { esTokenVigente } from '../utils/jwt'
 
 const USE_MOCK = import.meta.env.VITE_USE_MOCK !== 'false'
 
 // Para avisar en pantalla cuando los datos son de ejemplo.
 export const USA_DATOS_DE_EJEMPLO = USE_MOCK
 
-const http = axios.create({
-  baseURL: `${import.meta.env.VITE_API_URL ?? 'http://localhost:8000'}${import.meta.env.VITE_API_PREFIX ?? '/api/v1'}`,
+// Puerto por defecto: 7123 para Docker Compose (.NET), 5057 para dotnet run local
+export const API_BASE_URL = `${import.meta.env.VITE_API_URL ?? 'http://localhost:7123'}${import.meta.env.VITE_API_PREFIX ?? '/api/v1'}`
+
+export const http = axios.create({
+  baseURL: API_BASE_URL,
   timeout: 10000,
+  headers: {
+    'Content-Type': 'application/json',
+    Accept: 'application/json, application/problem+json',
+  },
 })
 
+// Inyectar Authorization Bearer solo si el token existe y sigue vigente
 http.interceptors.request.use((cfg) => {
   const token = localStorage.getItem('token')
-  if (token) cfg.headers.Authorization = `Bearer ${token}`
+  if (token) {
+    if (esTokenVigente(token)) {
+      cfg.headers.Authorization = `Bearer ${token}`
+    } else {
+      localStorage.removeItem('token')
+      localStorage.removeItem('usuario')
+    }
+  }
   return cfg
 })
 
 http.interceptors.response.use(
   (r) => r,
   (err) => {
-    // En el login un 401 es "clave incorrecta": no se redirige, para que se vea el mensaje.
+    // En el login un 401 es "clave incorrecta": no se redirige, para que la UI muestre el mensaje RFC 9457
     const esLogin = err.config?.url?.includes('/auth/login')
     if (err.response?.status === 401 && !esLogin) {
       localStorage.removeItem('token')
       localStorage.removeItem('usuario')
-      window.location.href = '/login'
+      if (window.location.pathname !== '/login') {
+        window.location.href = '/login'
+      }
     }
     return Promise.reject(err)
   },
@@ -36,13 +54,29 @@ http.interceptors.response.use(
 
 const respuesta = (dato) => new Promise((ok) => setTimeout(() => ok(dato), 150))
 
-export async function login(usuario, password) {
+// Autentica contra el Backend .NET (POST /api/v1/auth/login) o Mock, devolviendo la sesión normalizada
+export async function login(identificador, password) {
   if (USE_MOCK) {
-    if (!usuario || !password) throw new Error('Credenciales inválidas')
-    return respuesta({ token: 'token-de-ejemplo', expiraEn: 3600, usuario: { id: 1, nombre: usuario, rol: 'Gerente' } })
+    if (!identificador || !password) throw new Error('Credenciales inválidas')
+    const rolSimulado = identificador.toLowerCase().includes('admin')
+      ? 'Administrador'
+      : identificador.toLowerCase().includes('gerente')
+      ? 'Gerente'
+      : 'Analista financiero'
+
+    return aSesion({
+      idUsuario: '01966f2a-4c3b-7a10-9e21-8b3d4c5e6f70',
+      email: identificador.includes('@') ? identificador : `${identificador}@siftc.edu.co`,
+      nombreCompleto: identificador.includes('@') ? identificador.split('@')[0] : identificador,
+      rol: rolSimulado,
+      token: 'mock-jwt-token-siftc-alza-2026',
+    })
   }
-  // "usuario" es el campo del contrato; "email" lo pide el backend en C#. Se envían ambos.
-  return (await http.post('/auth/login', { usuario, email: usuario, password })).data
+
+  // Backend C# recibe AutenticarUsuarioCommand { email, password }
+  const email = identificador.includes('@') ? identificador : `${identificador}@siftc.edu.co`
+  const res = await http.post('/auth/login', { email, password })
+  return aSesion(res.data)
 }
 
 export async function getEntidades() {

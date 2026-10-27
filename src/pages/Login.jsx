@@ -5,26 +5,32 @@ import logoAlzaOscuro from '../assets/logo-alza-oscuro.png';
 import BotonTema from '../components/common/BotonTema';
 import '../styles/Login.css';
 import { useAuth } from '../context/AuthContext';
+import { extraerMensajeError } from '../services/authService';
 
 export const Login = () => {
   const { login } = useAuth();
   const [error, setError] = useState('');
-  const [usuario, setUsuario] = useState('');
+  const [identificador, setIdentificador] = useState('');
   const [password, setPassword] = useState('');
+  const [cargando, setCargando] = useState(false);
   const [mostrarPassword, setMostrarPassword] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
 
   const handleSubmit = async (e) => {
-  e.preventDefault();
-  setError('');
-  try {
-    await login(usuario, password);
-    navigate(location.state?.desde ?? '/dashboard', { replace: true });
-  } catch {
-    setError('Usuario o contraseña incorrectos.');
-  }
-};
+    e.preventDefault();
+    if (cargando) return;
+    setError('');
+    setCargando(true);
+    try {
+      await login(identificador.trim(), password);
+      navigate(location.state?.desde ?? '/dashboard', { replace: true });
+    } catch (err) {
+      setError(extraerMensajeError(err, 'Usuario o contraseña incorrectos.'));
+    } finally {
+      setCargando(false);
+    }
+  };
 
   return (
     <div className="login-container">
@@ -68,17 +74,19 @@ export const Login = () => {
           <img src={logoAlzaOscuro} alt="Logo ALZA" className="login-logo-img logo-oscuro" />
 
           <h2 className="login-card-title">Iniciar sesión</h2>
-          <p className="login-card-subtitle">Ingresa con tu usuario y contraseña del sistema.</p>
+          <p className="login-card-subtitle">Ingresa con tu correo o usuario del sistema.</p>
 
           <form onSubmit={handleSubmit} className="login-form">
             <div className="login-field-group">
-              <label className="login-label">Usuario</label>
+              <label className="login-label">Usuario o correo</label>
               <input
                 type="text"
-                placeholder="Escribe tu usuario"
-                value={usuario}
-                onChange={(e) => setUsuario(e.target.value)}
+                placeholder="ej: analista@siftc.edu.co o analista"
+                value={identificador}
+                onChange={(e) => setIdentificador(e.target.value)}
                 className="login-input"
+                autoComplete="username"
+                disabled={cargando}
                 required
               />
             </div>
@@ -92,12 +100,15 @@ export const Login = () => {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className="login-input"
+                  autoComplete="current-password"
+                  disabled={cargando}
                   required
                 />
                 <button
                   type="button"
                   onClick={() => setMostrarPassword(!mostrarPassword)}
                   className="login-toggle-eye"
+                  tabIndex={-1}
                 >
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
@@ -107,9 +118,9 @@ export const Login = () => {
               </div>
             </div>
 
-            {error && <p className="login-error">{error}</p>}
-            <button type="submit" className="login-submit-btn">
-              Ingresar
+            {error && <p className="login-error" role="alert">{error}</p>}
+            <button type="submit" className="login-submit-btn" disabled={cargando}>
+              {cargando ? 'Ingresando…' : 'Ingresar'}
             </button>
           </form>
 

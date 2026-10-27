@@ -1,33 +1,28 @@
-import React from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
-import Dashboard from '../pages/Dashboard';
-import Login from '../pages/Login';
-import FinancialChart from '../components/charts/FinancialChart';
+import { lazy, Suspense } from 'react'
+import { Routes, Route, Navigate } from 'react-router-dom'
+import Login from '../pages/Login'
+import Layout from '../components/layout/Layout'
+import ProtectedRoute from './ProtectedRoute'
 
-export const AppRouter = () => {
+// Cada pantalla se descarga solo cuando se entra a ella (menos peso al cargar el tablero)
+const Dashboard = lazy(() => import('../pages/Dashboard'))
+const FinancialChart = lazy(() => import('../components/charts/FinancialChart'))
+const Ranking = lazy(() => import('../components/ranking/Ranking'))
+
+export default function AppRouter() {
   return (
-    <Routes>
-      {/* Ruta para el Login del proyecto */}
-      <Route path="/login" element={<Login />} />
-
-      {/* Ruta para el Dashboard principal */}
-      <Route path="/dashboard" element={<Dashboard />} />
-
-      {/* RUTA DE PRUEBA RÁPIDA (RF-FE02): 
-          Entra a http://localhost:5173/grafica para ver sólo tu tarea directamente */}
-      <Route path="/grafica" element={
-        <div style={{ padding: '40px', backgroundColor: '#151D33', minHeight: '100vh' }}>
-          <FinancialChart entidadNombre="Entidad Beta (Prueba RF-FE02)" ticker="ENT-02" />
-        </div>
-      } />
-
-      {/* Flujo normal: al entrar a la raíz va al Login */}
-      <Route path="/" element={<Navigate to="/login" replace />} />
-
-      {/* Comodín para URLs no encontradas */}
-      <Route path="*" element={<Navigate to="/login" replace />} />
-    </Routes>
-  );
-};
-
-export default AppRouter;
+    <Suspense fallback={<p style={{ padding: 24 }}>Cargando…</p>}>
+      <Routes>
+        <Route path="/login" element={<Login />} />
+        <Route element={<ProtectedRoute />}>
+          <Route element={<Layout />}>
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/grafica" element={<FinancialChart />} />
+            <Route path="/ranking" element={<Ranking />} />
+          </Route>
+        </Route>
+        <Route path="*" element={<Navigate to="/login" replace />} />
+      </Routes>
+    </Suspense>
+  )
+}

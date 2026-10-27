@@ -247,4 +247,7 @@
   .grafica-title { font-size: 26px; }
   .grafica-main-value { font-size: 30px; }
   .grafica-cards-grid { grid-template-columns: 1fr; }
+  /* para que los botones de periodo no se salgan en 360px */
+  .grafica-period-group { flex-wrap: wrap; }
+  .grafica-select-entidad { min-width: 0; width: 100%; }
 }

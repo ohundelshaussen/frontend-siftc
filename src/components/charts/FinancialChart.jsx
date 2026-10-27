@@ -1,6 +1,7 @@
-import React, { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { createChart, ColorType, CandlestickSeries, AreaSeries } from 'lightweight-charts';
 import { mockOhlcData } from '../../services/mocks/ohlcMocks';
+import { useTema } from '../../context/ThemeContext';
 import './FinancialChart.css';
 
 const PALETTE = {
@@ -19,6 +20,12 @@ export const FinancialChart = ({ entidadNombre = 'Entidad Beta', ticker = 'ENT-0
   const [periodo, setPeriodo] = useState('1M');
   const [hoverData, setHoverData] = useState(null);
 
+  // Colores de la gráfica según el tema (claro u oscuro)
+  const { tema } = useTema();
+  const C = tema === 'dark'
+    ? { fondo: '#151D33', texto: '#A9B3CA', rejilla: '#222C47', borde: '#2D3958', cruz: '#8DB8E8', etiqueta: '#2D3958', rojo: '#E5645F', linea: '#8DB8E8', areaArriba: 'rgba(141, 184, 232, 0.35)', areaAbajo: 'rgba(141, 184, 232, 0)' }
+    : { fondo: '#FFFFFF', texto: PALETTE.textoGris, rejilla: '#F1F5F9', borde: '#E2E8F0', cruz: PALETTE.azulAcero, etiqueta: PALETTE.azulNoche, rojo: PALETTE.rojoBajada, linea: PALETTE.azulAcero, areaArriba: 'rgba(38, 78, 122, 0.35)', areaAbajo: 'rgba(38, 78, 122, 0.0)' };
+
   useEffect(() => {
     if (!chartContainerRef.current) return;
 
@@ -26,18 +33,18 @@ export const FinancialChart = ({ entidadNombre = 'Entidad Beta', ticker = 'ENT-0
       width: chartContainerRef.current.clientWidth,
       height: 400,
       layout: {
-        background: { type: ColorType.Solid, color: '#FFFFFF' },
-        textColor: PALETTE.textoGris,
+        background: { type: ColorType.Solid, color: C.fondo },
+        textColor: C.texto,
       },
       grid: {
-        vertLines: { color: '#F1F5F9' },
-        horzLines: { color: '#F1F5F9' },
+        vertLines: { color: C.rejilla },
+        horzLines: { color: C.rejilla },
       },
-      rightPriceScale: { borderColor: '#E2E8F0' },
-      timeScale: { borderColor: '#E2E8F0', timeVisible: true },
+      rightPriceScale: { borderColor: C.borde },
+      timeScale: { borderColor: C.borde, timeVisible: true, rightOffset: 2 }, // para que no se corte la ultima fecha
       crosshair: {
-        vertLine: { color: PALETTE.azulAcero, labelBackgroundColor: PALETTE.azulNoche },
-        horzLine: { color: PALETTE.azulAcero, labelBackgroundColor: PALETTE.azulNoche },
+        vertLine: { color: C.cruz, labelBackgroundColor: C.etiqueta },
+        horzLine: { color: C.cruz, labelBackgroundColor: C.etiqueta },
       },
     });
 
@@ -46,18 +53,18 @@ export const FinancialChart = ({ entidadNombre = 'Entidad Beta', ticker = 'ENT-0
     if (tipoGrafica === 'velas') {
       const candlestickSeries = chart.addSeries(CandlestickSeries, {
         upColor: PALETTE.verdeAlza,
-        downColor: PALETTE.rojoBajada,
+        downColor: C.rojo,
         borderUpColor: PALETTE.verdeAlza,
-        borderDownColor: PALETTE.rojoBajada,
+        borderDownColor: C.rojo,
         wickUpColor: PALETTE.verdeAlza,
-        wickDownColor: PALETTE.rojoBajada,
+        wickDownColor: C.rojo,
       });
       candlestickSeries.setData(mockOhlcData);
     } else {
       const areaSeries = chart.addSeries(AreaSeries, {
-        topColor: 'rgba(38, 78, 122, 0.35)',
-        bottomColor: 'rgba(38, 78, 122, 0.0)',
-        lineColor: PALETTE.azulAcero,
+        topColor: C.areaArriba,
+        bottomColor: C.areaAbajo,
+        lineColor: C.linea,
         lineWidth: 2,
       });
       const lineData = mockOhlcData.map(item => ({ time: item.time, value: item.close }));
@@ -84,7 +91,8 @@ export const FinancialChart = ({ entidadNombre = 'Entidad Beta', ticker = 'ENT-0
       window.removeEventListener('resize', handleResize);
       chart.remove();
     };
-  }, [tipoGrafica]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tipoGrafica, tema]);
 
   const handlePeriodoChange = (nuevoPeriodo) => {
     setPeriodo(nuevoPeriodo);

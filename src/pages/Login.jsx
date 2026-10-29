@@ -1,19 +1,39 @@
 import React, { useState } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import logoAlza from '../assets/logo-alza.png';
+import { login } from '../services/api';
 import '../styles/Login.css';
 
 export const Login = () => {
   const [usuario, setUsuario] = useState('');
   const [password, setPassword] = useState('');
   const [mostrarPassword, setMostrarPassword] = useState(false);
+  const [error, setError] = useState('');
+  const [cargando, setCargando] = useState(false);
   const navigate = useNavigate();
-  const location = useLocation();
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (usuario && password) {
-      navigate('/dashboard');
+    setError('');
+    setCargando(true);
+
+    try {
+      // Llamada al endpoint real de Render a través de api.js
+      const data = await login(usuario, password);
+
+      // Guardamos el token y los datos de usuario exactamente como los pide el interceptor
+      if (data && data.token) {
+        localStorage.setItem('token', data.token);
+        localStorage.setItem('usuario', JSON.stringify(data.usuario));
+
+        // Redirigimos al tablero principal de forma exitosa
+        navigate('/dashboard');
+      }
+    } catch (err) {
+      console.error('Error al iniciar sesión:', err);
+      setError('Credenciales inválidas o error de conexión con el servidor.');
+    } finally {
+      setCargando(false);
     }
   };
 
@@ -22,7 +42,7 @@ export const Login = () => {
       {/* Panel Izquierdo Oscuro */}
       <div className="login-panel-left">
         <span className="login-tag">SIFTC · PORTAL WEB</span>
-        
+
         <h1 className="login-title">
           Datos trazables.<br />
           Entidades que<br />
@@ -58,6 +78,12 @@ export const Login = () => {
 
           <h2 className="login-card-title">Iniciar sesión</h2>
           <p className="login-card-subtitle">Ingresa con tu usuario y contraseña del sistema.</p>
+
+          {error && (
+            <div style={{ color: '#d9534f', fontSize: '13px', marginBottom: '15px', fontWeight: '500' }}>
+              {error}
+            </div>
+          )}
 
           <form onSubmit={handleSubmit} className="login-form">
             <div className="login-field-group">
@@ -96,8 +122,8 @@ export const Login = () => {
               </div>
             </div>
 
-            <button type="submit" className="login-submit-btn">
-              Ingresar
+            <button type="submit" className="login-submit-btn" disabled={cargando}>
+              {cargando ? 'Validando...' : 'Ingresar'}
             </button>
           </form>
 

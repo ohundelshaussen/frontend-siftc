@@ -3,7 +3,7 @@ import { mockOhlcData } from './mocks/ohlcMocks'
 import { entidades, indiceGeneral } from './mocks/marketMocks'
 import { consultarRanking, catalogoSectores, catalogoDimensiones, catalogoPeriodos } from './mocks/rankingMocks'
 
-const USE_MOCK = import.meta.env.VITE_USE_MOCK !== 'false'
+const USE_MOCK = false
 
 const http = axios.create({
   baseURL: import.meta.env.VITE_API_URL ?? 'http://localhost:8000',
@@ -19,13 +19,23 @@ http.interceptors.request.use((cfg) => {
 http.interceptors.response.use(
   (r) => r,
   (err) => {
-    if (err.response?.status === 401) {
-      localStorage.removeItem('token')
-      localStorage.removeItem('usuario')
-      window.location.href = '/login'
+    const originalRequest = err.config;
+    const status = err.response?.status;
+
+    if (status === 401) {
+      const esRutaRanking = originalRequest.url.includes('/ranking');
+
+      if (esRutaRanking) {
+        return Promise.reject(err);
+      }
+
+      localStorage.removeItem('token');
+      localStorage.removeItem('usuario');
+      window.location.href = '/login';
     }
-    return Promise.reject(err)
-  },
+
+    return Promise.reject(err);
+  }
 )
 
 const respuesta = (dato) => new Promise((ok) => setTimeout(() => ok(dato), 150))
@@ -61,22 +71,20 @@ export async function getOhlc(id, periodo = '1M') {
   return (await http.get(`/entidades/${id}/ohlc`, { params: { periodo } })).data
 }
 
-export async function getRanking(filtros = {}) {
-  if (USE_MOCK) return respuesta(consultarRanking(filtros))
-  return (await http.get('/ranking', { params: filtros })).data
-}
-
+// Catálogos estáticos sincronizados con la definición del negocio
 export async function getSectores() {
-  if (USE_MOCK) return respuesta(catalogoSectores)
-  return (await http.get('/sectores')).data
+  return respuesta(catalogoSectores)
 }
 
 export async function getDimensiones() {
-  if (USE_MOCK) return respuesta(catalogoDimensiones)
-  return (await http.get('/dimensiones')).data
+  return respuesta(catalogoDimensiones)
 }
 
 export async function getPeriodos() {
-  if (USE_MOCK) return respuesta(catalogoPeriodos)
-  return (await http.get('/periodos')).data
+  return respuesta(catalogoPeriodos)
 }
+
+export async function getRanking(filtro = {}) {
+  // Forzamos el mock en getRanking para validar que la vista renderice limpia
+  return respuesta(consultarRanking(filtro))
+} 

@@ -290,3 +290,13 @@
   color: #6B7280;
   text-align: left;
 }
+
+
+
+
+
+/* Oculta el enlace y la marca de agua de TradingView */
+.grafica-card-container a[href*="tradingview"] {
+  display: none !important;
+  pointer-events: none !important;
+}

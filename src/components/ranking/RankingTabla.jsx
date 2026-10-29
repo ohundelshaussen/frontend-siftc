@@ -101,7 +101,7 @@ export default function RankingTabla({ filas, total, orden, dir, dimension, peri
         </table>
       </div>
       <p className="texto-suave pie">
-        Mostrando {filas.length} de {total} entidades · Periodo {periodo.toLowerCase()} · Clic en una entidad para ver su gráfica
+        Mostrando {filas.length} de {total} entidades · Año {periodo} · Clic en una entidad para ver su gráfica
       </p>
     </section>
   )

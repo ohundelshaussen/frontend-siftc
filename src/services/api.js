@@ -1,5 +1,5 @@
 import axios from 'axios'
-import { aEntidades, aTop, aIndiceGeneral, aSesion, aSerieOhlc } from './adaptadores'
+import { aEntidades, aTop, aIndiceGeneral, aSesion, aSerieOhlc, aRanking } from './adaptadores'
 import { obtenerOhlcMock } from './mocks/ohlcMocks'
 import { entidades, indiceGeneral } from './mocks/marketMocks'
 import { consultarRanking, catalogoSectores, catalogoDimensiones, catalogoPeriodos } from './mocks/rankingMocks'
@@ -196,16 +196,20 @@ export async function getTop() {
 
 export async function getOhlc(id, periodo = '1M', entidadOpcional = null) {
   const mapeoPeriodo = {
-    '1D': 'Diaria',
-    '1S': 'Diaria',
-    '1M': 'Mensual',
-    '1T': 'Trimestral',
-    '1A': 'Trimestral',
-    'Máx.': 'Trimestral',
-    'MAX': 'Trimestral',
-    'Diaria': 'Diaria',
-    'Mensual': 'Mensual',
-    'Trimestral': 'Trimestral',
+    '1D': '1D',
+    '1S': '1S',
+    '1M': '1M',
+    '1T': '1M',
+    '1A': '1A',
+    '1Y': '1A',
+    'Máx.': 'MAX',
+    'MAX': 'MAX',
+    'Diaria': '1D',
+    'Mensual': '1M',
+    'Trimestral': '1M',
+    '2026': '1A',
+    '2025': '1A',
+    '2024': '1A',
   }
   const periodoApi = mapeoPeriodo[periodo] || periodo
   const codigoOConsulta = entidadOpcional?.codigo_entidad || entidadOpcional?.codigo || id
@@ -238,8 +242,8 @@ export async function getRanking(filtros = {}) {
   }
 
   const resultado = await conRespaldoMock(
-    async () => (await http.get('/ranking', { params: filtros })).data,
-    () => consultarRanking(filtros),
+    async () => aRanking((await http.get('/ranking', { params: filtros })).data),
+    () => aRanking(consultarRanking(filtros)),
   )
 
   if (resultado) {

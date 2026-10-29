@@ -5,19 +5,21 @@ import { claveComparacion } from '../../utils/texto'
 import RankingTabla from './RankingTabla'
 import './Ranking.css'
 
-// HU-FE-04 filtros del ranking
+// HU-FE-04 filtros del ranking: estandarizado por Año según contrato oficial del Backend
 
-const POR_DEFECTO = { sector: '', dimension: '', periodo: 'mensual', orden: 'ic', dir: 'desc' }
+const POR_DEFECTO = { sector: '', dimension: '', periodo: '2026', orden: 'ic', dir: 'desc' }
 const ORDENABLES = ['posicion', 'entidad', 'sector', 'ic', 'variacionPct']
 const ASC_PRIMERO = ['posicion', 'entidad', 'sector']
 
 function leerFiltros(params) {
   const orden = params.get('orden')
   const dir = params.get('dir')
+  const periodoParam = params.get('periodo') || params.get('anio') || params.get('año') || POR_DEFECTO.periodo
+
   return {
     sector: params.get('sector') ?? POR_DEFECTO.sector,
     dimension: params.get('dimension') ?? POR_DEFECTO.dimension,
-    periodo: params.get('periodo') || POR_DEFECTO.periodo,
+    periodo: periodoParam,
     orden: ORDENABLES.includes(orden) ? orden : POR_DEFECTO.orden,
     dir: dir === 'asc' || dir === 'desc' ? dir : POR_DEFECTO.dir,
   }
@@ -101,11 +103,11 @@ export default function Ranking() {
   }, [dimension, catalogos.dimensiones])
 
   const periodoActivo = useMemo(() => {
-    if (!periodo) return 'mensual'
+    if (!periodo) return '2026'
     const match = catalogos.periodos.find(
       (p) => claveComparacion(p.id) === claveComparacion(periodo) || claveComparacion(p.nombre) === claveComparacion(periodo),
     )
-    return match ? match.id : periodo.toLowerCase()
+    return match ? match.id : String(periodo)
   }, [periodo, catalogos.periodos])
 
   // Los filtros se guardan en la URL de forma inmutable
@@ -158,7 +160,7 @@ export default function Ranking() {
           </label>
 
           <label className="campo">
-            <span>Periodo</span>
+            <span>Año</span>
             <select value={periodoActivo} onChange={(e) => cambiar({ periodo: e.target.value })}>
               {catalogos.periodos.length === 0 && <option value={periodoActivo}>{nombrePeriodo}</option>}
               {catalogos.periodos.map((p) => (

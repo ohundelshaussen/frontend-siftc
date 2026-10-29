@@ -6,18 +6,73 @@
 
 const direccion = (v) => (v > 0 ? 'UP' : v < 0 ? 'DOWN' : 'EQUAL')
 
-export const aEntidad = (e) => ({
-  id: e.id,
-  codigo_entidad: e.codigo ?? e.codigo_entidad,
-  nombre_entidad: e.nombre ?? e.nombre_entidad,
-  sector: e.sector,
-  indice_competitividad: e.ic ?? e.indice_competitividad ?? 0,
-  variacion: e.variacion ?? 0,
-  variacion_porcentual: e.variacionPct ?? e.variacion_porcentual ?? 0,
-  direccion: direccion(e.variacionPct ?? e.variacion_porcentual ?? 0),
-})
+export const aEntidad = (e) => {
+  const codigo = e.codigo ?? e.codigo_entidad ?? ''
+  const nombre = e.nombre ?? e.nombre_entidad ?? ''
+  const sector = e.sector ?? 'General'
+  const ic = Number(e.ic ?? e.indice_competitividad ?? 0)
+  const variacion = Number(e.variacion ?? 0)
+  const variacionPct = Number(e.variacionPct ?? e.variacion_porcentual ?? 0)
+  const id = e.id ?? codigo
 
-export const aEntidades = (lista) => lista.map(aEntidad)
+  return {
+    // Estándar oficial Backend .NET / OpenAPI (EntidadDto)
+    id,
+    codigo,
+    nombre,
+    sector,
+    ic,
+    variacion,
+    variacionPct,
+
+    // Compatibilidad legacy Frontend
+    codigo_entidad: codigo,
+    nombre_entidad: nombre,
+    indice_competitividad: ic,
+    variacion_porcentual: variacionPct,
+    direccion: direccion(variacionPct),
+  }
+}
+
+export const aEntidades = (lista) => (Array.isArray(lista) ? lista.map(aEntidad) : [])
+
+export const aRankingItem = (r, idx = 0) => {
+  const posicion = Number(r.posicion ?? idx + 1)
+  const cambioPosicion = Number(r.cambioPosicion ?? 0)
+  const entidadId = r.entidadId ?? r.id ?? r.codigo ?? ''
+  const entidad = r.entidad ?? r.nombre ?? r.nombre_entidad ?? ''
+  const codigo = r.codigo ?? r.codigo_entidad ?? entidadId
+  const sector = r.sector ?? 'General'
+  const ic = Number(r.ic ?? r.indice_competitividad ?? 0)
+  const variacionPct = Number(r.variacionPct ?? r.variacion_porcentual ?? 0)
+
+  return {
+    // Estándar oficial Backend .NET / OpenAPI (RankingItemDto)
+    posicion,
+    cambioPosicion,
+    entidadId,
+    entidad,
+    sector,
+    ic,
+    variacionPct,
+
+    // Compatibilidad
+    id: entidadId,
+    codigo,
+    nombre: entidad,
+    nombre_entidad: entidad,
+    indice_competitividad: ic,
+    variacion_porcentual: variacionPct,
+  }
+}
+
+export const aRanking = (res) => {
+  if (!res) return { periodo: '2026', total: 0, items: [] }
+  const items = (Array.isArray(res) ? res : res.items ?? []).map(aRankingItem)
+  const periodo = String(res.periodo ?? '2026')
+  const total = Number(res.total ?? items.length)
+  return { periodo, total, items }
+}
 
 // /mercado/top no trae código ni sector: se completan con la lista de entidades (por id).
 export function aTop(top, entidades) {

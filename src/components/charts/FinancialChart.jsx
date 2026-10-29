@@ -21,26 +21,47 @@ const ENTIDAD_INICIAL = {
   sector: 'Finanzas',
   indice_competitividad: 78.5,
   variacion_porcentual: 1.55,
+  id: 'ENT002',
 };
+
+const PERIODOS_DISPONIBLES = ['1D', '1S', '1M', '1A', 'Máx.'];
+
+function normalizarPeriodo(p) {
+  if (!p) return '1M';
+  const clean = String(p).trim().toLowerCase();
+  if (clean === '1d' || clean === 'diario' || clean === 'diaria') return '1D';
+  if (clean === '1s' || clean === 'semanal') return '1S';
+  if (clean === '1m' || clean === 'mensual') return '1M';
+  if (clean === '1t' || clean === 'trimestral') return '1M';
+  if (clean === '1a' || clean === 'anual') return '1A';
+  if (clean === 'max' || clean === 'máx.' || clean === 'máx') return 'Máx.';
+  return PERIODOS_DISPONIBLES.includes(p) ? p : '1M';
+}
 
 export const FinancialChart = ({ entidadNombre, ticker }) => {
   const chartContainerRef = useRef(null);
   const chartRef = useRef(null);
   const [searchParams, setSearchParams] = useSearchParams();
 
+  const parametroUrl = searchParams.get('entidad');
+  const periodoParam = searchParams.get('periodo');
+  const tipoParam = searchParams.get('tipo');
+
+  // Filtros sincronizados con la URL como única fuente de verdad (Single Source of Truth)
+  const periodo = normalizarPeriodo(periodoParam);
+  const tipoGrafica = tipoParam === 'linea' ? 'linea' : 'velas';
+
   const [listaEntidades, setListaEntidades] = useState([]);
   const [serieOhlc, setSerieOhlc] = useState(mockOhlcData);
-  const [tipoGrafica, setTipoGrafica] = useState('velas');
-  const [periodo, setPeriodo] = useState('1M');
   const [hoverData, setHoverData] = useState(null);
-
-  const parametroUrl = searchParams.get('entidad');
 
   useEffect(() => {
     let activo = true;
     getEntidades()
       .then((lista) => {
-        if (activo && Array.isArray(lista)) setListaEntidades(lista);
+        if (activo && Array.isArray(lista) && lista.length > 0) {
+          setListaEntidades(lista);
+        }
       })
       .catch(() => {});
     return () => {
@@ -48,24 +69,34 @@ export const FinancialChart = ({ entidadNombre, ticker }) => {
     };
   }, []);
 
+  const claveEntidad = (e) => e?.codigo_entidad || e?.codigo || e?.id || '';
+  const nombreEntidad = (e) => e?.nombre_entidad || e?.nombre || claveEntidad(e);
+
   const entidadActiva = useMemo(() => {
     if (listaEntidades.length === 0) {
       return {
         ...ENTIDAD_INICIAL,
         nombre_entidad: entidadNombre ?? ENTIDAD_INICIAL.nombre_entidad,
         codigo_entidad: ticker ? ticker.replace('-', '0') : ENTIDAD_INICIAL.codigo_entidad,
+        id: ENTIDAD_INICIAL.codigo_entidad,
       };
     }
     if (parametroUrl) {
       const buscado = parametroUrl.trim().toUpperCase();
-      const limpio = buscado.replace('-', '');
-      const encontrada = listaEntidades.find(
-        (e, idx) =>
-          String(e.codigo_entidad).toUpperCase() === buscado ||
-          String(e.codigo_entidad).toUpperCase() === limpio ||
-          String(e.id).toUpperCase() === buscado ||
-          String(idx + 1) === parametroUrl.trim(),
-      );
+      const limpio = buscado.replace(/[-_]/g, '');
+      const encontrada = listaEntidades.find((e, idx) => {
+        const cod = String(e.codigo_entidad || e.codigo || '').toUpperCase();
+        const codLimpio = cod.replace(/[-_]/g, '');
+        const idStr = String(e.id || '').toUpperCase();
+        const nom = String(e.nombre_entidad || e.nombre || '').toUpperCase();
+        return (
+          cod === buscado ||
+          codLimpio === limpio ||
+          idStr === buscado ||
+          nom === buscado ||
+          String(idx + 1) === parametroUrl.trim()
+        );
+      });
       if (encontrada) return encontrada;
     }
     return listaEntidades[1] ?? listaEntidades[0];
@@ -73,50 +104,61 @@ export const FinancialChart = ({ entidadNombre, ticker }) => {
 
   useEffect(() => {
     let activo = true;
-    const idConsulta = entidadActiva.id ?? entidadActiva.codigo_entidad;
-    getOhlc(idConsulta, periodo)
+    const idConsulta = entidadActiva.id || entidadActiva.codigo_entidad || entidadActiva.codigo || 'ENT002';
+
+    getOhlc(idConsulta, periodo, entidadActiva)
       .then((datos) => {
         if (activo && Array.isArray(datos) && datos.length > 0) {
           setSerieOhlc(datos);
           setHoverData(null);
         }
       })
-      .catch(() => {});
+      .catch((err) => {
+        console.warn('Error al cargar datos OHLC de la entidad:', err);
+      });
+
     return () => {
       activo = false;
     };
-  }, [entidadActiva.id, entidadActiva.codigo_entidad, periodo]);
+  }, [entidadActiva, periodo]);
 
   // Colores de la gráfica según el tema (claro u oscuro)
   const { tema } = useTema();
-  const C = tema === 'dark'
-    ? {
-        fondo: '#151D33',
-        texto: '#A9B3CA',
-        rejilla: '#222C47',
-        borde: '#2D3958',
-        cruz: '#8DB8E8',
-        etiqueta: '#2D3958',
-        rojo: '#E5645F',
-        linea: '#8DB8E8',
-        areaArriba: 'rgba(141, 184, 232, 0.35)',
-        areaAbajo: 'rgba(141, 184, 232, 0)',
-      }
-    : {
-        fondo: '#FFFFFF',
-        texto: PALETTE.textoGris,
-        rejilla: '#F1F5F9',
-        borde: '#E2E8F0',
-        cruz: PALETTE.azulAcero,
-        etiqueta: PALETTE.azulNoche,
-        rojo: PALETTE.rojoBajada,
-        linea: PALETTE.azulAcero,
-        areaArriba: 'rgba(38, 78, 122, 0.35)',
-        areaAbajo: 'rgba(38, 78, 122, 0.0)',
-      };
+  const C = useMemo(
+    () =>
+      tema === 'dark'
+        ? {
+            fondo: '#151D33',
+            texto: '#A9B3CA',
+            rejilla: '#222C47',
+            borde: '#2D3958',
+            cruz: '#8DB8E8',
+            etiqueta: '#2D3958',
+            rojo: '#E5645F',
+            linea: '#8DB8E8',
+            areaArriba: 'rgba(141, 184, 232, 0.35)',
+            areaAbajo: 'rgba(141, 184, 232, 0)',
+          }
+        : {
+            fondo: '#FFFFFF',
+            texto: PALETTE.textoGris,
+            rejilla: '#F1F5F9',
+            borde: '#E2E8F0',
+            cruz: PALETTE.azulAcero,
+            etiqueta: PALETTE.azulNoche,
+            rojo: PALETTE.rojoBajada,
+            linea: PALETTE.azulAcero,
+            areaArriba: 'rgba(38, 78, 122, 0.35)',
+            areaAbajo: 'rgba(38, 78, 122, 0.0)',
+          },
+    [tema],
+  );
 
   useEffect(() => {
     if (!chartContainerRef.current || serieOhlc.length === 0) return;
+
+    // Limpiar contenido previo para evitar lienzos residuales
+    chartContainerRef.current.innerHTML = '';
 
     const chart = createChart(chartContainerRef.current, {
       width: chartContainerRef.current.clientWidth,
@@ -167,7 +209,14 @@ export const FinancialChart = ({ entidadNombre, ticker }) => {
         setHoverData(null);
         return;
       }
-      const dataPoint = serieOhlc.find((d) => d.time === param.time);
+      let timeKey = param.time;
+      if (typeof timeKey === 'object' && timeKey !== null) {
+        const y = timeKey.year;
+        const m = String(timeKey.month).padStart(2, '0');
+        const d = String(timeKey.day).padStart(2, '0');
+        timeKey = `${y}-${m}-${d}`;
+      }
+      const dataPoint = serieOhlc.find((d) => d.time === timeKey || String(d.time) === String(timeKey));
       if (dataPoint) setHoverData(dataPoint);
     });
 
@@ -182,17 +231,36 @@ export const FinancialChart = ({ entidadNombre, ticker }) => {
       window.removeEventListener('resize', handleResize);
       chart.remove();
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tipoGrafica, tema, serieOhlc]);
+  }, [tipoGrafica, C, serieOhlc]);
 
   const handleEntidadChange = (e) => {
     const nuevoCodigo = e.target.value;
-    setSearchParams({ entidad: nuevoCodigo });
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      next.set('entidad', nuevoCodigo);
+      return next;
+    });
+  };
+
+  const handlePeriodoChange = (nuevoPeriodo) => {
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      next.set('periodo', nuevoPeriodo);
+      return next;
+    });
+  };
+
+  const handleTipoGraficaChange = (nuevoTipo) => {
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      next.set('tipo', nuevoTipo);
+      return next;
+    });
   };
 
   const ultimoDato = serieOhlc[serieOhlc.length - 1];
   const datoMostrar = hoverData || ultimoDato;
-  const variacionEntidad = entidadActiva.variacion_porcentual ?? 0;
+  const variacionEntidad = entidadActiva.variacion_porcentual ?? entidadActiva.variacionPct ?? 0;
   const sube = variacionEntidad > 0;
   const baja = variacionEntidad < 0;
   const simboloVar = sube ? '▲' : baja ? '▼' : '–';
@@ -204,17 +272,19 @@ export const FinancialChart = ({ entidadNombre, ticker }) => {
   const subeVela = variacionVela > 0;
   const bajaVela = variacionVela < 0;
 
+  const valorActivo = claveEntidad(entidadActiva);
+
   return (
     <div className="grafica-wrapper">
       <div className="grafica-card-container">
         {/* Cabecera superior */}
         <div className="grafica-header-top">
           <div>
-            <div className="grafica-breadcrumb">Gráficas / {entidadActiva.nombre_entidad}</div>
+            <div className="grafica-breadcrumb">Gráficas / {nombreEntidad(entidadActiva)}</div>
             <div className="grafica-title-row">
-              <h1 className="grafica-title">{entidadActiva.nombre_entidad}</h1>
-              <span className="grafica-ticker mono-num">{entidadActiva.codigo_entidad}</span>
-              <span className="grafica-badge-finanzas">{entidadActiva.sector}</span>
+              <h1 className="grafica-title">{nombreEntidad(entidadActiva)}</h1>
+              <span className="grafica-ticker mono-num">{entidadActiva.codigo_entidad || entidadActiva.codigo || '—'}</span>
+              <span className="grafica-badge-finanzas">{entidadActiva.sector || 'General'}</span>
             </div>
           </div>
 
@@ -226,20 +296,24 @@ export const FinancialChart = ({ entidadNombre, ticker }) => {
               <select
                 id="selector-entidad-grafica"
                 className="grafica-select-entidad"
-                value={entidadActiva.codigo_entidad}
+                value={valorActivo}
                 onChange={handleEntidadChange}
               >
-                {(listaEntidades.length > 0 ? listaEntidades : [entidadActiva]).map((ent) => (
-                  <option key={ent.codigo_entidad} value={ent.codigo_entidad}>
-                    {ent.nombre_entidad} · {ent.codigo_entidad}
-                  </option>
-                ))}
+                {(listaEntidades.length > 0 ? listaEntidades : [entidadActiva]).map((ent, idx) => {
+                  const val = claveEntidad(ent) || `ent-${idx}`;
+                  const nom = nombreEntidad(ent);
+                  return (
+                    <option key={`${val}-${idx}`} value={val}>
+                      {nom} · {ent.codigo_entidad || ent.codigo || val}
+                    </option>
+                  );
+                })}
               </select>
             </div>
 
             <div className="grafica-price-display-box">
               <span className="grafica-main-value mono-num">
-                {num(entidadActiva.indice_competitividad, 1)}
+                {num(entidadActiva.indice_competitividad ?? entidadActiva.ic, 1)}
               </span>
               <span className={`grafica-main-change mono-num ${claseVariacion}`}>
                 {simboloVar} {pct(variacionEntidad)}
@@ -253,14 +327,14 @@ export const FinancialChart = ({ entidadNombre, ticker }) => {
           <div className="grafica-type-toggle" role="group" aria-label="Tipo de gráfica">
             <button
               type="button"
-              onClick={() => setTipoGrafica('velas')}
+              onClick={() => handleTipoGraficaChange('velas')}
               className={`grafica-toggle-btn ${tipoGrafica === 'velas' ? 'active' : ''}`}
             >
               Velas
             </button>
             <button
               type="button"
-              onClick={() => setTipoGrafica('linea')}
+              onClick={() => handleTipoGraficaChange('linea')}
               className={`grafica-toggle-btn ${tipoGrafica === 'linea' ? 'active' : ''}`}
             >
               Línea
@@ -268,11 +342,11 @@ export const FinancialChart = ({ entidadNombre, ticker }) => {
           </div>
 
           <div className="grafica-period-group" role="group" aria-label="Periodo de tiempo">
-            {['1D', '1S', '1M', '1A', 'Máx.'].map((p) => (
+            {PERIODOS_DISPONIBLES.map((p) => (
               <button
                 type="button"
                 key={p}
-                onClick={() => setPeriodo(p)}
+                onClick={() => handlePeriodoChange(p)}
                 className={`grafica-period-btn ${periodo === p ? 'active' : ''}`}
               >
                 {p}
@@ -282,7 +356,11 @@ export const FinancialChart = ({ entidadNombre, ticker }) => {
         </div>
 
         {/* Lienzo de la Gráfica */}
-        <div ref={chartContainerRef} style={{ width: '100%', borderRadius: '12px', overflow: 'hidden' }} />
+        <div
+          ref={chartContainerRef}
+          onMouseLeave={() => setHoverData(null)}
+          style={{ width: '100%', borderRadius: '12px', overflow: 'hidden' }}
+        />
 
         {/* Tarjetas inferiores OHLC */}
         <div className="grafica-cards-grid">
@@ -315,7 +393,7 @@ export const FinancialChart = ({ entidadNombre, ticker }) => {
 
         <div className="grafica-footer-note">
           {USA_DATOS_DE_EJEMPLO ? 'Datos de ejemplo · ' : ''}
-          Serie diaria del Índice de Competitividad ({periodo}) · Pasa el cursor sobre la gráfica para ver el detalle de cada sesión.
+          Serie del Índice de Competitividad ({periodo}) · Pasa el cursor sobre la gráfica para ver el detalle de cada sesión.
         </div>
       </div>
     </div>

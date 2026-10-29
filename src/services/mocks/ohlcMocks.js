@@ -27,6 +27,9 @@ const PUNTOS_POR_PERIODO = {
   '1A': 90,
   MAX: 140,
   'Máx.': 140,
+  Diaria: 5,
+  Mensual: 22,
+  Trimestral: 66,
 }
 
 const redond = (v) => Math.round(Math.min(99.5, Math.max(5, v)) * 10) / 10
@@ -54,22 +57,29 @@ function diasHabilesHasta(fechaFinIso, cantidad) {
 }
 
 // Genera una serie OHLC determinística alineada con el IC y variación de cada entidad
-export function obtenerOhlcMock(idEntidad = 'ENT002', periodo = '1M') {
-  const buscado = String(idEntidad).trim().toUpperCase()
-  const normalizado = buscado.replace('-', '')
-  const entidad =
-    entidades.find(
-      (e, idx) =>
-        e.codigo_entidad.toUpperCase() === buscado ||
-        e.codigo_entidad.toUpperCase() === normalizado ||
-        String(idx + 1) === String(idEntidad).trim(),
-    ) ?? entidades[1]
+export function obtenerOhlcMock(idEntidad = 'ENT002', periodo = '1M', entidadOpcional = null) {
+  let entidad = entidadOpcional
+  if (!entidad || !entidad.indice_competitividad) {
+    const buscado = String(idEntidad || '').trim().toUpperCase()
+    const normalizado = buscado.replace(/[-_]/g, '')
+    entidad =
+      entidades.find(
+        (e, idx) =>
+          e.codigo_entidad.toUpperCase() === buscado ||
+          e.codigo_entidad.toUpperCase() === normalizado ||
+          e.nombre_entidad.toUpperCase() === buscado ||
+          (e.id && String(e.id).toUpperCase() === buscado) ||
+          String(idx + 1) === buscado,
+      ) ?? entidades[1]
+  }
 
   const totalPuntos = PUNTOS_POR_PERIODO[periodo] ?? 22
   const fechas = diasHabilesHasta('2026-10-07', totalPuntos)
-  const semilla = semillaTexto(entidad.codigo_entidad)
-  const cierreFinal = entidad.indice_competitividad
-  const aperturaUltimoDia = redond(cierreFinal / (1 + entidad.variacion_porcentual / 100))
+  const codigo = entidad.codigo_entidad || entidad.codigo || 'ENT002'
+  const semilla = semillaTexto(codigo)
+  const cierreFinal = entidad.indice_competitividad ?? entidad.ic ?? 75.0
+  const varPct = entidad.variacion_porcentual ?? entidad.variacionPct ?? 0
+  const aperturaUltimoDia = redond(cierreFinal / (1 + varPct / 100))
 
   // Construimos cierres hacia atrás desde el cierre actual para que el último punto coincida exacto
   const cierres = new Array(totalPuntos)

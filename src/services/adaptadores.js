@@ -52,6 +52,46 @@ export const aIndiceGeneral = (i) => ({
   serie: i.serie,
 })
 
+// Adapta la serie histórica OHLC para Lightweight Charts
+// Backend .NET / Render: { entidadId, entidad, periodo, serie: [ { fecha, apertura, maximo, minimo, cierre, volumen } ] }
+// O arreglo directo: [ { fecha|time, apertura|open, maximo|high, minimo|low, cierre|close } ]
+export function aSerieOhlc(respuestaApi) {
+  if (!respuestaApi) return []
+  const lista = Array.isArray(respuestaApi) ? respuestaApi : respuestaApi.serie ?? []
+  if (!Array.isArray(lista) || lista.length === 0) return []
+
+  const velas = lista
+    .map((item) => {
+      let time = item.time ?? item.fecha ?? ''
+      if (typeof time === 'string') {
+        time = time.slice(0, 10)
+      } else if (time instanceof Date) {
+        time = time.toISOString().slice(0, 10)
+      }
+      const open = Number(item.open ?? item.apertura ?? 0)
+      const close = Number(item.close ?? item.cierre ?? open)
+      const high = Number(item.high ?? item.maximo ?? Math.max(open, close))
+      const low = Number(item.low ?? item.minimo ?? Math.min(open, close))
+
+      return {
+        time,
+        open: Math.round(open * 100) / 100,
+        high: Math.round(high * 100) / 100,
+        low: Math.round(low * 100) / 100,
+        close: Math.round(close * 100) / 100,
+      }
+    })
+    .filter((v) => v.time && !Number.isNaN(v.open) && !Number.isNaN(v.close) && v.open > 0)
+
+  // Lightweight Charts requiere estrictamente orden ascendente por time sin duplicados
+  velas.sort((a, b) => a.time.localeCompare(b.time))
+  const mapaUnicos = new Map()
+  for (const v of velas) {
+    mapaUnicos.set(v.time, v)
+  }
+  return Array.from(mapaUnicos.values())
+}
+
 // Normaliza la respuesta de autenticación del Backend .NET (AuthResponseDto) o del Mock
 // Render / .NET: { token, expiraEn, usuario: { id, nombre, rol } }
 // AuthResponseDto plano: { idUsuario, email, nombreCompleto, rol, token }

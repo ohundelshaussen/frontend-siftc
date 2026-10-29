@@ -1,5 +1,5 @@
 import axios from 'axios'
-import { aEntidades, aTop, aIndiceGeneral, aSesion } from './adaptadores'
+import { aEntidades, aTop, aIndiceGeneral, aSesion, aSerieOhlc } from './adaptadores'
 import { obtenerOhlcMock } from './mocks/ohlcMocks'
 import { entidades, indiceGeneral } from './mocks/marketMocks'
 import { consultarRanking, catalogoSectores, catalogoDimensiones, catalogoPeriodos } from './mocks/rankingMocks'
@@ -148,7 +148,7 @@ export async function getTop() {
   )
 }
 
-export async function getOhlc(id, periodo = '1M') {
+export async function getOhlc(id, periodo = '1M', entidadOpcional = null) {
   const mapeoPeriodo = {
     '1D': 'Diaria',
     '1S': 'Diaria',
@@ -162,9 +162,16 @@ export async function getOhlc(id, periodo = '1M') {
     'Trimestral': 'Trimestral',
   }
   const periodoApi = mapeoPeriodo[periodo] || periodo
+  const codigoOConsulta = entidadOpcional?.codigo_entidad || entidadOpcional?.codigo || id
+
   return conRespaldoMock(
-    async () => (await http.get(`/entidades/${id}/ohlc`, { params: { periodo: periodoApi } })).data,
-    () => obtenerOhlcMock(id, periodo),
+    async () => {
+      const res = await http.get(`/entidades/${id}/ohlc`, { params: { periodo: periodoApi } })
+      const adaptado = aSerieOhlc(res.data)
+      if (adaptado.length === 0) throw new Error('Serie OHLC vacía')
+      return adaptado
+    },
+    () => aSerieOhlc(obtenerOhlcMock(codigoOConsulta, periodo, entidadOpcional)),
   )
 }
 

@@ -22,7 +22,7 @@ function leerSesionGuardada() {
 
     const usuarioParsed = JSON.parse(guardado)
 
-    // Si en localStorage quedó una sesión antigua con mojibake ('Juan P?rez'), se fuerza reautenticación limpia UTF-8
+    // Si en localStorage quedó una sesión antigua con mojibake, se fuerza reautenticación limpia UTF-8
     if (
       tieneTextoCorrupto(usuarioParsed?.nombre) ||
       tieneTextoCorrupto(usuarioParsed?.nombreCompleto) ||

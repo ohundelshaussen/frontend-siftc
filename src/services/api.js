@@ -11,12 +11,12 @@ const USE_MOCK = import.meta.env.VITE_USE_MOCK !== 'false'
 // Para avisar en pantalla cuando los datos provienen de simulación o respaldo local.
 export let USA_DATOS_DE_EJEMPLO = USE_MOCK
 
-// Puerto por defecto: 7123 para Docker Compose (.NET), 5057 para dotnet run local
-export const API_BASE_URL = `${import.meta.env.VITE_API_URL ?? 'http://localhost:7123'}${import.meta.env.VITE_API_PREFIX ?? '/api/v1'}`
+// Base URL: Render en producción/nube o localhost si se configura
+export const API_BASE_URL = `${import.meta.env.VITE_API_URL ?? 'https://siftc.onrender.com'}${import.meta.env.VITE_API_PREFIX ?? '/api/v1'}`
 
 export const http = axios.create({
   baseURL: API_BASE_URL,
-  timeout: 10000,
+  timeout: 15000,
   headers: {
     'Content-Type': 'application/json',
     Accept: 'application/json, application/problem+json',
@@ -41,8 +41,12 @@ http.interceptors.response.use(
   (r) => r,
   (err) => {
     // En el login un 401 es "clave incorrecta": no se redirige, para que la UI muestre el mensaje RFC 9457
-    const esLogin = err.config?.url?.includes('/auth/login')
-    if (err.response?.status === 401 && !esLogin) {
+    const originalUrl = err.config?.url || ''
+    const esLogin = originalUrl.includes('/auth/login')
+    const esRanking = originalUrl.includes('/ranking')
+
+    // Si ranking o un recurso opcional da 401, dejamos que el catch lo gestione sin cerrar sesión abruptamente
+    if (err.response?.status === 401 && !esLogin && !esRanking) {
       localStorage.removeItem('token')
       localStorage.removeItem('usuario')
       if (window.location.pathname !== '/login') {
@@ -55,8 +59,8 @@ http.interceptors.response.use(
 
 const respuesta = (dato) => new Promise((ok) => setTimeout(() => ok(dato), 150))
 
-// Si un endpoint analítico aún no está implementado en el backend (404/5xx/red),
-// usa los datos simulados de respaldo sin ocultar errores de autorización (401/403).
+// Si un endpoint analítico aún no está implementado en el backend (404/5xx/red o 401 en datos opcionales),
+// usa los datos simulados de respaldo sin ocultar errores de autorización en rutas críticas.
 async function conRespaldoMock(peticionReal, obtenerMock) {
   if (USE_MOCK) return respuesta(obtenerMock())
   try {
@@ -68,7 +72,12 @@ async function conRespaldoMock(peticionReal, obtenerMock) {
     return dato
   } catch (err) {
     const status = err?.response?.status
-    if (status === 401 || status === 403) throw err
+    // Si ranking o entidad pide autenticación y aún no hay token o falló el microservicio, usar respaldo
+    if (status === 401) {
+      USA_DATOS_DE_EJEMPLO = true
+      return obtenerMock()
+    }
+    if (status === 403) throw err
     USA_DATOS_DE_EJEMPLO = true
     return obtenerMock()
   }
@@ -101,9 +110,14 @@ export async function login(identificador, password) {
     })
   }
 
-  // Backend C# recibe AutenticarUsuarioCommand { email, password } (en PostgreSQL email se guarda en minúsculas)
+  // Compatible con Backend Render ({ usuario, password }) y Docker local ({ email, password })
   const email = usuarioNormalizado.includes('@') ? usuarioNormalizado : `${usuarioNormalizado}@siftc.edu.co`
-  const res = await http.post('/auth/login', { email, password: passwordNormalizado })
+  const payload = {
+    usuario: usuarioNormalizado,
+    email,
+    password: passwordNormalizado,
+  }
+  const res = await http.post('/auth/login', payload)
   return aSesion(res.data)
 }
 
@@ -135,10 +149,22 @@ export async function getTop() {
 }
 
 export async function getOhlc(id, periodo = '1M') {
-  const periodoApi = periodo === 'Máx.' ? 'MAX' : periodo
+  const mapeoPeriodo = {
+    '1D': 'Diaria',
+    '1S': 'Diaria',
+    '1M': 'Mensual',
+    '1T': 'Trimestral',
+    '1A': 'Trimestral',
+    'Máx.': 'Trimestral',
+    'MAX': 'Trimestral',
+    'Diaria': 'Diaria',
+    'Mensual': 'Mensual',
+    'Trimestral': 'Trimestral',
+  }
+  const periodoApi = mapeoPeriodo[periodo] || periodo
   return conRespaldoMock(
     async () => (await http.get(`/entidades/${id}/ohlc`, { params: { periodo: periodoApi } })).data,
-    () => obtenerOhlcMock(id, periodoApi),
+    () => obtenerOhlcMock(id, periodo),
   )
 }
 

@@ -8,13 +8,13 @@ const direccion = (v) => (v > 0 ? 'UP' : v < 0 ? 'DOWN' : 'EQUAL')
 
 export const aEntidad = (e) => ({
   id: e.id,
-  codigo_entidad: e.codigo,
-  nombre_entidad: e.nombre,
+  codigo_entidad: e.codigo ?? e.codigo_entidad,
+  nombre_entidad: e.nombre ?? e.nombre_entidad,
   sector: e.sector,
-  indice_competitividad: e.ic ?? 0,
+  indice_competitividad: e.ic ?? e.indice_competitividad ?? 0,
   variacion: e.variacion ?? 0,
-  variacion_porcentual: e.variacionPct ?? 0,
-  direccion: direccion(e.variacionPct ?? 0),
+  variacion_porcentual: e.variacionPct ?? e.variacion_porcentual ?? 0,
+  direccion: direccion(e.variacionPct ?? e.variacion_porcentual ?? 0),
 })
 
 export const aEntidades = (lista) => lista.map(aEntidad)
@@ -53,32 +53,35 @@ export const aIndiceGeneral = (i) => ({
 })
 
 // Normaliza la respuesta de autenticación del Backend .NET (AuthResponseDto) o del Mock
+// Render / .NET: { token, expiraEn, usuario: { id, nombre, rol } }
 // AuthResponseDto plano: { idUsuario, email, nombreCompleto, rol, token }
 export function aSesion(respuestaApi) {
   if (!respuestaApi) return null
 
-  // Si ya viene empaquetado en formato { token, usuario } (compatibilidad Mock previo)
+  // Si ya viene empaquetado en formato { token, usuario } (Render y Mock previo)
   if (respuestaApi.usuario && respuestaApi.token) {
     const u = respuestaApi.usuario
+    const nombreCompleto = u.nombreCompleto ?? u.nombre ?? u.usuario ?? ''
+    const email = u.email ?? (u.usuario ? (u.usuario.includes('@') ? u.usuario : `${u.usuario}@siftc.edu.co`) : (nombreCompleto ? `${nombreCompleto.toLowerCase().replace(/\s+/g, '.')}@siftc.edu.co` : ''))
     return {
       token: respuestaApi.token,
       usuario: {
         idUsuario: u.idUsuario ?? u.id ?? null,
-        email: u.email ?? u.usuario ?? '',
-        nombreCompleto: u.nombreCompleto ?? u.nombre ?? u.usuario ?? '',
-        nombre: u.nombre ?? u.nombreCompleto ?? u.usuario ?? '',
+        email,
+        nombreCompleto,
+        nombre: nombreCompleto,
         rol: u.rol ?? 'Analista financiero',
       },
     }
   }
 
-  // Formato oficial .NET: AuthResponseDto
-  const nombreCompleto = respuestaApi.nombreCompleto ?? respuestaApi.email?.split('@')[0] ?? ''
+  // Formato oficial .NET plano: AuthResponseDto
+  const nombreCompleto = respuestaApi.nombreCompleto ?? respuestaApi.email?.split('@')[0] ?? respuestaApi.nombre ?? ''
   return {
     token: respuestaApi.token,
     usuario: {
-      idUsuario: respuestaApi.idUsuario,
-      email: respuestaApi.email,
+      idUsuario: respuestaApi.idUsuario ?? respuestaApi.id,
+      email: respuestaApi.email ?? '',
       nombreCompleto,
       nombre: nombreCompleto,
       rol: respuestaApi.rol ?? 'Analista financiero',

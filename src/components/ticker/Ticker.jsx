@@ -19,14 +19,17 @@ export default function Ticker() {
     <div className="ticker" role="marquee" aria-label="Cotizaciones de las entidades">
       <div className="ticker-pista">
         {items.map((e, i) => {
-          const sube = e.variacion_porcentual > 0
-          const baja = e.variacion_porcentual < 0
+          const variacion = e.variacion_porcentual ?? e.variacionPct ?? e.variacion ?? 0
+          const indice = e.indice_competitividad ?? e.ic ?? 0
+          const codigo = e.codigo_entidad || e.codigo || e.nombre || 'N/A'
+          const sube = variacion > 0
+          const baja = variacion < 0
           return (
-            <span className="ticker-item mono-num" key={`${e.codigo_entidad}-${i}`}>
-              <span className="ticker-codigo">{e.codigo_entidad}</span>
-              <strong>{num(e.indice_competitividad, 1)}</strong>
+            <span className="ticker-item mono-num" key={`${codigo}-${i}`}>
+              <span className="ticker-codigo">{codigo}</span>
+              <strong>{num(indice, 1)}</strong>
               <span className={sube ? 'ticker-sube' : baja ? 'ticker-baja' : ''}>
-                {sube ? '▲' : baja ? '▼' : '–'} {pct(e.variacion_porcentual)}
+                {sube ? '▲' : baja ? '▼' : '–'} {pct(variacion)}
               </span>
             </span>
           )

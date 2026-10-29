@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { getRanking, getSectores, getDimensiones, getPeriodos } from '../../services/api'
+import { claveComparacion } from '../../utils/texto'
 import RankingTabla from './RankingTabla'
 import './Ranking.css'
 
@@ -22,14 +23,24 @@ function leerFiltros(params) {
   }
 }
 
-// por si la api no los devuelve ordenados
+// Ordenamiento robusto en memoria para garantizar respuesta inmediata (0 ms)
 function ordenar(items, orden, dir) {
   const signo = dir === 'asc' ? 1 : -1
   return [...items].sort((a, b) => {
-    const x = a[orden]
-    const y = b[orden]
-    if (typeof x === 'string') return x.localeCompare(y, 'es') * signo
-    return (x - y) * signo
+    const x = a?.[orden]
+    const y = b?.[orden]
+    if (x === y) return 0
+    if (x === null || x === undefined) return 1
+    if (y === null || y === undefined) return -1
+    if (typeof x === 'string' || typeof y === 'string') {
+      return String(x).localeCompare(String(y), 'es', { sensitivity: 'base' }) * signo
+    }
+    const numX = Number(x)
+    const numY = Number(y)
+    if (!Number.isNaN(numX) && !Number.isNaN(numY)) {
+      return (numX - numY) * signo
+    }
+    return 0
   })
 }
 
@@ -62,20 +73,47 @@ export default function Ranking() {
         setResultado({ clave, datos: respuesta })
         setError(false)
       })
-      .catch(() => vigente && setError(true))
+      .catch(() => {
+        if (vigente) setError(true)
+      })
     return () => {
       vigente = false
     }
-  }, [clave]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [clave, sector, dimension, periodo, orden, dir])
 
   const filas = useMemo(() => (datos ? ordenar(datos.items ?? [], orden, dir) : null), [datos, orden, dir])
 
-  // los filtros se guardan en la url
+  // Normalización tolerante a acentos y mayúsculas para que el select nunca pierda su opción seleccionada
+  const sectorActivo = useMemo(() => {
+    if (!sector) return ''
+    const match = catalogos.sectores.find(
+      (s) => claveComparacion(s.nombre) === claveComparacion(sector) || String(s.id) === String(sector),
+    )
+    return match ? match.nombre : sector
+  }, [sector, catalogos.sectores])
+
+  const dimensionActiva = useMemo(() => {
+    if (!dimension) return ''
+    const match = catalogos.dimensiones.find(
+      (d) => claveComparacion(d.nombre) === claveComparacion(dimension) || String(d.id) === String(dimension),
+    )
+    return match ? match.nombre : dimension
+  }, [dimension, catalogos.dimensiones])
+
+  const periodoActivo = useMemo(() => {
+    if (!periodo) return 'mensual'
+    const match = catalogos.periodos.find(
+      (p) => claveComparacion(p.id) === claveComparacion(periodo) || claveComparacion(p.nombre) === claveComparacion(periodo),
+    )
+    return match ? match.id : periodo.toLowerCase()
+  }, [periodo, catalogos.periodos])
+
+  // Los filtros se guardan en la URL de forma inmutable
   const cambiar = (cambios) => {
     const siguiente = { ...filtros, ...cambios }
     const limpio = {}
-    Object.entries(siguiente).forEach(([clave, valor]) => {
-      if (valor && valor !== POR_DEFECTO[clave]) limpio[clave] = valor
+    Object.entries(siguiente).forEach(([k, valor]) => {
+      if (valor && valor !== POR_DEFECTO[k]) limpio[k] = valor
     })
     setSearchParams(limpio)
   }
@@ -86,7 +124,7 @@ export default function Ranking() {
   }
 
   const hayFiltros = params.toString() !== ''
-  const nombrePeriodo = catalogos.periodos.find((p) => p.id === periodo)?.nombre ?? periodo
+  const nombrePeriodo = catalogos.periodos.find((p) => p.id === periodoActivo)?.nombre ?? periodoActivo
 
   return (
     <div className="ranking">
@@ -101,7 +139,7 @@ export default function Ranking() {
         <div className="filtros-fila">
           <label className="campo">
             <span>Sector</span>
-            <select value={sector} onChange={(e) => cambiar({ sector: e.target.value })}>
+            <select value={sectorActivo} onChange={(e) => cambiar({ sector: e.target.value })}>
               <option value="">Todos los sectores</option>
               {catalogos.sectores.map((s) => (
                 <option key={s.id} value={s.nombre}>{s.nombre}</option>
@@ -111,7 +149,7 @@ export default function Ranking() {
 
           <label className="campo">
             <span>Dimensión</span>
-            <select value={dimension} onChange={(e) => cambiar({ dimension: e.target.value })}>
+            <select value={dimensionActiva} onChange={(e) => cambiar({ dimension: e.target.value })}>
               <option value="">IC general</option>
               {catalogos.dimensiones.map((d) => (
                 <option key={d.id} value={d.nombre}>{d.nombre}</option>
@@ -121,8 +159,8 @@ export default function Ranking() {
 
           <label className="campo">
             <span>Periodo</span>
-            <select value={periodo} onChange={(e) => cambiar({ periodo: e.target.value })}>
-              {catalogos.periodos.length === 0 && <option value={periodo}>{nombrePeriodo}</option>}
+            <select value={periodoActivo} onChange={(e) => cambiar({ periodo: e.target.value })}>
+              {catalogos.periodos.length === 0 && <option value={periodoActivo}>{nombrePeriodo}</option>}
               {catalogos.periodos.map((p) => (
                 <option key={p.id} value={p.id}>{p.nombre}</option>
               ))}
@@ -138,17 +176,17 @@ export default function Ranking() {
         </p>
       </section>
 
-      {error && (
+      {error && !filas && (
         <p role="alert" className="estado estado-error">No se pudo cargar el ranking. Intenta de nuevo.</p>
       )}
-      {!error && !filas && <p className="estado" aria-live="polite">Cargando ranking…</p>}
-      {!error && filas && (
+      {!filas && !error && <p className="estado" aria-live="polite">Cargando ranking…</p>}
+      {filas && (
         <RankingTabla
           filas={filas}
-          total={datos.total ?? filas.length}
+          total={datos?.total ?? filas.length}
           orden={orden}
           dir={dir}
-          dimension={dimension}
+          dimension={dimensionActiva}
           periodo={nombrePeriodo}
           cargando={cargando}
           onOrdenar={ordenarPor}

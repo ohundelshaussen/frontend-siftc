@@ -16,14 +16,22 @@ export default function Tablero() {
       .catch(() => setError(true))
   }, [])
 
-  if (error) return <p role="alert" className="estado">No se pudo cargar el tablero. Intenta de nuevo.</p>
+  if (error && !datos) return <p role="alert" className="estado">No se pudo cargar el tablero. Intenta de nuevo.</p>
   if (!datos) return <p className="estado" aria-live="polite">Cargando tablero…</p>
 
   const { indice, top, entidades } = datos
-  const suben = entidades.filter((e) => e.variacion_porcentual > 0).length
-  const bajan = entidades.filter((e) => e.variacion_porcentual < 0).length
-  const mayorSubida = top.ganadores?.[0]
-  const mayorBajada = top.perdedores?.[0]
+  const listaEntidades = entidades || []
+  const suben = listaEntidades.filter((e) => (e.variacion_porcentual ?? e.variacionPct ?? e.variacion ?? 0) > 0).length
+  const bajan = listaEntidades.filter((e) => (e.variacion_porcentual ?? e.variacionPct ?? e.variacion ?? 0) < 0).length
+  const mayorSubida = top?.ganadores?.[0]
+  const mayorBajada = top?.perdedores?.[0]
+
+  const codSubida = mayorSubida?.codigo_entidad || mayorSubida?.codigo || mayorSubida?.id || ''
+  const codBajada = mayorBajada?.codigo_entidad || mayorBajada?.codigo || mayorBajada?.id || ''
+  const nomSubida = mayorSubida?.nombre_entidad || mayorSubida?.nombre || codSubida
+  const nomBajada = mayorBajada?.nombre_entidad || mayorBajada?.nombre || codBajada
+  const varSubida = mayorSubida?.variacion_porcentual ?? mayorSubida?.variacionPct ?? mayorSubida?.variacion ?? 0
+  const varBajada = mayorBajada?.variacion_porcentual ?? mayorBajada?.variacionPct ?? mayorBajada?.variacion ?? 0
 
   return (
     <div className="tablero">
@@ -50,20 +58,20 @@ export default function Tablero() {
 
           <div className="resumen-destacados">
             {mayorSubida && (
-              <Link to={`/grafica?entidad=${mayorSubida.codigo_entidad}`} className="resumen-bloque">
+              <Link to={`/grafica?entidad=${codSubida}`} className="resumen-bloque">
                 <span className="etiqueta">Mayor subida</span>
                 <div className="resumen-fila">
-                  <strong>{mayorSubida.nombre_entidad}</strong>
-                  <Variacion valor={mayorSubida.variacion_porcentual} />
+                  <strong>{nomSubida}</strong>
+                  <Variacion valor={varSubida} />
                 </div>
               </Link>
             )}
             {mayorBajada && (
-              <Link to={`/grafica?entidad=${mayorBajada.codigo_entidad}`} className="resumen-bloque">
+              <Link to={`/grafica?entidad=${codBajada}`} className="resumen-bloque">
                 <span className="etiqueta">Mayor bajada</span>
                 <div className="resumen-fila">
-                  <strong>{mayorBajada.nombre_entidad}</strong>
-                  <Variacion valor={mayorBajada.variacion_porcentual} />
+                  <strong>{nomBajada}</strong>
+                  <Variacion valor={varBajada} />
                 </div>
               </Link>
             )}
@@ -72,8 +80,8 @@ export default function Tablero() {
       </div>
 
       <div className="fila-listas">
-        <TopLista titulo="Top 5 ganadores del día" entidades={top.ganadores ?? []} />
-        <TopLista titulo="Top 5 perdedores del día" entidades={top.perdedores ?? []} />
+        <TopLista titulo="Top 5 ganadores del día" entidades={top?.ganadores ?? []} />
+        <TopLista titulo="Top 5 perdedores del día" entidades={top?.perdedores ?? []} />
       </div>
 
       <section className="cta">

@@ -66,27 +66,37 @@ export default function RankingTabla({ filas, total, orden, dir, dimension, peri
             </tr>
           </thead>
           <tbody>
-            {filas.map((f) => (
-              <tr key={f.entidadId}>
-                <td className="mono-num posicion">{f.posicion}</td>
-                <td><CambioPosicion valor={f.cambioPosicion} /></td>
-                <td>
-                  <Link to={`/grafica?entidad=${f.entidadId}`} className="entidad">
-                    <strong>{f.entidad}</strong>
-                  </Link>
-                </td>
-                <td><span className="sector">{f.sector}</span></td>
-                <td>
-                  <div className="ic">
-                    <span className="mono-num">{num(f.ic, 1)}</span>
-                    <span className="barra" aria-hidden="true">
-                      <span style={{ width: `${Math.min(100, Math.max(0, f.ic))}%` }} />
-                    </span>
-                  </div>
-                </td>
-                <td><Variacion valor={f.variacionPct} /></td>
-              </tr>
-            ))}
+            {filas.map((f, idx) => {
+              const clave = f.entidadId || f.codigo || f.id || `ent-${idx}`
+              const codigoEnlace = f.codigo || f.entidadId || f.id || clave
+              const nombre = f.entidad || f.nombre || codigoEnlace
+              const sector = f.sector || 'General'
+              const icValor = f.ic ?? f.indice_competitividad ?? 0
+              const varValor = f.variacionPct ?? f.variacion_porcentual ?? f.variacion ?? 0
+              const pos = f.posicion ?? (idx + 1)
+
+              return (
+                <tr key={`${clave}-${idx}`}>
+                  <td className="mono-num posicion">{pos}</td>
+                  <td><CambioPosicion valor={f.cambioPosicion} /></td>
+                  <td>
+                    <Link to={`/grafica?entidad=${codigoEnlace}`} className="entidad">
+                      <strong>{nombre}</strong>
+                    </Link>
+                  </td>
+                  <td><span className="sector">{sector}</span></td>
+                  <td>
+                    <div className="ic">
+                      <span className="mono-num">{num(icValor, 1)}</span>
+                      <span className="barra" aria-hidden="true">
+                        <span style={{ width: `${Math.min(100, Math.max(0, icValor))}%` }} />
+                      </span>
+                    </div>
+                  </td>
+                  <td><Variacion valor={varValor} /></td>
+                </tr>
+              )
+            })}
           </tbody>
         </table>
       </div>

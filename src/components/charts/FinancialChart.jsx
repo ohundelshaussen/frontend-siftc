@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { createChart, ColorType, CandlestickSeries, AreaSeries } from 'lightweight-charts';
-import { getEntidades, getOhlc, USA_DATOS_DE_EJEMPLO } from '../../services/api';
+import { getEntidades, getOhlc } from '../../services/api';
 import { mockOhlcData } from '../../services/mocks/ohlcMocks';
 import { useTema } from '../../context/ThemeContext';
 import { num, pct, fechaIso } from '../../utils/format';
@@ -389,11 +389,6 @@ export const FinancialChart = ({ entidadNombre, ticker }) => {
               </span>
             </div>
           </div>
-        </div>
-
-        <div className="grafica-footer-note">
-          {USA_DATOS_DE_EJEMPLO ? 'Datos de ejemplo · ' : ''}
-          Serie del Índice de Competitividad ({periodo}) · Pasa el cursor sobre la gráfica para ver el detalle de cada sesión.
         </div>
       </div>
     </div>

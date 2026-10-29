@@ -57,7 +57,34 @@ http.interceptors.response.use(
   },
 )
 
-const respuesta = (dato) => new Promise((ok) => setTimeout(() => ok(dato), 150))
+const respuesta = (dato) => Promise.resolve(dato)
+
+// Caché en memoria de alto rendimiento para garantizar velocidad inmediata (0 ms) en filtros y cambios de vista
+const cacheMemoria = {
+  entidades: null,
+  indiceGeneral: null,
+  top: null,
+  rankingGeneral: null,
+  rankingPorFiltro: new Map(),
+  ohlc: new Map(),
+  catalogos: {
+    sectores: null,
+    dimensiones: null,
+    periodos: null,
+  },
+}
+
+export function limpiarCache() {
+  cacheMemoria.entidades = null
+  cacheMemoria.indiceGeneral = null
+  cacheMemoria.top = null
+  cacheMemoria.rankingGeneral = null
+  cacheMemoria.rankingPorFiltro.clear()
+  cacheMemoria.ohlc.clear()
+  cacheMemoria.catalogos.sectores = null
+  cacheMemoria.catalogos.dimensiones = null
+  cacheMemoria.catalogos.periodos = null
+}
 
 // Si un endpoint analítico aún no está implementado en el backend (404/5xx/red o 401 en datos opcionales),
 // usa los datos simulados de respaldo sin ocultar errores de autorización en rutas críticas.
@@ -101,6 +128,7 @@ export async function login(identificador, password) {
       ? 'Gerente'
       : 'Analista financiero'
 
+    limpiarCache()
     return aSesion({
       idUsuario: '01966f2a-4c3b-7a10-9e21-8b3d4c5e6f70',
       email: usuarioNormalizado.includes('@') ? usuarioNormalizado : `${usuarioNormalizado}@siftc.edu.co`,
@@ -118,25 +146,41 @@ export async function login(identificador, password) {
     password: passwordNormalizado,
   }
   const res = await http.post('/auth/login', payload)
+  limpiarCache()
   return aSesion(res.data)
 }
 
 export async function getEntidades() {
-  return conRespaldoMock(
+  if (cacheMemoria.entidades && cacheMemoria.entidades.length > 0) {
+    return cacheMemoria.entidades
+  }
+  const datos = await conRespaldoMock(
     async () => aEntidades((await http.get('/entidades')).data),
     () => entidades,
   )
+  if (datos && datos.length > 0) {
+    cacheMemoria.entidades = datos
+  }
+  return datos
 }
 
 export async function getIndiceGeneral() {
-  return conRespaldoMock(
+  if (cacheMemoria.indiceGeneral) {
+    return cacheMemoria.indiceGeneral
+  }
+  const datos = await conRespaldoMock(
     async () => aIndiceGeneral((await http.get('/indice-general')).data),
     () => indiceGeneral,
   )
+  if (datos) cacheMemoria.indiceGeneral = datos
+  return datos
 }
 
 export async function getTop() {
-  return conRespaldoMock(
+  if (cacheMemoria.top) {
+    return cacheMemoria.top
+  }
+  const datos = await conRespaldoMock(
     async () => {
       const [top, lista] = await Promise.all([
         http.get('/mercado/top', { params: { limite: 5 } }),
@@ -146,6 +190,8 @@ export async function getTop() {
     },
     calcularTopMock,
   )
+  if (datos) cacheMemoria.top = datos
+  return datos
 }
 
 export async function getOhlc(id, periodo = '1M', entidadOpcional = null) {
@@ -163,8 +209,13 @@ export async function getOhlc(id, periodo = '1M', entidadOpcional = null) {
   }
   const periodoApi = mapeoPeriodo[periodo] || periodo
   const codigoOConsulta = entidadOpcional?.codigo_entidad || entidadOpcional?.codigo || id
+  const claveCache = `${String(codigoOConsulta).toUpperCase()}-${periodo}`
 
-  return conRespaldoMock(
+  if (cacheMemoria.ohlc.has(claveCache)) {
+    return cacheMemoria.ohlc.get(claveCache)
+  }
+
+  const resultado = await conRespaldoMock(
     async () => {
       const res = await http.get(`/entidades/${id}/ohlc`, { params: { periodo: periodoApi } })
       const adaptado = aSerieOhlc(res.data)
@@ -173,32 +224,62 @@ export async function getOhlc(id, periodo = '1M', entidadOpcional = null) {
     },
     () => aSerieOhlc(obtenerOhlcMock(codigoOConsulta, periodo, entidadOpcional)),
   )
+
+  if (resultado && resultado.length > 0) {
+    cacheMemoria.ohlc.set(claveCache, resultado)
+  }
+  return resultado
 }
 
 export async function getRanking(filtros = {}) {
-  return conRespaldoMock(
+  const clave = JSON.stringify(filtros)
+  if (cacheMemoria.rankingPorFiltro.has(clave)) {
+    return cacheMemoria.rankingPorFiltro.get(clave)
+  }
+
+  const resultado = await conRespaldoMock(
     async () => (await http.get('/ranking', { params: filtros })).data,
     () => consultarRanking(filtros),
   )
+
+  if (resultado) {
+    cacheMemoria.rankingPorFiltro.set(clave, resultado)
+  }
+  return resultado
 }
 
 export async function getSectores() {
-  return conRespaldoMock(
+  if (cacheMemoria.catalogos.sectores) {
+    return cacheMemoria.catalogos.sectores
+  }
+  const datos = await conRespaldoMock(
     async () => (await http.get('/sectores')).data,
     () => catalogoSectores,
   )
+  if (datos) cacheMemoria.catalogos.sectores = datos
+  return datos
 }
 
 export async function getDimensiones() {
-  return conRespaldoMock(
+  if (cacheMemoria.catalogos.dimensiones) {
+    return cacheMemoria.catalogos.dimensiones
+  }
+  const datos = await conRespaldoMock(
     async () => (await http.get('/dimensiones')).data,
     () => catalogoDimensiones,
   )
+  if (datos) cacheMemoria.catalogos.dimensiones = datos
+  return datos
 }
 
 export async function getPeriodos() {
-  return conRespaldoMock(
+  if (cacheMemoria.catalogos.periodos) {
+    return cacheMemoria.catalogos.periodos
+  }
+  const datos = await conRespaldoMock(
     async () => (await http.get('/periodos')).data,
     () => catalogoPeriodos,
   )
+  if (datos) cacheMemoria.catalogos.periodos = datos
+  return datos
 }

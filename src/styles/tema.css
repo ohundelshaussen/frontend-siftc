@@ -43,8 +43,35 @@ html[data-theme='dark'] {
 html[data-theme='dark'] .login-card { background-color: #151D33; box-shadow: none; border: 1px solid #2D3958; }
 html[data-theme='dark'] .login-card-title,
 html[data-theme='dark'] .login-label { color: #E8EDF7; }
-html[data-theme='dark'] .login-input { background-color: #0E1424; color: #E8EDF7; }
+html[data-theme='dark'] .login-label.login-label-error { color: #FF8F8F; }
+html[data-theme='dark'] .login-input { background-color: #0E1424; color: #E8EDF7; border-color: #4A6B93; }
+html[data-theme='dark'] .login-input.login-input-error {
+  background-color: #22131B;
+  border-color: #FF6B6B;
+  box-shadow: 0 0 0 3px rgba(255, 107, 107, 0.18);
+}
+html[data-theme='dark'] .login-input.login-input-error:focus,
+html[data-theme='dark'] .login-input.login-input-error:focus-visible {
+  border-color: #FF8F8F;
+  box-shadow: 0 0 0 3px rgba(255, 143, 143, 0.28);
+}
+html[data-theme='dark'] .login-field-error { color: #FF8F8F; }
 html[data-theme='dark'] .login-toggle-eye { color: #8DB8E8; }
+
+/* Tablero: Banner CTA en modo oscuro */
+html[data-theme='dark'] .cta {
+  background: linear-gradient(135deg, #151D33 0%, #1C2947 100%);
+  border-color: #2D3958;
+  border-left-color: #24A460;
+}
+html[data-theme='dark'] .cta-boton {
+  background: #24A460;
+  color: #0E1424;
+}
+html[data-theme='dark'] .cta-boton:hover {
+  background: #2EBD70;
+  color: #0E1424;
+}
 
 /* Gráfica */
 html[data-theme='dark'] .grafica-card-container,
@@ -60,9 +87,6 @@ html[data-theme='dark'] .grafica-period-btn { background-color: #1C2947; color: 
 html[data-theme='dark'] .grafica-toggle-btn { color: #E8EDF7; }
 html[data-theme='dark'] .grafica-toggle-btn.active,
 html[data-theme='dark'] .grafica-period-btn.active { background-color: #264E7A; color: #FFFFFF; }
-html[data-theme='dark'] .grafica-main-change,
-html[data-theme='dark'] .grafica-stat-change-tag { color: #5FD08F; }
-html[data-theme='dark'] .grafica-main-change { background-color: #12301F; }
 
 /* Logo: versión clara en modo claro, versión para fondo oscuro en modo oscuro */
 .logo-oscuro { display: none; }

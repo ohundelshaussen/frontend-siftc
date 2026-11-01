@@ -12,7 +12,7 @@ export default function Ticker() {
 
   if (entidades.length === 0) return <div className="ticker" aria-hidden="true" />
 
-  // La lista se repite para que el desplazamiento sea continuo.
+  // La lista se repite para que el desplazamiento en bucle sea continuo.
   const items = [...entidades, ...entidades]
 
   return (

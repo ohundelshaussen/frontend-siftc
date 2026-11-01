@@ -6,14 +6,16 @@
 
 const direccion = (v) => (v > 0 ? 'UP' : v < 0 ? 'DOWN' : 'EQUAL')
 
-export const aEntidad = (e) => {
-  const codigo = e.codigo ?? e.codigo_entidad ?? ''
-  const nombre = e.nombre ?? e.nombre_entidad ?? ''
-  const sector = e.sector ?? 'General'
-  const ic = Number(e.ic ?? e.indice_competitividad ?? 0)
-  const variacion = Number(e.variacion ?? 0)
-  const variacionPct = Number(e.variacionPct ?? e.variacion_porcentual ?? 0)
-  const id = e.id ?? codigo
+export const aEntidad = (e) => ({
+  id: e.id,
+  codigo_entidad: e.codigo,
+  nombre_entidad: e.nombre,
+  sector: e.sector,
+  indice_competitividad: e.ic ?? 0,
+  variacion: e.variacion ?? 0,
+  variacion_porcentual: e.variacionPct ?? 0,
+  direccion: direccion(e.variacionPct ?? 0),
+})
 
   return {
     // Estándar oficial Backend .NET / OpenAPI (EntidadDto)
@@ -107,79 +109,87 @@ export const aIndiceGeneral = (i) => ({
   serie: i.serie,
 })
 
-// Adapta la serie histórica OHLC para Lightweight Charts
-// Backend .NET / Render: { entidadId, entidad, periodo, serie: [ { fecha, apertura, maximo, minimo, cierre, volumen } ] }
-// O arreglo directo: [ { fecha|time, apertura|open, maximo|high, minimo|low, cierre|close } ]
-export function aSerieOhlc(respuestaApi) {
-  if (!respuestaApi) return []
-  const lista = Array.isArray(respuestaApi) ? respuestaApi : respuestaApi.serie ?? []
-  if (!Array.isArray(lista) || lista.length === 0) return []
-
-  const velas = lista
-    .map((item) => {
-      let time = item.time ?? item.fecha ?? ''
-      if (typeof time === 'string') {
-        time = time.slice(0, 10)
-      } else if (time instanceof Date) {
-        time = time.toISOString().slice(0, 10)
-      }
-      const open = Number(item.open ?? item.apertura ?? 0)
-      const close = Number(item.close ?? item.cierre ?? open)
-      const high = Number(item.high ?? item.maximo ?? Math.max(open, close))
-      const low = Number(item.low ?? item.minimo ?? Math.min(open, close))
-
-      return {
-        time,
-        open: Math.round(open * 100) / 100,
-        high: Math.round(high * 100) / 100,
-        low: Math.round(low * 100) / 100,
-        close: Math.round(close * 100) / 100,
-      }
-    })
-    .filter((v) => v.time && !Number.isNaN(v.open) && !Number.isNaN(v.close) && v.open > 0)
-
-  // Lightweight Charts requiere estrictamente orden ascendente por time sin duplicados
-  velas.sort((a, b) => a.time.localeCompare(b.time))
-  const mapaUnicos = new Map()
-  for (const v of velas) {
-    mapaUnicos.set(v.time, v)
-  }
-  return Array.from(mapaUnicos.values())
-}
-
 // Normaliza la respuesta de autenticación del Backend .NET (AuthResponseDto) o del Mock
-// Render / .NET: { token, expiraEn, usuario: { id, nombre, rol } }
 // AuthResponseDto plano: { idUsuario, email, nombreCompleto, rol, token }
 export function aSesion(respuestaApi) {
   if (!respuestaApi) return null
 
-  // Si ya viene empaquetado en formato { token, usuario } (Render y Mock previo)
+  // Si ya viene empaquetado en formato { token, usuario } (compatibilidad Mock previo)
   if (respuestaApi.usuario && respuestaApi.token) {
     const u = respuestaApi.usuario
-    const nombreCompleto = u.nombreCompleto ?? u.nombre ?? u.usuario ?? ''
-    const email = u.email ?? (u.usuario ? (u.usuario.includes('@') ? u.usuario : `${u.usuario}@siftc.edu.co`) : (nombreCompleto ? `${nombreCompleto.toLowerCase().replace(/\s+/g, '.')}@siftc.edu.co` : ''))
     return {
       token: respuestaApi.token,
       usuario: {
         idUsuario: u.idUsuario ?? u.id ?? null,
-        email,
-        nombreCompleto,
-        nombre: nombreCompleto,
+        email: u.email ?? u.usuario ?? '',
+        nombreCompleto: u.nombreCompleto ?? u.nombre ?? u.usuario ?? '',
+        nombre: u.nombre ?? u.nombreCompleto ?? u.usuario ?? '',
         rol: u.rol ?? 'Analista financiero',
       },
     }
   }
 
-  // Formato oficial .NET plano: AuthResponseDto
-  const nombreCompleto = respuestaApi.nombreCompleto ?? respuestaApi.email?.split('@')[0] ?? respuestaApi.nombre ?? ''
+  // Formato oficial .NET: AuthResponseDto
+  const nombreCompleto = respuestaApi.nombreCompleto ?? respuestaApi.email?.split('@')[0] ?? ''
   return {
     token: respuestaApi.token,
     usuario: {
-      idUsuario: respuestaApi.idUsuario ?? respuestaApi.id,
-      email: respuestaApi.email ?? '',
+      idUsuario: respuestaApi.idUsuario,
+      email: respuestaApi.email,
       nombreCompleto,
       nombre: nombreCompleto,
       rol: respuestaApi.rol ?? 'Analista financiero',
     },
   }
+}
+
+// --- Serie OHLC ---------------------------------------------------------------
+// GET /entidades/{id}/ohlc NO devuelve un array: devuelve un objeto
+// { entidadId, entidad, periodo, <serie> } donde la serie es una propiedad interna.
+// lightweight-charts necesita [{ time, open, high, low, close }, ...], así que aquí
+// se localiza el array y se traducen los nombres de campo vengan en español o inglés.
+
+const PRIMER_VALOR = (obj, claves) => {
+  for (const k of claves) {
+    if (obj?.[k] !== undefined && obj[k] !== null) return obj[k]
+  }
+  return undefined
+}
+
+// 'time' debe ser 'YYYY-MM-DD' o un epoch en segundos
+function aTiempo(valor) {
+  if (typeof valor === 'number') return valor
+  const texto = String(valor ?? '')
+  const soloFecha = texto.slice(0, 10)
+  return /^\d{4}-\d{2}-\d{2}$/.test(soloFecha) ? soloFecha : texto
+}
+
+const aNumero = (v) => (v === null || v === undefined || v === '' ? undefined : Number(v))
+
+export function aSerieOhlc(respuesta) {
+  if (Array.isArray(respuesta)) return normalizarVelas(respuesta)
+  if (!respuesta || typeof respuesta !== 'object') return []
+
+  // La serie es la primera propiedad que sea un array de objetos
+  const serie = Object.values(respuesta).find(
+    (v) => Array.isArray(v) && v.length > 0 && typeof v[0] === 'object',
+  )
+  if (!serie) {
+    console.warn('[OHLC] La respuesta no trae ninguna serie de velas:', Object.keys(respuesta))
+    return []
+  }
+  return normalizarVelas(serie)
+}
+
+function normalizarVelas(serie) {
+  return serie
+    .map((v) => ({
+      time: aTiempo(PRIMER_VALOR(v, ['time', 'fecha', 'date', 'periodo'])),
+      open: aNumero(PRIMER_VALOR(v, ['open', 'apertura'])),
+      high: aNumero(PRIMER_VALOR(v, ['high', 'maximo', 'máximo'])),
+      low: aNumero(PRIMER_VALOR(v, ['low', 'minimo', 'mínimo'])),
+      close: aNumero(PRIMER_VALOR(v, ['close', 'cierre', 'valor'])),
+    }))
+    .filter((v) => v.time && Number.isFinite(v.close))
+    .sort((a, b) => String(a.time).localeCompare(String(b.time)))
 }

@@ -1,48 +1,36 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { getRanking, getSectores, getDimensiones, getPeriodos } from '../../services/api'
-import { claveComparacion } from '../../utils/texto'
 import RankingTabla from './RankingTabla'
+import { PERIODO_POR_DEFECTO } from '../../constants/periodos'
 import './Ranking.css'
 
-// HU-FE-04 filtros del ranking: estandarizado por Año según contrato oficial del Backend
+// HU-FE-04 filtros del ranking
 
-const POR_DEFECTO = { sector: '', dimension: '', periodo: '2026', orden: 'ic', dir: 'desc' }
+const POR_DEFECTO = { sector: '', dimension: '', periodo: PERIODO_POR_DEFECTO, orden: 'ic', dir: 'desc' }
 const ORDENABLES = ['posicion', 'entidad', 'sector', 'ic', 'variacionPct']
 const ASC_PRIMERO = ['posicion', 'entidad', 'sector']
 
 function leerFiltros(params) {
   const orden = params.get('orden')
   const dir = params.get('dir')
-  const periodoParam = params.get('periodo') || params.get('anio') || params.get('año') || POR_DEFECTO.periodo
-
   return {
     sector: params.get('sector') ?? POR_DEFECTO.sector,
     dimension: params.get('dimension') ?? POR_DEFECTO.dimension,
-    periodo: periodoParam,
+    periodo: params.get('periodo') || POR_DEFECTO.periodo,
     orden: ORDENABLES.includes(orden) ? orden : POR_DEFECTO.orden,
     dir: dir === 'asc' || dir === 'desc' ? dir : POR_DEFECTO.dir,
   }
 }
 
-// Ordenamiento robusto en memoria para garantizar respuesta inmediata (0 ms)
+// por si la api no los devuelve ordenados
 function ordenar(items, orden, dir) {
   const signo = dir === 'asc' ? 1 : -1
   return [...items].sort((a, b) => {
-    const x = a?.[orden]
-    const y = b?.[orden]
-    if (x === y) return 0
-    if (x === null || x === undefined) return 1
-    if (y === null || y === undefined) return -1
-    if (typeof x === 'string' || typeof y === 'string') {
-      return String(x).localeCompare(String(y), 'es', { sensitivity: 'base' }) * signo
-    }
-    const numX = Number(x)
-    const numY = Number(y)
-    if (!Number.isNaN(numX) && !Number.isNaN(numY)) {
-      return (numX - numY) * signo
-    }
-    return 0
+    const x = a[orden]
+    const y = b[orden]
+    if (typeof x === 'string') return x.localeCompare(y, 'es') * signo
+    return (x - y) * signo
   })
 }
 
@@ -75,47 +63,20 @@ export default function Ranking() {
         setResultado({ clave, datos: respuesta })
         setError(false)
       })
-      .catch(() => {
-        if (vigente) setError(true)
-      })
+      .catch(() => vigente && setError(true))
     return () => {
       vigente = false
     }
-  }, [clave, sector, dimension, periodo, orden, dir])
+  }, [clave]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const filas = useMemo(() => (datos ? ordenar(datos.items ?? [], orden, dir) : null), [datos, orden, dir])
 
-  // Normalización tolerante a acentos y mayúsculas para que el select nunca pierda su opción seleccionada
-  const sectorActivo = useMemo(() => {
-    if (!sector) return ''
-    const match = catalogos.sectores.find(
-      (s) => claveComparacion(s.nombre) === claveComparacion(sector) || String(s.id) === String(sector),
-    )
-    return match ? match.nombre : sector
-  }, [sector, catalogos.sectores])
-
-  const dimensionActiva = useMemo(() => {
-    if (!dimension) return ''
-    const match = catalogos.dimensiones.find(
-      (d) => claveComparacion(d.nombre) === claveComparacion(dimension) || String(d.id) === String(dimension),
-    )
-    return match ? match.nombre : dimension
-  }, [dimension, catalogos.dimensiones])
-
-  const periodoActivo = useMemo(() => {
-    if (!periodo) return '2026'
-    const match = catalogos.periodos.find(
-      (p) => claveComparacion(p.id) === claveComparacion(periodo) || claveComparacion(p.nombre) === claveComparacion(periodo),
-    )
-    return match ? match.id : String(periodo)
-  }, [periodo, catalogos.periodos])
-
-  // Los filtros se guardan en la URL de forma inmutable
+  // los filtros se guardan en la url
   const cambiar = (cambios) => {
     const siguiente = { ...filtros, ...cambios }
     const limpio = {}
-    Object.entries(siguiente).forEach(([k, valor]) => {
-      if (valor && valor !== POR_DEFECTO[k]) limpio[k] = valor
+    Object.entries(siguiente).forEach(([clave, valor]) => {
+      if (valor && valor !== POR_DEFECTO[clave]) limpio[clave] = valor
     })
     setSearchParams(limpio)
   }
@@ -126,7 +87,7 @@ export default function Ranking() {
   }
 
   const hayFiltros = params.toString() !== ''
-  const nombrePeriodo = catalogos.periodos.find((p) => p.id === periodoActivo)?.nombre ?? periodoActivo
+  const nombrePeriodo = catalogos.periodos.find((p) => p.id === periodo)?.nombre ?? periodo
 
   return (
     <div className="ranking">
@@ -141,7 +102,7 @@ export default function Ranking() {
         <div className="filtros-fila">
           <label className="campo">
             <span>Sector</span>
-            <select value={sectorActivo} onChange={(e) => cambiar({ sector: e.target.value })}>
+            <select value={sector} onChange={(e) => cambiar({ sector: e.target.value })}>
               <option value="">Todos los sectores</option>
               {catalogos.sectores.map((s) => (
                 <option key={s.id} value={s.nombre}>{s.nombre}</option>
@@ -151,8 +112,16 @@ export default function Ranking() {
 
           <label className="campo">
             <span>Dimensión</span>
-            <select value={dimensionActiva} onChange={(e) => cambiar({ dimension: e.target.value })}>
-              <option value="">IC general</option>
+            {/* Sin métricas cargadas en el servidor no hay dimensiones que filtrar:
+                se deshabilita en vez de mostrar opciones que no harían nada. */}
+            <select
+              value={dimension}
+              onChange={(e) => cambiar({ dimension: e.target.value })}
+              disabled={catalogos.dimensiones.length === 0}
+            >
+              <option value="">
+                {catalogos.dimensiones.length === 0 ? 'Sin métricas cargadas' : 'IC general'}
+              </option>
               {catalogos.dimensiones.map((d) => (
                 <option key={d.id} value={d.nombre}>{d.nombre}</option>
               ))}
@@ -160,9 +129,9 @@ export default function Ranking() {
           </label>
 
           <label className="campo">
-            <span>Año</span>
-            <select value={periodoActivo} onChange={(e) => cambiar({ periodo: e.target.value })}>
-              {catalogos.periodos.length === 0 && <option value={periodoActivo}>{nombrePeriodo}</option>}
+            <span>Periodo</span>
+            <select value={periodo} onChange={(e) => cambiar({ periodo: e.target.value })}>
+              {catalogos.periodos.length === 0 && <option value={periodo}>{nombrePeriodo}</option>}
               {catalogos.periodos.map((p) => (
                 <option key={p.id} value={p.id}>{p.nombre}</option>
               ))}
@@ -173,22 +142,28 @@ export default function Ranking() {
             Limpiar filtros
           </button>
         </div>
+        {catalogos.dimensiones.length === 0 && (
+          <p className="texto-suave" role="status">
+            El servidor todavía no tiene métricas cargadas, así que el filtro de dimensión no está
+            disponible. El ranking que ves usa el Índice de Competitividad general.
+          </p>
+        )}
         <p className="texto-suave nota-url">
           Los filtros quedan guardados en la dirección: si recargas o compartes el enlace, se conservan.
         </p>
       </section>
 
-      {error && !filas && (
+      {error && (
         <p role="alert" className="estado estado-error">No se pudo cargar el ranking. Intenta de nuevo.</p>
       )}
-      {!filas && !error && <p className="estado" aria-live="polite">Cargando ranking…</p>}
-      {filas && (
+      {!error && !filas && <p className="estado" aria-live="polite">Cargando ranking…</p>}
+      {!error && filas && (
         <RankingTabla
           filas={filas}
-          total={datos?.total ?? filas.length}
+          total={datos.total ?? filas.length}
           orden={orden}
           dir={dir}
-          dimension={dimensionActiva}
+          dimension={dimension}
           periodo={nombrePeriodo}
           cargando={cargando}
           onOrdenar={ordenarPor}

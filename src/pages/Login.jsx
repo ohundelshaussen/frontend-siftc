@@ -170,6 +170,7 @@ export const Login = () => {
       setEstadoIntentos(obtenerEstadoIntentos());
       navigate(location.state?.desde ?? '/dashboard', { replace: true });
     } catch (err) {
+      console.error('[Login] Error en autenticación:', err);
       const esErrorRed = !err?.response && err?.message !== 'Credenciales inválidas';
       if (esErrorRed) {
         setError(extraerMensajeError(err, 'No se pudo conectar con el servidor.'));

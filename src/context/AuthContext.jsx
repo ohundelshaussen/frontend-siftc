@@ -81,6 +81,9 @@ export function AuthProvider({ children }) {
     if (rolJwt && !sesion.usuario.rol) {
       sesion.usuario.rol = rolJwt
     }
+    if (!sesion.usuario.email && identificador.includes('@')) {
+      sesion.usuario.email = identificador.trim().toLowerCase()
+    }
 
     localStorage.setItem('token', sesion.token)
     localStorage.setItem('usuario', JSON.stringify(sesion.usuario))

@@ -22,7 +22,7 @@ const TIMEOUT_MS = Number(import.meta.env.VITE_API_TIMEOUT ?? 60000)
 export let USA_DATOS_DE_EJEMPLO = USE_MOCK
 
 // Puerto por defecto: 7123 para Docker Compose (.NET), 5057 para dotnet run local
-const RAIZ_SERVIDOR = import.meta.env.VITE_API_URL ?? 'http://localhost:7123'
+const RAIZ_SERVIDOR = import.meta.env.VITE_API_URL || 'https://siftc.onrender.com'
 export const API_BASE_URL = `${RAIZ_SERVIDOR}${import.meta.env.VITE_API_PREFIX ?? '/api/v1'}`
 
 // /health cuelga de la raíz del servidor, no de /api/v1: se pide con URL absoluta.

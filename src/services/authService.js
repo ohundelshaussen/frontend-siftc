@@ -7,6 +7,9 @@ export function extraerMensajeError(err, mensajeFallback = 'Ocurrió un error in
 
   // Si no hay respuesta del servidor (servidor apagado, CORS, etc.)
   if (!err.response) {
+    if (err.code === 'ECONNABORTED' || err.message?.includes('timeout')) {
+      return 'El servidor tardó en responder mientras arranca en Render. Espera unos segundos y vuelve a intentar.'
+    }
     if (err.code === 'ERR_NETWORK' || err.message?.includes('Network Error')) {
       return 'No se pudo conectar con el servidor backend. Verifica que esté corriendo.'
     }

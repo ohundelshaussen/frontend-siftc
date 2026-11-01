@@ -292,11 +292,7 @@ export const FinancialChart = ({ entidadNombre, ticker }) => {
         </div>
 
         {/* Lienzo de la Gráfica */}
-        <div
-          ref={chartContainerRef}
-          onMouseLeave={() => setHoverData(null)}
-          style={{ width: '100%', borderRadius: '12px', overflow: 'hidden' }}
-        />
+        <div ref={chartContainerRef} style={{ width: '100%', borderRadius: '12px', overflow: 'hidden' }} />
 
         {/* Tarjetas inferiores OHLC */}
         <div className="grafica-cards-grid">

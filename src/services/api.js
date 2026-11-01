@@ -137,15 +137,6 @@ async function conRespaldoMock(peticionReal, obtenerMock, nombre = 'endpoint') {
   }
 }
 
-// Endpoint que el backend TODAVÍA no publica (ver src/services/endpoints.js: ruta en null).
-// Se sirve el mock y se marca la pantalla como "datos de ejemplo", sin intentar la llamada.
-function pendienteEnBackend(nombre, obtenerMock) {
-  if (!USE_MOCK) {
-    console.warn(`[API] ${nombre} aún no existe en el servidor; mostrando datos de ejemplo.`)
-    USA_DATOS_DE_EJEMPLO = true
-  }
-  return respuesta(obtenerMock())
-}
 
 // Autentica contra el Backend .NET (POST /api/v1/auth/login) o Mock, devolviendo la sesión normalizada
 export async function login(identificador, password) {
@@ -191,7 +182,22 @@ export async function getEntidades() {
 // El servidor sólo expone GET /api/v1/metricas. Falta confirmar si su respuesta
 // trae el índice general y el top: ejecuta `npm run explorar:api` y ajusta aquí.
 export async function getIndiceGeneral() {
-  return pendienteEnBackend('indice general', () => indiceGeneral)
+  if (USE_MOCK) return respuesta(indiceGeneral)
+  // No existe /indice-general en el servidor: se deriva de las entidades REALES
+  // (promedio del IC y de su variación) para no mezclar datos reales con simulados.
+  const lista = await getEntidades()
+  const validas = lista.filter((e) => Number.isFinite(e.indice_competitividad))
+  if (validas.length === 0) throw new Error('Sin entidades para calcular el índice general')
+  const prom = (campo) => validas.reduce((s, e) => s + (Number(e[campo]) || 0), 0) / validas.length
+  const valor = prom('indice_competitividad')
+  const puntos = prom('variacion')
+  const anterior = valor - puntos
+  return {
+    fecha: new Date().toISOString().slice(0, 10),
+    valor,
+    puntos,
+    variacion: anterior ? (puntos / anterior) * 100 : 0,
+  }
 }
 
 // No existe /mercado/top en el servidor, pero el top son las mismas entidades
@@ -243,7 +249,14 @@ async function catalogoDerivado(nombre, obtenerValores, mock) {
 
 export async function getRanking(filtros = {}) {
   return conRespaldoMock(
-    async () => (await http.get(ENDPOINTS.ranking, { params: filtros })).data,
+    async () => {
+      // /ranking admite diario|mensual|trimestral; /ohlc admite Diaria|Mensual|Trimestral.
+      const ALIAS_RANKING = { diaria: 'diario' }
+      const periodo = filtros.periodo
+        ? (ALIAS_RANKING[String(filtros.periodo).toLowerCase()] ?? String(filtros.periodo).toLowerCase())
+        : undefined
+      return (await http.get(ENDPOINTS.ranking, { params: { ...filtros, ...(periodo && { periodo }) } })).data
+    },
     () => consultarRanking(filtros),
     ENDPOINTS.ranking,
   )

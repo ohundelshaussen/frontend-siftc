@@ -1,4 +1,5 @@
 import { num, fechaIso } from '../../utils/format'
+import { USA_DATOS_DE_EJEMPLO } from '../../services/api'
 import Variacion from '../common/Variacion'
 
 function Sparkline({ serie }) {
@@ -49,7 +50,7 @@ export default function IndiceGeneral({ indice }) {
           ))}
         </div>
       )}
-      <p className="texto-suave nota">Datos al {fechaIso(indice.fecha)}</p>
+      <p className="texto-suave nota">Datos al {fechaIso(indice.fecha)}{USA_DATOS_DE_EJEMPLO ? ' · Datos de ejemplo' : ''}</p>
     </section>
   )
 }

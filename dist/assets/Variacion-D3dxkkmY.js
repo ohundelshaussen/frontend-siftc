@@ -1,1 +1,0 @@
-import{a as e,r as t}from"./index-DcjPM4sy.js";var n=e();function r({valor:e}){let r=e>0,i=e<0,a=r?`badge-up`:i?`badge-down`:`badge-eq`,o=r?`▲`:i?`▼`:`–`;return(0,n.jsxs)(`span`,{className:`${a} mono-num`,children:[o,` `,t(e)]})}export{r as t};

@@ -14,7 +14,5 @@ export function pct(valor, decimales = 2) {
 }
 
 export function fechaIso(texto) {
-  if (!texto) return ''
-  const soloFecha = String(texto).slice(0, 10)
-  return soloFecha.split('-').reverse().join('/')
+  return texto ? texto.split('-').reverse().join('/') : ''
 }

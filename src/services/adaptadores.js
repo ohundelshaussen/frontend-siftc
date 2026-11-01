@@ -17,64 +17,7 @@ export const aEntidad = (e) => ({
   direccion: direccion(e.variacionPct ?? 0),
 })
 
-  return {
-    // Estándar oficial Backend .NET / OpenAPI (EntidadDto)
-    id,
-    codigo,
-    nombre,
-    sector,
-    ic,
-    variacion,
-    variacionPct,
-
-    // Compatibilidad legacy Frontend
-    codigo_entidad: codigo,
-    nombre_entidad: nombre,
-    indice_competitividad: ic,
-    variacion_porcentual: variacionPct,
-    direccion: direccion(variacionPct),
-  }
-}
-
-export const aEntidades = (lista) => (Array.isArray(lista) ? lista.map(aEntidad) : [])
-
-export const aRankingItem = (r, idx = 0) => {
-  const posicion = Number(r.posicion ?? idx + 1)
-  const cambioPosicion = Number(r.cambioPosicion ?? 0)
-  const entidadId = r.entidadId ?? r.id ?? r.codigo ?? ''
-  const entidad = r.entidad ?? r.nombre ?? r.nombre_entidad ?? ''
-  const codigo = r.codigo ?? r.codigo_entidad ?? entidadId
-  const sector = r.sector ?? 'General'
-  const ic = Number(r.ic ?? r.indice_competitividad ?? 0)
-  const variacionPct = Number(r.variacionPct ?? r.variacion_porcentual ?? 0)
-
-  return {
-    // Estándar oficial Backend .NET / OpenAPI (RankingItemDto)
-    posicion,
-    cambioPosicion,
-    entidadId,
-    entidad,
-    sector,
-    ic,
-    variacionPct,
-
-    // Compatibilidad
-    id: entidadId,
-    codigo,
-    nombre: entidad,
-    nombre_entidad: entidad,
-    indice_competitividad: ic,
-    variacion_porcentual: variacionPct,
-  }
-}
-
-export const aRanking = (res) => {
-  if (!res) return { periodo: '2026', total: 0, items: [] }
-  const items = (Array.isArray(res) ? res : res.items ?? []).map(aRankingItem)
-  const periodo = String(res.periodo ?? '2026')
-  const total = Number(res.total ?? items.length)
-  return { periodo, total, items }
-}
+export const aEntidades = (lista) => lista.map(aEntidad)
 
 // /mercado/top no trae código ni sector: se completan con la lista de entidades (por id).
 export function aTop(top, entidades) {

@@ -18,11 +18,9 @@
 
   /* 03. Verde alza: Acento, subidas (▲), éxito y llamadas a la acción */
   --color-verde-alza: #24A460;
-  --color-bullish: #187A45;
-  --color-bullish-bg: #E3F4EA;
-  --color-bearish: #B83232;
-  --color-bearish-bg: #FBE8E6;
-  --color-text-muted: #5A6379;
+  --color-verde-alza-rgb: 36, 164, 96;
+  --color-verde-alza-hover: #1E874E;
+  --color-verde-alza-bg: #E8F7EF;
 
   /* 04. Blanco hueso: Fondo claro, tarjetas y superficies */
   --color-blanco-hueso: #F6F5F3;
@@ -30,16 +28,16 @@
   --color-blanco-puro: #FFFFFF;
 
   /* --- SEMÁFORO FINANCIERO Y ALERTAS (HU-FE-09, HU-FE-01) --- */
-  /* Variación alcista / Subida (▲) */
-  --color-bullish: var(--color-verde-alza);
-  --color-bullish-bg: var(--color-verde-alza-bg);
+  /* Variación alcista / Subida (▲) - contraste accesible */
+  --color-bullish: #187A45;
+  --color-bullish-bg: #E3F4EA;
   --color-bullish-border: #A3E0BF;
 
-  /* Variación bajista / Caída (▼) */
-  --color-bearish: #E03E3E;
-  --color-bearish-rgb: 224, 62, 62;
-  --color-bearish-hover: #BF2D2D;
-  --color-bearish-bg: #FDF0F0;
+  /* Variación bajista / Caída (▼) - contraste accesible */
+  --color-bearish: #B83232;
+  --color-bearish-rgb: 184, 50, 50;
+  --color-bearish-hover: #992626;
+  --color-bearish-bg: #FBE8E6;
   --color-bearish-border: #F5B5B5;
 
   /* Atención / Neutral (Umbrales amarillos de alerta) */
@@ -50,7 +48,7 @@
   /* --- BORDES, SOMBRAS Y SUPERFICIES --- */
   --color-border: #E2E0DC;
   --color-border-dark: #2D3958;
-  --color-text-muted: #6B7280;
+  --color-text-muted: #5A6379;
   --color-text-on-dark: #F6F5F3;
   --color-text-on-light: #151D33;
 

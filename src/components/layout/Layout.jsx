@@ -25,6 +25,7 @@ export default function Layout() {
           <NavLink to="/dashboard">Tablero</NavLink>
           <NavLink to="/grafica">Gráficas</NavLink>
           <NavLink to="/ranking">Ranking</NavLink>
+          <NavLink to="/comparar">Comparar</NavLink>
         </nav>
         <div className="nav-acciones">
           <BotonTema />

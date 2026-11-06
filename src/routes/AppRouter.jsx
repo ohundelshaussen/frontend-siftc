@@ -8,6 +8,7 @@ import ProtectedRoute from './ProtectedRoute'
 const Dashboard = lazy(() => import('../pages/Dashboard'))
 const FinancialChart = lazy(() => import('../components/charts/FinancialChart'))
 const Ranking = lazy(() => import('../components/ranking/Ranking'))
+const Comparador = lazy(() => import('../components/comparador/Comparador'))
 
 export default function AppRouter() {
   return (
@@ -19,6 +20,7 @@ export default function AppRouter() {
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/grafica" element={<FinancialChart />} />
             <Route path="/ranking" element={<Ranking />} />
+            <Route path="/comparar" element={<Comparador />} />
           </Route>
         </Route>
         <Route path="*" element={<Navigate to="/login" replace />} />

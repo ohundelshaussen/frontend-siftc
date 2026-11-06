@@ -139,6 +139,29 @@ async function conRespaldoMock(peticionReal, obtenerMock, nombre = 'endpoint') {
 
 
 // Autentica contra el Backend .NET (POST /api/v1/auth/login) o Mock, devolviendo la sesión normalizada
+const DURACION_SESION_MOCK_SEG = 8 * 60 * 60
+
+function aBase64Url(objeto) {
+  const bytes = new TextEncoder().encode(JSON.stringify(objeto))
+  let binario = ''
+  bytes.forEach((b) => { binario += String.fromCharCode(b) })
+  return btoa(binario).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')
+}
+
+function crearTokenMock({ idUsuario, email, nombre, rol }) {
+  const ahora = Math.floor(Date.now() / 1000)
+  const cabecera = { alg: 'none', typ: 'JWT' }
+  const datos = {
+    sub: idUsuario,
+    email,
+    name: nombre,
+    role: rol,
+    iat: ahora,
+    exp: ahora + DURACION_SESION_MOCK_SEG,
+  }
+  return `${aBase64Url(cabecera)}.${aBase64Url(datos)}.mock`
+}
+
 export async function login(identificador, password) {
   const usuarioNormalizado = normalizarIdentificador(identificador)
   const passwordNormalizado = normalizarPassword(password)
@@ -156,7 +179,12 @@ export async function login(identificador, password) {
       email: usuarioNormalizado.includes('@') ? usuarioNormalizado : `${usuarioNormalizado}@siftc.edu.co`,
       nombreCompleto: usuarioNormalizado.includes('@') ? usuarioNormalizado.split('@')[0] : identificador.trim(),
       rol: rolSimulado,
-      token: 'mock-jwt-token-siftc-alza-2026',
+      token: crearTokenMock({
+        idUsuario: '01966f2a-4c3b-7a10-9e21-8b3d4c5e6f70',
+        email: usuarioNormalizado.includes('@') ? usuarioNormalizado : `${usuarioNormalizado}@siftc.edu.co`,
+        nombre: usuarioNormalizado.includes('@') ? usuarioNormalizado.split('@')[0] : identificador.trim(),
+        rol: rolSimulado,
+      }),
     })
   }
 

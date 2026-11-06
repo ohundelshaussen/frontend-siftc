@@ -16,6 +16,12 @@ export const ENDPOINTS = {
 
   // --- Usuarios (grupo "Usuarios") ---
   registrarUsuario: '/usuarios/registrar',
+  // HU-FE-07: estas rutas aun no existen en el servidor (dependen de HU-BE-02 y HU-BE-09).
+  // Mientras sigan en null, el modulo de administracion usa datos de prueba.
+  // Cuando Backend las publique, solo se escribe la ruta aqui.
+  listarUsuarios: null,              // GET    /usuarios
+  editarUsuario: null,               // PUT    /usuarios/{id}
+  cambiarEstadoUsuario: null,        // PATCH  /usuarios/{id}/estado
   // NO EXISTE en el servidor (verificado 2026-11-01): no hay endpoint para listar roles.
   // Los UUID de rol siguen hardcodeados; pídeselos a Backend.
   roles: null,
@@ -41,6 +47,8 @@ export const ENDPOINTS = {
   dimensiones: null,
   periodos: null,
   actualizarUmbral: '/parametros/actualizar-umbral',
+  // HU-FE-07: pesos de las dimensiones del indice (aun no existe en el servidor)
+  pesosDimensiones: null,            // GET y PUT /parametros/pesos
 
   // --- Cargas (subida de la matriz financiera CSV) ---
   cargas: '/cargas',

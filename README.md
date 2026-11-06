@@ -34,7 +34,7 @@ npm run dev
   VITE_API_URL=https://siftc.onrender.com
   VITE_API_PREFIX=/api/v1
   ```
-  El contrato oficial de la API publicada se encuentra documentado en [`docs/api/openapi-v1.json`](./docs/api/openapi-v1.json). El modo simulado (mock) de la primera entrega fue eliminado; todas las peticiones operan contra la API externa.
+  El contrato oficial de la API publicada se encuentra documentado en [`docs/api/openapi-v1.json`](./docs/api/openapi-v1.json). El modo simulado (`USE_MOCK` / `VITE_USE_MOCK`) y el directorio `src/services/mocks/` de la primera entrega fueron eliminados por completo; todas las pantallas consultan únicamente la API externa (y muestran estados explícitos de carga o error si el servidor no responde).
 
 ---
 

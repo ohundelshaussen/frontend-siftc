@@ -37,7 +37,7 @@ export function esTokenVigente(token) {
   return payload.exp > ahoraSegundos;
 }
 
-// Extrae el rol principal del JWT emitido por .NET o Mock
+// Extrae el rol principal del JWT emitido por el Backend .NET
 export function extraerRolJwt(token) {
   const payload = decodificarJwt(token);
   if (!payload) return null;

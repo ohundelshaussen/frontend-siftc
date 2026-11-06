@@ -34,9 +34,9 @@ export const ENDPOINTS = {
   ranking: '/ranking',
 
   // --- Parámetros ---
-  // NO EXISTEN los catálogos de filtros (verificado 2026-11-01). Lo único publicado
-  // es POST /parametros/actualizar-umbral. Mientras Backend no los implemente,
-  // sectores/dimensiones/periodos se sirven desde los mocks locales.
+  // NO EXISTEN endpoints propios de catálogos de filtros (verificado en docs/api/openapi-v1.json).
+  // Lo único publicado es POST /parametros/actualizar-umbral.
+  // Sectores y dimensiones se derivan de /entidades y /metricas; periodos viene de src/constants/periodos.js.
   sectores: null,
   dimensiones: null,
   periodos: null,

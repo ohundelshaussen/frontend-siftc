@@ -9,9 +9,6 @@ import { normalizarIdentificador, normalizarPassword } from '../utils/texto'
 // la primera petición puede tardar 30-60 s mientras la instancia arranca.
 const TIMEOUT_MS = Number(import.meta.env.VITE_API_TIMEOUT ?? 60000)
 
-// Modo simulado eliminado: siempre en falso para no alterar componentes consumidores.
-export const USA_DATOS_DE_EJEMPLO = false
-
 // Servidor de la API externo desplegado en Render (contrato oficial: docs/api/openapi-v1.json)
 const RAIZ_SERVIDOR = import.meta.env.VITE_API_URL || 'https://siftc.onrender.com'
 export const API_BASE_URL = `${RAIZ_SERVIDOR}${import.meta.env.VITE_API_PREFIX ?? '/api/v1'}`
@@ -109,7 +106,7 @@ export async function login(identificador, password) {
   // Contrato real verificado en el OpenAPI (2026-11-01):
   // POST /api/v1/auth/login recibe { usuario, password } -- NO { email }.
   // Se envía el identificador tal cual lo escribió la persona (alias o correo).
-  // El login NO cae a mock: una credencial debe validarse siempre contra el servidor real.
+  // La credencial se valida siempre contra el servidor externo en Render.
   const res = await conReintentoDeArranque(() =>
     http.post(ENDPOINTS.login, { usuario: usuarioNormalizado, password: passwordNormalizado }),
   )
@@ -126,7 +123,7 @@ export async function getEntidades() {
 // trae el índice general y el top: ejecuta `npm run explorar:api` y ajusta aquí.
 export async function getIndiceGeneral() {
   // No existe /indice-general en el servidor: se deriva de las entidades REALES
-  // (promedio del IC y de su variación) para no mezclar datos reales con simulados.
+  // (promedio del IC y de su variación) calculado sobre los registros del servidor.
   const lista = await getEntidades()
   const validas = lista.filter((e) => Number.isFinite(e.indice_competitividad))
   if (validas.length === 0) throw new Error('Sin entidades para calcular el índice general')
@@ -150,7 +147,7 @@ export async function getTop() {
   return { ganadores: orden.slice(0, 5), perdedores: orden.slice(-5).reverse() }
 }
 
-// El periodo viaja tal cual a la API: 'diario' | 'quincenal' | 'mensual' | 'semestral' | 'anual'
+// El periodo viaja tal cual a la API: 'Diaria' | 'Mensual' | 'Trimestral'
 // (ver src/constants/periodos.js)
 export async function getOhlc(id, periodo = PERIODO_POR_DEFECTO) {
   const res = await conReintentoDeArranque(() =>

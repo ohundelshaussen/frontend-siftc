@@ -52,12 +52,12 @@ export const aIndiceGeneral = (i) => ({
   serie: i.serie,
 })
 
-// Normaliza la respuesta de autenticación del Backend .NET (AuthResponseDto) o del Mock
+// Normaliza la respuesta de autenticación del Backend .NET (AuthResponseDto)
 // AuthResponseDto plano: { idUsuario, email, nombreCompleto, rol, token }
 export function aSesion(respuestaApi) {
   if (!respuestaApi) return null
 
-  // Si ya viene empaquetado en formato { token, usuario } (compatibilidad Mock previo)
+  // Formato { token, expiraEn, usuario: { id, nombre, rol } } (docs/api/openapi-v1.json)
   if (respuestaApi.usuario && respuestaApi.token) {
     const u = respuestaApi.usuario
     return {

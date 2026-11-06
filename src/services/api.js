@@ -2,26 +2,17 @@ import axios from 'axios'
 import { ENDPOINTS } from './endpoints'
 import { PERIODOS, PERIODO_POR_DEFECTO } from '../constants/periodos'
 import { aEntidades, aSesion, aSerieOhlc } from './adaptadores'
-import { obtenerOhlcMock } from './mocks/ohlcMocks'
-import { entidades, indiceGeneral } from './mocks/marketMocks'
-import { consultarRanking, catalogoSectores, catalogoDimensiones } from './mocks/rankingMocks'
 import { esTokenVigente } from '../utils/jwt'
 import { normalizarIdentificador, normalizarPassword } from '../utils/texto'
-
-const USE_MOCK = import.meta.env.VITE_USE_MOCK !== 'false'
-
-// Respaldo con datos simulados cuando un endpoint real falla.
-// Por defecto DESACTIVADO: contra un servidor real conviene ver el error, no datos falsos.
-const FALLBACK_MOCK = import.meta.env.VITE_FALLBACK_MOCK === 'true'
 
 // Render (plan gratuito) duerme el servicio tras ~15 min sin tráfico:
 // la primera petición puede tardar 30-60 s mientras la instancia arranca.
 const TIMEOUT_MS = Number(import.meta.env.VITE_API_TIMEOUT ?? 60000)
 
-// Para avisar en pantalla cuando los datos provienen de simulación o respaldo local.
-export let USA_DATOS_DE_EJEMPLO = USE_MOCK
+// Modo simulado eliminado: siempre en falso para no alterar componentes consumidores.
+export const USA_DATOS_DE_EJEMPLO = false
 
-// Puerto por defecto: 7123 para Docker Compose (.NET), 5057 para dotnet run local
+// Servidor de la API externo desplegado en Render (contrato oficial: docs/api/openapi-v1.json)
 const RAIZ_SERVIDOR = import.meta.env.VITE_API_URL || 'https://siftc.onrender.com'
 export const API_BASE_URL = `${RAIZ_SERVIDOR}${import.meta.env.VITE_API_PREFIX ?? '/api/v1'}`
 
@@ -98,7 +89,6 @@ async function conReintentoDeArranque(peticion, intentos = 2) {
  * Nunca lanza: si falla, la app sigue y el error aparecerá en la petición real.
  */
 export async function despertarBackend() {
-  if (USE_MOCK) return { despierto: true, mock: true }
   const inicio = Date.now()
   try {
     await conReintentoDeArranque(() => http.get(URL_HEALTH))
@@ -111,82 +101,10 @@ export async function despertarBackend() {
   }
 }
 
-const respuesta = (dato) => new Promise((ok) => setTimeout(() => ok(dato), 150))
-
-// Ejecuta la petición real. Si VITE_FALLBACK_MOCK='true' y el endpoint analítico
-// todavía no existe (404/5xx/red), cae a datos simulados; en caso contrario propaga
-// el error para que el fallo sea visible en vez de disfrazarse de dato bueno.
-// Los errores de autorización (401/403) siempre se propagan.
-async function conRespaldoMock(peticionReal, obtenerMock, nombre = 'endpoint') {
-  if (USE_MOCK) return respuesta(obtenerMock())
-  try {
-    const dato = await conReintentoDeArranque(peticionReal)
-    if (Array.isArray(dato) && dato.length === 0 && FALLBACK_MOCK) {
-      console.warn(`[API] ${nombre} devolvió una lista vacía; usando datos de ejemplo.`)
-      USA_DATOS_DE_EJEMPLO = true
-      return obtenerMock()
-    }
-    return dato
-  } catch (err) {
-    const status = err?.response?.status
-    if (status === 401 || status === 403) throw err
-    console.error(`[API] Falló ${nombre} (${status ?? err?.code ?? 'sin respuesta'}):`, err?.message)
-    if (!FALLBACK_MOCK) throw err
-    USA_DATOS_DE_EJEMPLO = true
-    return obtenerMock()
-  }
-}
-
-
-// Autentica contra el Backend .NET (POST /api/v1/auth/login) o Mock, devolviendo la sesión normalizada
-const DURACION_SESION_MOCK_SEG = 8 * 60 * 60
-
-function aBase64Url(objeto) {
-  const bytes = new TextEncoder().encode(JSON.stringify(objeto))
-  let binario = ''
-  bytes.forEach((b) => { binario += String.fromCharCode(b) })
-  return btoa(binario).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')
-}
-
-function crearTokenMock({ idUsuario, email, nombre, rol }) {
-  const ahora = Math.floor(Date.now() / 1000)
-  const cabecera = { alg: 'none', typ: 'JWT' }
-  const datos = {
-    sub: idUsuario,
-    email,
-    name: nombre,
-    role: rol,
-    iat: ahora,
-    exp: ahora + DURACION_SESION_MOCK_SEG,
-  }
-  return `${aBase64Url(cabecera)}.${aBase64Url(datos)}.mock`
-}
-
+// Autentica contra el Backend .NET (POST /api/v1/auth/login), devolviendo la sesión normalizada
 export async function login(identificador, password) {
   const usuarioNormalizado = normalizarIdentificador(identificador)
   const passwordNormalizado = normalizarPassword(password)
-
-  if (USE_MOCK) {
-    if (!usuarioNormalizado || !passwordNormalizado) throw new Error('Credenciales inválidas')
-    const rolSimulado = usuarioNormalizado.includes('admin')
-      ? 'Administrador'
-      : usuarioNormalizado.includes('gerente')
-      ? 'Gerente'
-      : 'Analista financiero'
-
-    return aSesion({
-      idUsuario: '01966f2a-4c3b-7a10-9e21-8b3d4c5e6f70',
-      email: usuarioNormalizado.includes('@') ? usuarioNormalizado : `${usuarioNormalizado}@siftc.edu.co`,
-      nombreCompleto: usuarioNormalizado.includes('@') ? usuarioNormalizado.split('@')[0] : identificador.trim(),
-      rol: rolSimulado,
-      token: crearTokenMock({
-        idUsuario: '01966f2a-4c3b-7a10-9e21-8b3d4c5e6f70',
-        email: usuarioNormalizado.includes('@') ? usuarioNormalizado : `${usuarioNormalizado}@siftc.edu.co`,
-        nombre: usuarioNormalizado.includes('@') ? usuarioNormalizado.split('@')[0] : identificador.trim(),
-        rol: rolSimulado,
-      }),
-    })
-  }
 
   // Contrato real verificado en el OpenAPI (2026-11-01):
   // POST /api/v1/auth/login recibe { usuario, password } -- NO { email }.
@@ -200,17 +118,13 @@ export async function login(identificador, password) {
 }
 
 export async function getEntidades() {
-  return conRespaldoMock(
-    async () => aEntidades((await http.get(ENDPOINTS.entidades)).data),
-    () => entidades,
-    ENDPOINTS.entidades,
-  )
+  const res = await conReintentoDeArranque(() => http.get(ENDPOINTS.entidades))
+  return aEntidades(res.data)
 }
 
 // El servidor sólo expone GET /api/v1/metricas. Falta confirmar si su respuesta
 // trae el índice general y el top: ejecuta `npm run explorar:api` y ajusta aquí.
 export async function getIndiceGeneral() {
-  if (USE_MOCK) return respuesta(indiceGeneral)
   // No existe /indice-general en el servidor: se deriva de las entidades REALES
   // (promedio del IC y de su variación) para no mezclar datos reales con simulados.
   const lista = await getEntidades()
@@ -239,27 +153,23 @@ export async function getTop() {
 // El periodo viaja tal cual a la API: 'diario' | 'quincenal' | 'mensual' | 'semestral' | 'anual'
 // (ver src/constants/periodos.js)
 export async function getOhlc(id, periodo = PERIODO_POR_DEFECTO) {
-  return conRespaldoMock(
-    async () => aSerieOhlc((await http.get(ENDPOINTS.ohlc(id), { params: { periodo } })).data),
-    () => obtenerOhlcMock(id, periodo),
-    ENDPOINTS.ohlc(id),
+  const res = await conReintentoDeArranque(() =>
+    http.get(ENDPOINTS.ohlc(id), { params: { periodo } }),
   )
+  return aSerieOhlc(res.data)
 }
 
 // GET /api/v1/metricas -> array de métricas por entidad, fecha y dimensión.
 // Parámetros admitidos: sector, periodo, fecha, dimension, page, size, sort, dir
 export async function getMetricas(filtros = {}) {
-  return conRespaldoMock(
-    async () => (await http.get(ENDPOINTS.metricas, { params: filtros })).data,
-    () => [],
-    ENDPOINTS.metricas,
+  const res = await conReintentoDeArranque(() =>
+    http.get(ENDPOINTS.metricas, { params: filtros }),
   )
+  return res.data
 }
 
 // Los catálogos de filtros no tienen endpoint propio: se derivan de los datos reales.
-// Si la derivación falla, se cae a los catálogos de ejemplo para no romper la pantalla.
-async function catalogoDerivado(nombre, obtenerValores, mock) {
-  if (USE_MOCK) return respuesta(mock)
+async function catalogoDerivado(nombre, obtenerValores) {
   try {
     const valores = [...new Set((await obtenerValores()).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'es'))
     // Lista vacía = el servidor todavía no tiene esos datos. Se devuelve vacío a propósito:
@@ -276,32 +186,28 @@ async function catalogoDerivado(nombre, obtenerValores, mock) {
 }
 
 export async function getRanking(filtros = {}) {
-  return conRespaldoMock(
-    async () => {
-      // /ranking admite diario|mensual|trimestral; /ohlc admite Diaria|Mensual|Trimestral.
-      const ALIAS_RANKING = { diaria: 'diario' }
-      const periodo = filtros.periodo
-        ? (ALIAS_RANKING[String(filtros.periodo).toLowerCase()] ?? String(filtros.periodo).toLowerCase())
-        : undefined
-      return (await http.get(ENDPOINTS.ranking, { params: { ...filtros, ...(periodo && { periodo }) } })).data
-    },
-    () => consultarRanking(filtros),
-    ENDPOINTS.ranking,
+  // /ranking admite diario|mensual|trimestral; /ohlc admite Diaria|Mensual|Trimestral.
+  const ALIAS_RANKING = { diaria: 'diario' }
+  const periodo = filtros.periodo
+    ? (ALIAS_RANKING[String(filtros.periodo).toLowerCase()] ?? String(filtros.periodo).toLowerCase())
+    : undefined
+  const res = await conReintentoDeArranque(() =>
+    http.get(ENDPOINTS.ranking, { params: { ...filtros, ...(periodo && { periodo }) } }),
   )
+  return res.data
 }
 
 // Sectores: valores únicos del campo 'sector' en /entidades
 export async function getSectores() {
-  return catalogoDerivado('sectores', async () => (await getEntidades()).map((e) => e.sector), catalogoSectores)
+  return catalogoDerivado('sectores', async () => (await getEntidades()).map((e) => e.sector))
 }
 
 // Dimensiones: valores únicos del campo 'dimension' en /metricas
 export async function getDimensiones() {
-  return catalogoDerivado('dimensiones', async () => (await getMetricas({ size: 500 })).map((m) => m.dimension), catalogoDimensiones)
+  return catalogoDerivado('dimensiones', async () => (await getMetricas({ size: 500 })).map((m) => m.dimension))
 }
 
 // Periodos: lista acordada con Backend (no hay endpoint de catálogo en la API).
 export async function getPeriodos() {
-  return respuesta(PERIODOS)
+  return PERIODOS
 }
-

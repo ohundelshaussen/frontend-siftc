@@ -2,9 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import logoAlzaOscuro from '../assets/logo-alza-oscuro.png';
 import logoHorizontal from '../assets/logo-alza-horizontal.png';
-import logoHorizontalOscuro from '../assets/logo-alza-horizontal-oscuro.png';
 import { Mail, Lock, ArrowRight, ChartLine, ChartColumnIncreasing, FileSearch, CircleCheck } from 'lucide-react';
-import BotonTema from '../components/common/BotonTema';
 import '../styles/Login.css';
 import { useAuth } from '../context/AuthContext';
 import { extraerMensajeError } from '../services/authService';
@@ -248,8 +246,6 @@ export const Login = () => {
 
   return (
     <div className="login-container">
-      <BotonTema className="tema-flotante" />
-
       {/* Panel izquierdo: presentacion sobre la imagen */}
       <section className="login-hero">
         <div className="login-hero-arriba">
@@ -298,11 +294,10 @@ export const Login = () => {
         </ul>
       </section>
 
-      {/* Panel derecho: formulario */}
+      {/* Panel derecho: formulario en tema claro */}
       <section className="login-panel-form">
         <div className="login-form-caja">
-          <img src={logoHorizontal} alt="Logo ALZA" className="login-logo-img logo-claro" />
-          <img src={logoHorizontalOscuro} alt="Logo ALZA" className="login-logo-img logo-oscuro" />
+          <img src={logoHorizontal} alt="Logo ALZA" className="login-logo-img" />
 
           <h2 className="login-card-title">Iniciar sesión</h2>
           <p className="login-card-subtitle">Ingresa con tu correo o usuario del sistema.</p>

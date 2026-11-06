@@ -75,7 +75,8 @@ export const FinancialChart = ({ entidadNombre, ticker }) => {
     return listaEntidades[0];
   }, [listaEntidades, parametroUrl]);
 
-  const idConsulta = entidadActiva?.id ?? entidadActiva?.codigo_entidad ?? null;
+  // El endpoint GET /api/v1/entidades/{id}/ohlc exige que {id} tenga formato UUID
+  const idConsulta = entidadActiva?.id ?? null;
 
   useEffect(() => {
     if (!idConsulta) return undefined;

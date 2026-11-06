@@ -1,6 +1,6 @@
 import axios from 'axios'
 import { ENDPOINTS } from './endpoints'
-import { PERIODOS, PERIODO_POR_DEFECTO } from '../constants/periodos'
+import { PERIODOS, PERIODO_POR_DEFECTO, DIMENSIONES_RANKING } from '../constants/periodos'
 import { aEntidades, aSesion, aSerieOhlc } from './adaptadores'
 import { esTokenVigente } from '../utils/jwt'
 import { normalizarIdentificador, normalizarPassword } from '../utils/texto'
@@ -80,6 +80,14 @@ async function conReintentoDeArranque(peticion, intentos = 2) {
   throw ultimoError
 }
 
+// Normaliza el parámetro periodo ('diario' | 'mensual' | 'trimestral') para /ranking y /metricas
+function normalizarPeriodoMinusculas(periodo) {
+  if (!periodo) return undefined
+  const p = String(periodo).trim().toLowerCase()
+  if (p === 'diaria') return 'diario'
+  return p
+}
+
 /**
  * Despierta la instancia de Render antes de que el usuario intente iniciar sesión.
  * Se llama una sola vez al arrancar la app (src/main.jsx).
@@ -99,34 +107,51 @@ export async function despertarBackend() {
 }
 
 // Autentica contra el Backend .NET (POST /api/v1/auth/login), devolviendo la sesión normalizada
+// Contrato docs/api/openapi-v1.json:
+// Request: { usuario: string, password: string }
+// Response 200: { token: string, expiraEn: int32, usuario: { id: uuid, nombre: string, rol: string } }
 export async function login(identificador, password) {
   const usuarioNormalizado = normalizarIdentificador(identificador)
   const passwordNormalizado = normalizarPassword(password)
 
-  // Contrato real verificado en el OpenAPI (2026-11-01):
-  // POST /api/v1/auth/login recibe { usuario, password } -- NO { email }.
-  // Se envía el identificador tal cual lo escribió la persona (alias o correo).
-  // La credencial se valida siempre contra el servidor externo en Render.
   const res = await conReintentoDeArranque(() =>
     http.post(ENDPOINTS.login, { usuario: usuarioNormalizado, password: passwordNormalizado }),
   )
-  // Respuesta: { token, expiraEn, usuario: { id, nombre, rol } }
-  return aSesion(res.data)
+
+  const sesion = aSesion(res.data)
+  if (!sesion || !sesion.token) {
+    throw new Error('Respuesta de autenticación inválida del servidor.')
+  }
+  return sesion
 }
 
-export async function getEntidades() {
-  const res = await conReintentoDeArranque(() => http.get(ENDPOINTS.entidades))
+// GET /api/v1/entidades
+// Parámetros admitidos en docs/api/openapi-v1.json: sector, page (>=1), size (1..100), sort, dir
+export async function getEntidades(filtros = {}) {
+  const params = { ...filtros }
+  if (params.size !== undefined) {
+    params.size = Math.min(100, Math.max(1, Number(params.size) || 100))
+  }
+  const res = await conReintentoDeArranque(() =>
+    http.get(ENDPOINTS.entidades, { params }),
+  )
   return aEntidades(res.data)
 }
 
-// El servidor sólo expone GET /api/v1/metricas. Falta confirmar si su respuesta
-// trae el índice general y el top: ejecuta `npm run explorar:api` y ajusta aquí.
+// GET /api/v1/entidades/{id}
+// Devuelve EntidadDetalleDto (id: uuid, codigo, nombre, sector, nit, estado, icActual, variacion, variacionPct, ultimaActualizacion)
+export async function getEntidad(id) {
+  const res = await conReintentoDeArranque(() =>
+    http.get(ENDPOINTS.entidad(id)),
+  )
+  return res.data
+}
+
+// Calcula el resumen agregado del Índice General a partir de los registros reales de GET /api/v1/entidades
 export async function getIndiceGeneral() {
-  // No existe /indice-general en el servidor: se deriva de las entidades REALES
-  // (promedio del IC y de su variación) calculado sobre los registros del servidor.
   const lista = await getEntidades()
   const validas = lista.filter((e) => Number.isFinite(e.indice_competitividad))
-  if (validas.length === 0) throw new Error('Sin entidades para calcular el índice general')
+  if (validas.length === 0) throw new Error('Sin entidades disponibles en el servidor para calcular el índice general.')
   const prom = (campo) => validas.reduce((s, e) => s + (Number(e[campo]) || 0), 0) / validas.length
   const valor = prom('indice_competitividad')
   const puntos = prom('variacion')
@@ -139,16 +164,15 @@ export async function getIndiceGeneral() {
   }
 }
 
-// No existe /mercado/top en el servidor, pero el top son las mismas entidades
-// ordenadas por variación: se calcula aquí con los datos REALES de /entidades.
+// Obtiene las 5 entidades con mayor alza y 5 con mayor baja a partir de GET /api/v1/entidades
 export async function getTop() {
   const lista = await getEntidades()
   const orden = [...lista].sort((a, b) => b.variacion_porcentual - a.variacion_porcentual)
   return { ganadores: orden.slice(0, 5), perdedores: orden.slice(-5).reverse() }
 }
 
-// El periodo viaja tal cual a la API: 'Diaria' | 'Mensual' | 'Trimestral'
-// (ver src/constants/periodos.js)
+// GET /api/v1/entidades/{id}/ohlc
+// Parámetros en docs/api/openapi-v1.json: id (uuid en ruta), periodo ('Diaria' | 'Mensual' | 'Trimestral')
 export async function getOhlc(id, periodo = PERIODO_POR_DEFECTO) {
   const res = await conReintentoDeArranque(() =>
     http.get(ENDPOINTS.ohlc(id), { params: { periodo } }),
@@ -156,23 +180,30 @@ export async function getOhlc(id, periodo = PERIODO_POR_DEFECTO) {
   return aSerieOhlc(res.data)
 }
 
-// GET /api/v1/metricas -> array de métricas por entidad, fecha y dimensión.
-// Parámetros admitidos: sector, periodo, fecha, dimension, page, size, sort, dir
+// GET /api/v1/metricas
+// Parámetros admitidos en docs/api/openapi-v1.json:
+// sector, periodo ('diario'|'mensual'|'trimestral'), fecha ('yyyy-MM-dd'),
+// dimension ('Rentabilidad'|'Liquidez'|'Solvencia'|'Crecimiento'|'Mercado'|'Trazabilidad'),
+// page (>=1), size (1..100, default 100), sort, dir
 export async function getMetricas(filtros = {}) {
+  const params = { ...filtros }
+  if (params.periodo) {
+    params.periodo = normalizarPeriodoMinusculas(params.periodo)
+  }
+  if (params.size !== undefined) {
+    params.size = Math.min(100, Math.max(1, Number(params.size) || 100))
+  }
   const res = await conReintentoDeArranque(() =>
-    http.get(ENDPOINTS.metricas, { params: filtros }),
+    http.get(ENDPOINTS.metricas, { params }),
   )
   return res.data
 }
 
-// Los catálogos de filtros no tienen endpoint propio: se derivan de los datos reales.
+// Deriva opciones únicas ordenadas alfabéticamente a partir de los endpoints reales de la API
 async function catalogoDerivado(nombre, obtenerValores) {
   try {
     const valores = [...new Set((await obtenerValores()).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'es'))
-    // Lista vacía = el servidor todavía no tiene esos datos. Se devuelve vacío a propósito:
-    // ofrecer opciones de ejemplo que no filtran nada confunde más que no ofrecer ninguna.
     if (valores.length === 0) {
-      console.warn(`[API] El servidor no tiene datos de ${nombre}; el filtro queda deshabilitado.`)
       return []
     }
     return valores.map((nombreValor, i) => ({ id: i + 1, nombre: nombreValor }))
@@ -182,29 +213,37 @@ async function catalogoDerivado(nombre, obtenerValores) {
   }
 }
 
+// GET /api/v1/ranking
+// Parámetros admitidos en docs/api/openapi-v1.json:
+// sector, dimension ('Rentabilidad'|'Liquidez'|'Solvencia'|'Crecimiento'),
+// periodo ('diario'|'mensual'|'trimestral'), orden ('posicion'|'entidad'|'sector'|'ic'|'variacionPct'),
+// dir ('asc'|'desc'), limit (1..200, default 50), offset (>=0, default 0)
 export async function getRanking(filtros = {}) {
-  // /ranking admite diario|mensual|trimestral; /ohlc admite Diaria|Mensual|Trimestral.
-  const ALIAS_RANKING = { diaria: 'diario' }
-  const periodo = filtros.periodo
-    ? (ALIAS_RANKING[String(filtros.periodo).toLowerCase()] ?? String(filtros.periodo).toLowerCase())
-    : undefined
+  const periodo = normalizarPeriodoMinusculas(filtros.periodo)
+  const params = { ...filtros, ...(periodo && { periodo }) }
+  if (params.limit !== undefined) {
+    params.limit = Math.min(200, Math.max(1, Number(params.limit) || 50))
+  }
   const res = await conReintentoDeArranque(() =>
-    http.get(ENDPOINTS.ranking, { params: { ...filtros, ...(periodo && { periodo }) } }),
+    http.get(ENDPOINTS.ranking, { params }),
   )
   return res.data
 }
 
-// Sectores: valores únicos del campo 'sector' en /entidades
+// Sectores: valores únicos del campo 'sector' en GET /api/v1/entidades
 export async function getSectores() {
-  return catalogoDerivado('sectores', async () => (await getEntidades()).map((e) => e.sector))
+  return catalogoDerivado('sectores', async () => (await getEntidades({ size: 100 })).map((e) => e.sector))
 }
 
-// Dimensiones: valores únicos del campo 'dimension' en /metricas
+// Dimensiones: valores únicos de GET /api/v1/metricas (size máx 100 según OpenAPI) o las 4 dimensiones del contrato de /ranking
 export async function getDimensiones() {
-  return catalogoDerivado('dimensiones', async () => (await getMetricas({ size: 500 })).map((m) => m.dimension))
+  const derivadas = await catalogoDerivado('dimensiones', async () =>
+    (await getMetricas({ size: 100 })).map((m) => m.dimension),
+  )
+  return derivadas.length > 0 ? derivadas : DIMENSIONES_RANKING
 }
 
-// Periodos: lista acordada con Backend (no hay endpoint de catálogo en la API).
+// Periodos: opciones documentadas en docs/api/openapi-v1.json ('Diaria', 'Mensual', 'Trimestral')
 export async function getPeriodos() {
   return PERIODOS
 }

@@ -172,3 +172,23 @@ Este PR limpia del repositorio frontend (`frontend-siftc`) los scripts y guías 
 - [x] `npm run build` compila sin errores (`✓ 2031 modules transformed, built in 1.38s`).
 - [x] `npm run dev` levanta Vite en `http://localhost:5173/` y responde `HTTP 200`.
 ```
+
+
+---
+
+## 10. Limpieza y Descarte del Modo Simulado (`limpieza-mock`)
+
+En seguimiento a la decisión del equipo, se procedió a eliminar el modo simulado (mock) y los datos de prueba de la primera entrega:
+
+1. **Eliminación de la lógica mock en `src/services/api.js`:**
+   - Se removió la bandera `USE_MOCK` (`import.meta.env.VITE_USE_MOCK !== 'false'`), la cual presentaba un riesgo de seguridad de activar silenciosamente el modo mock en builds de producción ante la ausencia de la variable de entorno (Control ISO 27001 **A.8.28** y **A.8.5**).
+   - Se eliminaron las funciones auxiliares de tokens sintéticos (`crearTokenMock`, `aBase64Url`, `DURACION_SESION_MOCK_SEG`) y la bifurcación de login simulado, dirigiendo todas las solicitudes a `POST /api/v1/auth/login`.
+   - Se reemplazó el envoltorio `conRespaldoMock` por llamadas directas con reintento ante arranque en frío (`conReintentoDeArranque`).
+   - Se actualizó el comentario obsoleto del puerto 7123 / Docker por la referencia oficial al contrato OpenAPI del servidor externo en Render.
+   - Se fijó `USA_DATOS_DE_EJEMPLO = false` para mantener compatibilidad con `src/components/tablero/IndiceGeneral.jsx` sin mutación dinámica.
+2. **Eliminación de datos falsos independientes:**
+   - Se eliminó `src/services/mocks/rankingMocks.js` (clasificado como `(a) SOLO MOCK`).
+   - Se preservó `src/services/mocks/ohlcMocks.js` y su dependencia transitiva `src/services/mocks/marketMocks.js` (clasificados como `(b) COMPARTIDO`) debido a que el componente de la gráfica (`src/components/charts/FinancialChart.jsx`) aún importa `mockOhlcData` como estado inicial antes de recibir los datos del servidor.
+3. **Variables de entorno y documentación:**
+   - Se removió `VITE_USE_MOCK` de `.env.example`, `.env`, `README.md`, `DESPLIEGUE.md` y `scripts/diagnostico-api.mjs`.
+   - Se actualizó `docs/LOGIN_CONTEXT.md` agregando el hallazgo de riesgo B-12 (FE) en la sección de brechas.

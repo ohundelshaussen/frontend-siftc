@@ -27,18 +27,14 @@ Copy-Item .env.example .env -Force
 npm run dev
 ```
 
-### 2. Modos de operación (`.env`)
+### 2. Configuración de entorno (`.env`)
 
 - **Conectado al Backend desplegado en Render (por defecto en `.env.example`):**
   ```env
-  VITE_USE_MOCK=false
   VITE_API_URL=https://siftc.onrender.com
   VITE_API_PREFIX=/api/v1
   ```
-  El contrato oficial de la API publicada se encuentra documentado en [`docs/api/openapi-v1.json`](./docs/api/openapi-v1.json).
-
-- **Modo Simulado Local (sin conexión al servidor):**
-  Cambia `VITE_USE_MOCK=true` en tu archivo `.env` para trabajar con los datos simulados en memoria (`src/services/mocks/`).
+  El contrato oficial de la API publicada se encuentra documentado en [`docs/api/openapi-v1.json`](./docs/api/openapi-v1.json). El modo simulado (mock) de la primera entrega fue eliminado; todas las peticiones operan contra la API externa.
 
 ---
 

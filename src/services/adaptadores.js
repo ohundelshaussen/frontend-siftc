@@ -160,7 +160,7 @@ export function aSerieOhlc(respuesta) {
 }
 
 function normalizarVelas(serie) {
-  return serie
+  const puntosCrudos = serie
     .map((v) => ({
       time: aTiempo(PRIMER_VALOR(v, ['fecha', 'time', 'date', 'periodo'])),
       open: aNumero(PRIMER_VALOR(v, ['apertura', 'open'])),
@@ -170,4 +170,28 @@ function normalizarVelas(serie) {
     }))
     .filter((v) => v.time && Number.isFinite(v.close))
     .sort((a, b) => String(a.time).localeCompare(String(b.time)))
+
+  // Si los datos del backend vienen planos (open === close === high === low),
+  // se aplica continuidad de mercado: la apertura es el cierre del periodo anterior.
+  return puntosCrudos.map((punto, index) => {
+    let { open, high, low, close } = punto
+    const esPlana = open === close && (high === low || !high)
+
+    if (esPlana && index > 0) {
+      const cierreAnterior = puntosCrudos[index - 1].close
+      if (Number.isFinite(cierreAnterior)) {
+        open = cierreAnterior
+        high = Math.max(open, close)
+        low = Math.min(open, close)
+      }
+    }
+
+    return {
+      time: punto.time,
+      open,
+      high,
+      low,
+      close,
+    }
+  })
 }

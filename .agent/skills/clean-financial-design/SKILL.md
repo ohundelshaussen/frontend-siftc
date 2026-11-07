@@ -18,24 +18,24 @@ Todo componente nuevo o refactorizado debe cumplir estrictamente estas medidas:
 
 | Categoría | Elemento / Token | Métrica / Valor Exacto | Regla / Restricción |
 | :--- | :--- | :--- | :--- |
-| **Layout Global** | Contenedor `.contenido` | `max-width: 1380px`<br>`padding: clamp(12px, 2.5vw, 28px)` | Fluido desde `360px` hasta monitores `1440px+`. |
+| **Layout Global** | Contenedor `.contenido` | `max-width: 1440px`<br>`padding: clamp(12px, 2vw, 24px)` | Fluido desde `360px` hasta monitores `1440px+`. |
 | **Header & Nav** | Barra `.nav` y navegación | Escritorio (`> 768px`): 1 sola fila de `52px`, enlaces visibles (`height: 34px`, `font-size: 13px`)<br>Móvil/Tablet (`<= 768px`): 1 sola fila de `48px` con **Menú Hamburguesa** (`Menu`/`X`) | Prohibido hacer wrap en 2 filas en móvil o mostrar barras de scroll horizontal en `.nav-links`. |
 | **Header Controles** | `.boton-tema`, `.nav-salir`, `.nav-avatar` | `height: 32px–34px`<br>`border-radius: 6px` (`50%` avatar `30px`)<br>`font-size: 12.5px` | En móvil (`<= 768px`), la info de usuario y el botón `Salir` pasan dentro del panel desplegable del menú hamburguesa. |
 | **Cinta Bursátil** | `.ticker` | Escritorio: `height: 34px` (`font-size: 0.82rem`)<br>Móvil (`<= 768px`): `height: 28px` (`font-size: 0.76rem`) | Compacta para no restar espacio vertical al área de trabajo. |
-| **Superficies** | Contenedores / Tarjetas | `border-radius: 8px`<br>`padding: 18px 20px` (`14px` en móvil) | Prohibido `border-radius > 10px` o `padding > 24px`. |
+| **Superficies** | Contenedores / Tarjetas | `border-radius: 8px`<br>`padding: 16px 20px` (`14px` en móvil) | Prohibido `border-radius > 10px` o `padding > 24px`. |
 | **Bordes** | Bordes de contenedor y celdas | `1px solid rgba(0, 0, 0, 0.08)` (claro)<br>`1px solid rgba(255, 255, 255, 0.08)` (oscuro) | Prohibido usar bordes de `1.5px` o `2px` en cajas o inputs. |
 | **Sombras** | Elevación de contenedores | `0 1px 2px rgba(0, 0, 0, 0.03)` (`none` en oscuro) | Prohibidas sombras difusas (`> 4px`) y efectos `translateY` en hover. |
-| **Controles** | Inputs, Selects y Botones | `height: 36px` (`min-height: 36px`)<br>`padding: 6px 12px`<br>`border-radius: 6px`<br>`font-size: 13px` | Alineación horizontal uniforme en barras de filtros. |
+| **Controles** | Inputs, Selects y Botones | `height: 34px–36px`<br>`padding: 6px 12px`<br>`border-radius: 6px`<br>`font-size: 13px` | Alineación horizontal uniforme en barras de filtros y herramientas. |
 | **Segmented Controls** | Selector de Periodo / Tipo | Contenedor: `padding: 3px`, `border-radius: 6px`, `bg: #F1F3F5`<br>Botón: `min-height: 28px`, `padding: 4px 10px`, `font-size: 12px` | Botón activo con fondo `#FFFFFF` y sombra `0 1px 2px rgba(0,0,0,0.06)`. |
-| **Tipografía** | Título de página (`h1`) | `font-size: clamp(1.35rem, 2vw, 1.65rem)`<br>`font-weight: 700`<br>`letter-spacing: -0.02em` | Sin subtítulos explicativos debajo del `h1`. |
-| **Tipografía** | Cabeceras de sección (`h2`, `h3`) | `font-size: 0.95rem` a `1.05rem`<br>`font-weight: 700` | Acompañadas solo de datos o contadores `mono-num`. |
+| **Tipografía** | Título de página (`h1`) | `font-size: clamp(1.30rem, 1.8vw, 1.55rem)`<br>`font-weight: 700`<br>`letter-spacing: -0.02em` | Sin subtítulos explicativos debajo del `h1`. |
+| **Tipografía** | Cabeceras de sección (`h2`, `h3`) | `font-size: 0.92rem` a `1.02rem`<br>`font-weight: 700` | Acompañadas solo de datos o contadores `mono-num`. |
 | **Tipografía** | Micro-etiquetas y `thead th` | `font-size: 0.70rem` a `0.72rem`<br>`text-transform: uppercase`<br>`letter-spacing: 0.05em`<br>`font-weight: 600–700` | Color `var(--color-text-muted)`. |
-| **Datos Numéricos** | Cifras, precios, IC, variaciones | Clase obligatoria `.mono-num`<br>(`font-variant-numeric: tabular-nums`) | Alineación obligatoria a la derecha en tablas y comparaciones. |
+| **Datos Numéricos** | `--font-mono` y `.mono-num` | `--font-mono: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif`<br>`font-variant-numeric: tabular-nums`<br>`font-feature-settings: "tnum" 1, "zero" 1` | **Prohibido usar `'Courier New'`** (apariencia de máquina de escribir antigua). Los números deben usar la misma familia sans-serif limpia con ancho tabular fijo (`tabular-nums`). |
 | **Barras de Progreso** | Indicadores de IC, dimensión y pesos | `height: 3px` a `4px` (`hairline`)<br>`border-radius: 9999px` | Prohibidas barras gruesas (`>= 6px`). |
 | **Tablas Bursátiles** | Filas y celdas (`th`, `td`) | `min-height: 38px–42px`<br>`padding: 10px 14px` (`8px 10px` en móvil) | Separador inferior `1px solid rgba(0,0,0,0.06)` y hover `rgba(0,0,0,0.02)`. |
-| **Gráficas** | Lienzo `lightweight-charts` | Escritorio (`>= 640px`): `height: 360px–380px`<br>Móvil (`< 640px`): `height: 260px–280px` | Uso obligatorio de `ResizeObserver` para redimensionado fluido. |
-| **Rejillas (Grids)** | Tira OHLC / Celdas resumen | `grid-template-columns: repeat(auto-fit, minmax(120px, 1fr))`<br>`gap: 10px` | Se adapta sola de 5 columnas (desktop) a 2 columnas (móvil). |
-| **Rejillas (Grids)** | Celdas de Métricas por Dimensión | `grid-template-columns: repeat(auto-fill, minmax(200px, 1fr))`<br>`gap: 10px` | Padding de celda `10px 12px`, máximo 3 datos visibles por celda. |
+| **Gráficas** | Lienzo `lightweight-charts` y proporción de velas | Escritorio (`>= 640px`): `height: 380px`<br>Móvil (`< 640px`): `height: 270px`<br>`timeScale: { barSpacing: 10, maxBarSpacing: 18, rightOffset: 3 }` | `maxBarSpacing: 18` obligatorio para evitar que las velas mensuales/trimestrales se deformen como bloques gigantes en monitores anchos. |
+| **Tira OHLC** | Barra de datos de sesión | Tira horizontal compacta (`min-height: 38px`, `padding: 8px 14px`, `bg: #F8F9FA`) en vez de 5 tarjetas gigantes separadas | Muestra `Fecha`, `Apertura`, `Máximo`, `Mínimo` y `Cierre` en línea con divisores verticales sutiles (`1px`). |
+| **Terminal Split** | Layout Gráfica + Ficha en Desktop (`>= 1100px`) | Rejilla de 2 columnas: `grid-template-columns: minmax(0, 1.65fr) minmax(340px, 1fr)` (`gap: 16px`) | A la izquierda la Gráfica + Tira OHLC; a la derecha el panel de **Métricas por Dimensión** visible sin hacer scroll vertical. |
 
 ---
 
@@ -62,13 +62,13 @@ En una plataforma financiera profesional, la interfaz se explica por su estructu
 
 Todo componente debe probarse y responder limpiamente en los siguientes 4 puntos de corte:
 
-1. **`>= 1280px` (Desktop / Monitores amplios):**
-   - Contenedor hasta `1380px`.
-   - Tablero en 2 columnas asimétricas (`1.8fr 1fr`).
-   - Rejilla de métricas de 4 a 5 columnas por fila.
-2. **`769px – 1024px` (Tablet horizontal / Laptop compacta):**
+1. **`>= 1100px` (Desktop / Monitores amplios — Modo Terminal de 2 Columnas):**
+   - Contenedor hasta `1440px`.
+   - En `/grafica`: Layout de 2 columnas (`1.65fr 1fr`) donde la Gráfica está a la izquierda y las Métricas por Dimensión a la derecha a la misma altura visual.
+   - En `/dashboard`: Tablero en 2 columnas (`1.8fr 1fr`).
+2. **`769px – 1099px` (Tablet horizontal / Laptop compacta):**
    - Barra `.nav` de una sola fila compacta (`52px`).
-   - Paneles de dos columnas (`.fila-principal`, `.cmp-panel`) pasan a `1fr` debajo de `900px`.
+   - Paneles de dos columnas pasan a `1fr` apilados limpiamente.
 3. **`<= 768px` (Tablet vertical y Móvil — Menú Hamburguesa Activo):**
    - La barra `.nav` se mantiene en **1 sola fila de `48px`**: Logo (`height: 28px`) a la izquierda, y `BotonTema` (`32px`) + botón **Hamburguesa (`32px`)** a la derecha.
    - Los enlaces de navegación y el bloque de usuario (`Avatar + Nombre + Rol + Salir`) se muestran dentro de un panel desplegable limpio (`drawer`/`dropdown`) al abrir el menú, cerrándose automáticamente al cambiar de ruta o presionar `Escape`.

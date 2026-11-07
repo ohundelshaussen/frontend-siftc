@@ -144,8 +144,16 @@ export default function UsuariosAdmin() {
               : usuarios ? `${usuarios.length} usuarios · ${activos} activos` : 'Cargando…'}
           </p>
         </div>
-        <button type="button" className="adm-btn adm-btn-principal" onClick={() => setFormulario({})}>
-          <UserPlus size={18} aria-hidden="true" /> Nuevo usuario
+        <button
+          type="button"
+          className="adm-btn adm-btn-principal adm-btn-deshabilitado"
+          disabled={true}
+          title="Función temporalmente deshabilitada: pendiente de activación en el backend"
+          aria-disabled="true"
+        >
+          <UserPlus size={18} aria-hidden="true" />
+          <span>Nuevo usuario</span>
+          <span className="adm-badge-pendiente">(Próximamente)</span>
         </button>
       </div>
 

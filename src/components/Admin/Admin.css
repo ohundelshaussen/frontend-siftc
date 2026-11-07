@@ -49,6 +49,17 @@
   transition: background-color var(--transition-fast), opacity var(--transition-fast);
 }
 .adm-btn:disabled { opacity: .5; cursor: not-allowed; }
+.adm-btn-deshabilitado { opacity: .55 !important; cursor: not-allowed !important; }
+.adm-badge-pendiente {
+  display: inline-block;
+  font-size: .75rem;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: var(--radius-full);
+  background: rgba(255, 255, 255, 0.28);
+  margin-left: 6px;
+  color: #FFFFFF;
+}
 .adm-btn-principal { background: var(--color-verde-alza); color: #FFFFFF; }
 .adm-btn-principal:hover:not(:disabled) { background: var(--color-verde-alza-hover); }
 .adm-btn-secundario { background: var(--superficie); color: var(--color-azul-acero); border-color: var(--color-azul-acero); }

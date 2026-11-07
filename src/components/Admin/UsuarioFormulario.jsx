@@ -141,12 +141,22 @@ export default function UsuarioFormulario({ usuario, onGuardar, onCerrar }) {
 
           {errorGeneral && <p className="adm-alerta adm-alerta-error" role="alert">{errorGeneral}</p>}
 
+          <p className="adm-alerta adm-alerta-aviso" role="status">
+            Función en modo informativo: el registro de usuarios está temporalmente deshabilitado hasta su activación en el backend.
+          </p>
+
           <div className="adm-modal-acciones">
             <button type="button" className="adm-btn adm-btn-secundario" onClick={onCerrar} disabled={guardando}>
               Cancelar
             </button>
-            <button type="submit" className="adm-btn adm-btn-principal" disabled={guardando}>
-              {guardando ? 'Guardando…' : esEdicion ? 'Guardar cambios' : 'Crear usuario'}
+            <button
+              type="submit"
+              className="adm-btn adm-btn-principal adm-btn-deshabilitado"
+              disabled={true}
+              title="Registro temporalmente deshabilitado: pendiente de activación en el backend"
+              aria-disabled="true"
+            >
+              {esEdicion ? 'Guardar cambios (Pendiente)' : 'Crear usuario (Próximamente)'}
             </button>
           </div>
         </form>

@@ -16,7 +16,7 @@
           "Entidades"
         ],
         "summary": "Lista las entidades con su cotización actual",
-        "description": "Filtro opcional por nombre de sector. page desde 1; size de 1 a 100 (por defecto 100). sort: codigo, nombre, sector, ic o variacionPct; dir: asc o desc. El total de registros viaja en la cabecera X-Total-Count.",
+        "description": "Roles admitidos: Administrador, Data Steward, Analista financiero, Gerente / Directivo, Auditor y Usuario móvil.\n\nDevuelve el ticker y el tablero de entidades con su último IC y variación.\nParámetros:\n- sector: nombre exacto del sector. Ejemplo: Energía. Vacío = todos.\n- page: entero >= 1. Por defecto 1.\n- size: entero entre 1 y 100. Por defecto 100.\n- sort: codigo, nombre, sector, ic o variacionPct. Por defecto codigo.\n- dir: asc o desc. Por defecto asc.\nEl total de registros viaja en la cabecera X-Total-Count.\n\nRespuesta: arreglo de { id, codigo, nombre, sector, ic, variacion, variacionPct }.",
         "parameters": [
           {
             "name": "sector",
@@ -113,6 +113,16 @@
                 }
               }
             }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -128,6 +138,7 @@
           "Entidades"
         ],
         "summary": "Obtiene una entidad con su cotización actual",
+        "description": "Roles admitidos: Administrador, Data Steward, Analista financiero, Gerente / Directivo, Auditor y Usuario móvil.\n\nParámetro de ruta:\n- id: UUID de la entidad. Ejemplo: 4ebbf629-0d2d-46ef-b233-93421e13eaee.\n\nDevuelve { id, codigo, nombre, sector, ic, variacion, variacionPct }.\nResponde 404 si la entidad no existe.",
         "parameters": [
           {
             "name": "id",
@@ -170,6 +181,16 @@
               }
             }
           },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
           "404": {
             "description": "Not Found",
             "content": {
@@ -194,7 +215,7 @@
           "Entidades"
         ],
         "summary": "Obtiene la serie OHLC de una entidad",
-        "description": "periodo usa la frecuencia del sistema: Diaria, Mensual o Trimestral. Devuelve la serie de la fecha más antigua a la más reciente.",
+        "description": "Roles admitidos: Administrador, Data Steward, Analista financiero, Gerente / Directivo, Auditor y Usuario móvil.\n\nParámetros:\n- id: UUID de la entidad.\n- periodo: Diaria, Mensual o Trimestral. Vacío = Diaria.\nLa serie se devuelve de la fecha más antigua a la más reciente.\n\nNota: el CSV es mensual. En Diaria y Mensual cada punto tiene apertura=máximo=mínimo=cierre;\nen Trimestral se agrupan tres meses y la vela tiene rango real. Para gráficas de línea usar Mensual;\npara velas usar Trimestral.\n\nRespuesta: { entidadId, entidad, periodo, serie: [{ fecha, apertura, maximo, minimo, cierre, variacion, variacionPct }] }.",
         "parameters": [
           {
             "name": "id",
@@ -254,6 +275,16 @@
               }
             }
           },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
           "404": {
             "description": "Not Found",
             "content": {
@@ -278,7 +309,7 @@
           "Health"
         ],
         "summary": "Health check",
-        "description": "Devuelve 200 cuando la API está en ejecución. No requiere autenticación.",
+        "description": "Endpoint público. Devuelve 200 con { status: \"ok\" } cuando la API está en ejecución. No requiere token.",
         "responses": {
           "200": {
             "description": "OK"
@@ -292,7 +323,7 @@
           "Matriz"
         ],
         "summary": "Carga y valida la matriz CSV",
-        "description": "Recibe el archivo en el campo multipart 'file' y lo reenvía a POST /v1/validar-matriz del microservicio Python. Si el CSV tiene errores, devuelve 422 con la lista de errores en la extensión 'errores'.",
+        "description": "Roles admitidos: Analista financiero y Administrador.\n\nRecibe el archivo CSV de la matriz en el campo multipart 'file' y lo reenvía al microservicio Python.\nEl CSV debe estar separado por punto y coma (;), codificado en UTF-8 y contener las 15 columnas del diccionario.\n\nRespuesta 200: el resultado del ETL.\nRespuesta 422: el CSV tiene errores; la lista viaja en la extensión 'errores'.\nRespuesta 503: el microservicio Python no está disponible.",
         "requestBody": {
           "content": {
             "multipart/form-data": {
@@ -370,7 +401,7 @@
           "Metricas"
         ],
         "summary": "Lista las métricas calculadas por entidad y fecha",
-        "description": "periodo filtra por frecuencia: diario, mensual o trimestral. fecha usa ISO 8601 (yyyy-MM-dd). Filtros opcionales: sector y dimension (Rentabilidad, Liquidez, Solvencia, Crecimiento, Mercado o Trazabilidad). page desde 1; size de 1 a 100 (por defecto 100). sort: fecha, codigo, nombre, sector, dimension, codigoMetrica, valor o valorNormalizado; dir: asc o desc. El total de registros viaja en la cabecera X-Total-Count.",
+        "description": "Roles admitidos: Administrador, Data Steward, Analista financiero, Gerente / Directivo, Auditor y Usuario móvil.\n\nDevuelve una fila por métrica calculada por la capa analítica.\nParámetros:\n- sector: nombre exacto del sector. Vacío = todos.\n- periodo: frecuencia de la métrica: diario, mensual o trimestral. Vacío = todas.\n- fecha: periodo exacto en ISO 8601 (yyyy-MM-dd). Ejemplo: 2026-09-01. Vacío = todos.\n- dimension: Rentabilidad, Liquidez, Solvencia, Crecimiento, Mercado o Trazabilidad.\n- page: entero >= 1. Por defecto 1.\n- size: entero entre 1 y 100. Por defecto 100.\n- sort: fecha, codigo, nombre, sector, dimension, codigoMetrica, valor o valorNormalizado.\n- dir: asc o desc.\nEl total de registros viaja en la cabecera X-Total-Count.\n\nLa fecha de los datos del corte va del 2024-10-01 al 2026-09-01. Una fecha fuera de ese rango devuelve 0 filas.\nRespuesta: arreglo de { entidadId, codigo, nombre, sector, fecha, codigoMetrica, nombreMetrica, dimension, formula, frecuencia, valor, valorNormalizado }.",
         "parameters": [
           {
             "name": "sector",
@@ -488,6 +519,16 @@
                 }
               }
             }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -503,7 +544,7 @@
           "Parametros"
         ],
         "summary": "Actualiza el umbral de un parámetro",
-        "description": "Endpoint de administración reservado para Analista financiero o Administrador.",
+        "description": "Roles admitidos: Analista financiero y Administrador.\n\nEndpoint de administración de parámetros. Actualmente devuelve un mensaje de confirmación;\nel parámetro y su valor se conectarán en la HU de administración.",
         "responses": {
           "200": {
             "description": "OK"
@@ -541,8 +582,8 @@
         "tags": [
           "Ranking"
         ],
-        "summary": "Obtiene el ranking desde el microservicio Python",
-        "description": "Reenvía la consulta a GET /api/v1/ranking del microservicio. Filtros: sector, dimension (Rentabilidad, Liquidez, Solvencia, Crecimiento), periodo (diario, mensual, trimestral), orden (posicion, entidad, sector, ic, variacionPct), dir (asc, desc), limit (1..200) y offset (>=0).",
+        "summary": "Obtiene el ranking general o por dimensión",
+        "description": "Roles admitidos: Administrador, Data Steward, Analista financiero, Gerente / Directivo, Auditor y Usuario móvil.\n\nDevuelve el ranking de entidades por IC. Si se envía dimension, calcula el puntaje de esa dimensión\n(promedio de sus métricas normalizadas) y ordena por ese puntaje.\nParámetros:\n- sector: nombre exacto del sector. Vacío = todos.\n- dimension: Rentabilidad, Liquidez, Solvencia o Crecimiento. Vacío = IC general.\n- periodo: diario, mensual o trimestral. Se devuelve en la respuesta.\n- orden: posicion, entidad, sector, ic o variacionPct. Por defecto ic.\n- dir: asc o desc. Por defecto desc.\n- limit: entero entre 1 y 200. Por defecto 50.\n- offset: entero >= 0. Por defecto 0.\n\nRespuesta: { periodo, total, items: [{ posicion, cambioPosicion, entidadId, entidad, sector, ic, variacionPct }] }.\ncambioPosicion > 0 significa que subió; < 0 que bajó; 0 que mantuvo.",
         "parameters": [
           {
             "name": "sector",
@@ -645,6 +686,16 @@
               }
             }
           },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
           "503": {
             "description": "Service Unavailable",
             "content": {
@@ -669,7 +720,7 @@
           "Auth"
         ],
         "summary": "Inicia sesión y devuelve el token JWT",
-        "description": "Acepta 'usuario' y 'password'. Devuelve token, expiraEn y los datos del usuario autenticado.",
+        "description": "Endpoint público (no requiere token).\n\nCuerpo JSON:\n- usuario: correo o usuario registrado.\n- password: contraseña en texto plano.\n\nRespuesta 200: { token, expiraEn, usuario: { id, nombre, rol } }.\nEl token debe enviarse como Bearer en los demás endpoints.\nRespuesta 401: credenciales incorrectas.",
         "requestBody": {
           "content": {
             "application/json": {
@@ -730,7 +781,7 @@
           "Usuarios"
         ],
         "summary": "Registra un usuario",
-        "description": "Requiere rol Administrador. Devuelve el identificador UUID del usuario creado.",
+        "description": "Roles admitidos: Administrador.\n\nCuerpo JSON:\n- email: correo único del usuario.\n- password: contraseña en texto plano; se guarda con bcrypt.\n- primerNombre: primer nombre.\n- primerApellido: primer apellido.\n- idRol: UUID de un rol existente en seguridad.roles.\n\nRespuesta 200: UUID del usuario creado.\nRespuesta 409: el correo ya existe.",
         "requestBody": {
           "content": {
             "application/json": {
@@ -822,6 +873,179 @@
           }
         ]
       }
+    },
+    "/api/v1/watchlist": {
+      "get": {
+        "tags": [
+          "Watchlist"
+        ],
+        "summary": "Lista las entidades seguidas por el usuario autenticado",
+        "description": "Roles admitidos: Administrador, Data Steward, Analista financiero, Gerente / Directivo, Auditor y Usuario móvil.\n\nDevuelve la watchlist personal con la cotización actual de cada entidad.\nEl usuario se obtiene del claim sub del JWT; no se recibe idUsuario por parámetro.\nCada usuario solo puede ver su propia lista.\n\nRespuesta: arreglo de { id, codigo, nombre, sector, ic, variacion, variacionPct }.\nEjemplo:\n[\n  { \"id\": \"4ebbf629-0d2d-46ef-b233-93421e13eaee\", \"codigo\": \"ENT001\", \"nombre\": \"Andina Energía S.A.\", \"sector\": \"Energía\", \"ic\": 55.042, \"variacion\": -0.531, \"variacionPct\": -0.9555 }\n]",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/EntidadDto"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/EntidadDto"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/EntidadDto"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/watchlist/{idEntidad}": {
+      "post": {
+        "tags": [
+          "Watchlist"
+        ],
+        "summary": "Agrega una entidad a la watchlist",
+        "description": "Roles admitidos: Administrador, Data Steward, Analista financiero, Gerente / Directivo, Auditor y Usuario móvil.\n\nAgrega la entidad indicada a la watchlist del usuario autenticado.\nParámetro de ruta:\n- idEntidad: UUID de una entidad existente.\n\nEs idempotente: si ya está seguida, responde 204.\nResponde 404 si la entidad no existe.",
+        "parameters": [
+          {
+            "name": "idEntidad",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ]
+      },
+      "delete": {
+        "tags": [
+          "Watchlist"
+        ],
+        "summary": "Quita una entidad de la watchlist",
+        "description": "Roles admitidos: Administrador, Data Steward, Analista financiero, Gerente / Directivo, Auditor y Usuario móvil.\n\nQuita la entidad indicada de la watchlist del usuario autenticado.\nParámetro de ruta:\n- idEntidad: UUID de la entidad.\n\nEs idempotente: si no estaba seguida, responde 204.",
+        "parameters": [
+          {
+            "name": "idEntidad",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ]
+      }
     }
   },
   "components": {
@@ -834,10 +1058,12 @@
         "type": "object",
         "properties": {
           "usuario": {
-            "type": "string"
+            "type": "string",
+            "description": "Correo o usuario registrado. Es el identificador de login."
           },
           "password": {
-            "type": "string"
+            "type": "string",
+            "description": "Contraseña en texto plano; se valida contra el hash bcrypt."
           }
         }
       },
@@ -850,7 +1076,8 @@
         "type": "object",
         "properties": {
           "token": {
-            "type": "string"
+            "type": "string",
+            "description": "JWT que debe enviarse como Bearer en los demás endpoints."
           },
           "expiraEn": {
             "pattern": "^-?(?:0|[1-9]\\d*)$",
@@ -858,6 +1085,7 @@
               "integer",
               "string"
             ],
+            "description": "Vigencia del token en segundos.",
             "format": "int32"
           },
           "usuario": {
@@ -875,13 +1103,16 @@
         "properties": {
           "id": {
             "type": "string",
+            "description": "Identificador UUID del usuario.",
             "format": "uuid"
           },
           "nombre": {
-            "type": "string"
+            "type": "string",
+            "description": "Nombre completo."
           },
           "rol": {
-            "type": "string"
+            "type": "string",
+            "description": "Rol del sistema; determina los permisos."
           }
         }
       },
@@ -896,19 +1127,24 @@
         "type": "object",
         "properties": {
           "email": {
-            "type": "string"
+            "type": "string",
+            "description": "Correo único del usuario."
           },
           "password": {
-            "type": "string"
+            "type": "string",
+            "description": "Contraseña en texto plano; el backend la guarda con bcrypt."
           },
           "primerNombre": {
-            "type": "string"
+            "type": "string",
+            "description": "Primer nombre."
           },
           "primerApellido": {
-            "type": "string"
+            "type": "string",
+            "description": "Primer apellido."
           },
           "idRol": {
             "type": "string",
+            "description": "UUID del rol existente en seguridad.roles.",
             "format": "uuid"
           }
         }
@@ -927,16 +1163,20 @@
         "properties": {
           "id": {
             "type": "string",
+            "description": "Identificador UUID de la entidad.",
             "format": "uuid"
           },
           "codigo": {
-            "type": "string"
+            "type": "string",
+            "description": "Ticker o código único de la entidad, por ejemplo ENT001."
           },
           "nombre": {
-            "type": "string"
+            "type": "string",
+            "description": "Nombre comercial o razón social."
           },
           "sector": {
-            "type": "string"
+            "type": "string",
+            "description": "Sector económico al que pertenece."
           },
           "ic": {
             "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
@@ -945,6 +1185,7 @@
               "number",
               "string"
             ],
+            "description": "Último Índice de Competitividad (0 a 100).",
             "format": "double"
           },
           "variacion": {
@@ -954,6 +1195,7 @@
               "number",
               "string"
             ],
+            "description": "Variación absoluta frente al cierre anterior.",
             "format": "double"
           },
           "variacionPct": {
@@ -963,6 +1205,7 @@
               "number",
               "string"
             ],
+            "description": "Variación porcentual frente al cierre anterior.",
             "format": "double"
           }
         }
@@ -986,35 +1229,45 @@
         "properties": {
           "entidadId": {
             "type": "string",
+            "description": "Identificador UUID de la entidad.",
             "format": "uuid"
           },
           "codigo": {
-            "type": "string"
+            "type": "string",
+            "description": "Ticker de la entidad."
           },
           "nombre": {
-            "type": "string"
+            "type": "string",
+            "description": "Nombre de la entidad."
           },
           "sector": {
-            "type": "string"
+            "type": "string",
+            "description": "Sector económico."
           },
           "fecha": {
             "type": "string",
+            "description": "Periodo del dato en formato ISO 8601 (yyyy-MM-dd).",
             "format": "date"
           },
           "codigoMetrica": {
-            "type": "string"
+            "type": "string",
+            "description": "Código del catálogo: RNT-01, LIQ-01, END-01, CRE-01, etc."
           },
           "nombreMetrica": {
-            "type": "string"
+            "type": "string",
+            "description": "Nombre legible de la métrica."
           },
           "dimension": {
-            "type": "string"
+            "type": "string",
+            "description": "Dimensión del catálogo: Rentabilidad, Liquidez, Solvencia, Crecimiento, Mercado o Trazabilidad."
           },
           "formula": {
-            "type": "string"
+            "type": "string",
+            "description": "Fórmula usada para el cálculo."
           },
           "frecuencia": {
-            "type": "string"
+            "type": "string",
+            "description": "Frecuencia de la métrica: Diaria, Mensual o Trimestral."
           },
           "valor": {
             "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
@@ -1023,6 +1276,7 @@
               "number",
               "string"
             ],
+            "description": "Valor calculado como proporción o veces, según la métrica.",
             "format": "double"
           },
           "valorNormalizado": {
@@ -1032,6 +1286,7 @@
               "number",
               "string"
             ],
+            "description": "Valor llevado a escala 0 a 1 para el cálculo del IC.",
             "format": "double"
           }
         }
@@ -1050,6 +1305,7 @@
         "properties": {
           "fecha": {
             "type": "string",
+            "description": "Fecha del periodo en formato ISO 8601.",
             "format": "date"
           },
           "apertura": {
@@ -1058,6 +1314,7 @@
               "number",
               "string"
             ],
+            "description": "Primer valor del IC en el periodo.",
             "format": "double"
           },
           "maximo": {
@@ -1066,6 +1323,7 @@
               "number",
               "string"
             ],
+            "description": "Valor máximo del IC en el periodo.",
             "format": "double"
           },
           "minimo": {
@@ -1074,6 +1332,7 @@
               "number",
               "string"
             ],
+            "description": "Valor mínimo del IC en el periodo.",
             "format": "double"
           },
           "cierre": {
@@ -1082,6 +1341,7 @@
               "number",
               "string"
             ],
+            "description": "Último valor del IC en el periodo.",
             "format": "double"
           },
           "variacion": {
@@ -1091,6 +1351,7 @@
               "number",
               "string"
             ],
+            "description": "Variación absoluta frente al cierre anterior.",
             "format": "double"
           },
           "variacionPct": {
@@ -1100,6 +1361,7 @@
               "number",
               "string"
             ],
+            "description": "Variación porcentual frente al cierre anterior.",
             "format": "double"
           }
         }
@@ -1115,19 +1377,23 @@
         "properties": {
           "entidadId": {
             "type": "string",
+            "description": "Identificador UUID de la entidad.",
             "format": "uuid"
           },
           "entidad": {
-            "type": "string"
+            "type": "string",
+            "description": "Nombre de la entidad."
           },
           "periodo": {
-            "type": "string"
+            "type": "string",
+            "description": "Frecuencia usada: Diaria, Mensual o Trimestral."
           },
           "serie": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/OhlcPuntoDto"
-            }
+            },
+            "description": "Puntos OHLC ordenados de la fecha más antigua a la más reciente."
           }
         }
       },
@@ -1187,6 +1453,7 @@
               "integer",
               "string"
             ],
+            "description": "Posición actual (1 es la mejor).",
             "format": "int32"
           },
           "cambioPosicion": {
@@ -1195,17 +1462,21 @@
               "integer",
               "string"
             ],
+            "description": "Positivo si subió, negativo si bajó, 0 si mantuvo.",
             "format": "int32"
           },
           "entidadId": {
             "type": "string",
+            "description": "Identificador UUID de la entidad.",
             "format": "uuid"
           },
           "entidad": {
-            "type": "string"
+            "type": "string",
+            "description": "Nombre de la entidad."
           },
           "sector": {
-            "type": "string"
+            "type": "string",
+            "description": "Sector económico."
           },
           "ic": {
             "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
@@ -1213,6 +1484,7 @@
               "number",
               "string"
             ],
+            "description": "IC general o puntaje de la dimensión (0 a 100).",
             "format": "double"
           },
           "variacionPct": {
@@ -1221,6 +1493,7 @@
               "number",
               "string"
             ],
+            "description": "Variación porcentual frente al periodo anterior.",
             "format": "double"
           }
         }
@@ -1234,7 +1507,8 @@
         "type": "object",
         "properties": {
           "periodo": {
-            "type": "string"
+            "type": "string",
+            "description": "Frecuencia solicitada: diario, mensual o trimestral."
           },
           "total": {
             "pattern": "^-?(?:0|[1-9]\\d*)$",
@@ -1242,13 +1516,15 @@
               "integer",
               "string"
             ],
+            "description": "Cantidad total de entidades que cumplen los filtros.",
             "format": "int32"
           },
           "items": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/RankingItemDto"
-            }
+            },
+            "description": "Filas ordenadas según orden y dir."
           }
         }
       }
@@ -1286,6 +1562,9 @@
     },
     {
       "name": "Usuarios"
+    },
+    {
+      "name": "Watchlist"
     }
   ]
 }

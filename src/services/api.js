@@ -248,3 +248,21 @@ export async function getDimensiones() {
 export async function getPeriodos() {
   return PERIODOS
 }
+
+// GET /api/v1/watchlist
+export async function getWatchlist() {
+  const res = await conReintentoDeArranque(() => http.get(ENDPOINTS.watchlist))
+  return Array.isArray(res.data) ? res.data : res.data?.items ?? []
+}
+
+// POST /api/v1/watchlist/{idEntidad}
+export async function agregarAWatchlist(idEntidad) {
+  const res = await conReintentoDeArranque(() => http.post(ENDPOINTS.watchlistEntidad(idEntidad)))
+  return res.data
+}
+
+// DELETE /api/v1/watchlist/{idEntidad}
+export async function quitarDeWatchlist(idEntidad) {
+  const res = await conReintentoDeArranque(() => http.delete(ENDPOINTS.watchlistEntidad(idEntidad)))
+  return res.data
+}

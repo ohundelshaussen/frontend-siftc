@@ -1,22 +1,35 @@
 export const ROLES = {
   ADMINISTRADOR: 'Administrador',
-  ANALISTA: 'Analista financiero',
-  GERENTE: 'Gerente',
   DATA_STEWARD: 'Data Steward',
+  ANALISTA: 'Analista financiero',
+  GERENTE: 'Gerente / Directivo',
   AUDITOR: 'Auditor',
-  USUARIO_MOVIL: 'Usuario móvil',
-};
+  USUARIO_CONSULTA: 'Usuario de consulta',
+}
 
-export const ROLES_LISTA = Object.values(ROLES);
+export const ROLES_LISTA = Object.values(ROLES)
+
+// Mapa de alias para mantener compatibilidad con tokens que traigan variantes previas
+const ALIAS_ROLES = {
+  Gerente: ROLES.GERENTE,
+  'Gerente / Directivo': ROLES.GERENTE,
+  'Usuario móvil': ROLES.USUARIO_CONSULTA,
+  'Usuario movil': ROLES.USUARIO_CONSULTA,
+  'Usuario de consulta': ROLES.USUARIO_CONSULTA,
+}
+
+const normalizarNombreRol = (rol) => {
+  const limpio = String(rol ?? '').normalize('NFC').trim()
+  return ALIAS_ROLES[limpio] ?? limpio
+}
 
 // Comparación exacta normalizada en UTF-8 NFC (estándar OWASP de control de acceso basado en roles)
 export const tieneRol = (usuario, rolesPermitidos) => {
-  if (!usuario || !usuario.rol) return false;
-  if (!rolesPermitidos || rolesPermitidos.length === 0) return true;
-  const rolActual = String(usuario.rol).normalize('NFC').trim();
-  return rolesPermitidos.some((r) => String(r).normalize('NFC').trim() === rolActual);
-};
-
+  if (!usuario || !usuario.rol) return false
+  if (!rolesPermitidos || rolesPermitidos.length === 0) return true
+  const rolActual = normalizarNombreRol(usuario.rol)
+  return rolesPermitidos.some((r) => normalizarNombreRol(r) === rolActual)
+}
 
 // Id de cada rol en la base de datos (tabla seguridad.roles).
 // El servidor no tiene ruta para listar roles, por eso van fijos aquí.
@@ -26,7 +39,7 @@ export const ROLES_CATALOGO = Object.freeze([
   { id: '00000000-0000-0000-0000-000000000003', nombre: ROLES.GERENTE, descripcion: 'Consulta rankings y toma decisiones' },
   { id: '00000000-0000-0000-0000-000000000004', nombre: ROLES.DATA_STEWARD, descripcion: 'Mantiene diccionario y reglas de calidad' },
   { id: '00000000-0000-0000-0000-000000000005', nombre: ROLES.AUDITOR, descripcion: 'Revisa linaje y bitácora' },
-  { id: '00000000-0000-0000-0000-000000000006', nombre: ROLES.USUARIO_MOVIL, descripcion: 'Consulta cotizaciones y watchlist' },
-]);
+  { id: '00000000-0000-0000-0000-000000000006', nombre: ROLES.USUARIO_CONSULTA, descripcion: 'Consulta cotizaciones y watchlist' },
+])
 
-export const nombreRol = (idRol) => ROLES_CATALOGO.find((r) => r.id === idRol)?.nombre ?? 'Sin rol';
+export const nombreRol = (idRol) => ROLES_CATALOGO.find((r) => r.id === idRol)?.nombre ?? 'Sin rol'

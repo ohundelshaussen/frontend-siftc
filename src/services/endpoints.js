@@ -44,6 +44,10 @@ export const ENDPOINTS = {
 
   // --- Cargas (subida de la matriz financiera CSV) ---
   cargas: '/cargas',
+
+  // --- Watchlist (favoritos y seguimiento personal) ---
+  watchlist: '/watchlist',
+  watchlistEntidad: (idEntidad) => `/watchlist/${idEntidad}`,
 }
 
 export default ENDPOINTS

@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import { Layers, ChevronRight, AlertCircle, Info } from 'lucide-react'
+import { AlertCircle, Info } from 'lucide-react'
 import { num } from '../../utils/format'
 
 const ORDEN_DIMENSIONES_PREFERIDO = [
@@ -129,7 +129,7 @@ export default function MetricasPorDimension({
           </div>
         </div>
         <div className="ficha-metricas-vacia" role="status">
-          <Info size={20} aria-hidden="true" />
+          <Info size={18} aria-hidden="true" />
           <div>
             <strong>Corte analítico en consolidación</strong>
             <p>
@@ -148,11 +148,11 @@ export default function MetricasPorDimension({
         <div>
           <h2 className="ficha-metricas-titulo">Métricas por Dimensión</h2>
           <p className="ficha-metricas-subtitulo">
-            Desglose de indicadores oficiales ({periodo}). Haz clic en cualquier métrica para ver su fórmula y linaje.
+            Indicadores oficiales ({periodo}) · Selecciona una celda para consultar fórmula y linaje
           </p>
         </div>
         <span className="ficha-metricas-total-badge mono-num">
-          {totalUnicas} {totalUnicas === 1 ? 'métrica' : 'métricas'}
+          {totalUnicas} {totalUnicas === 1 ? 'indicador' : 'indicadores'}
         </span>
       </div>
 
@@ -161,14 +161,14 @@ export default function MetricasPorDimension({
           <div key={dimension} className="ficha-dimension-bloque">
             <div className="ficha-dimension-cabecera">
               <div className="ficha-dimension-nombre-grupo">
-                <span className="ficha-dimension-icono" aria-hidden="true">
-                  <Layers size={16} />
-                </span>
                 <h3 className="ficha-dimension-nombre">{dimension}</h3>
               </div>
-              <span className="ficha-dimension-conteo mono-num">
-                Promedio: {num(promedio, 1)} pts · {items.length}{' '}
-                {items.length === 1 ? 'indicador' : 'indicadores'}
+              <span className="ficha-dimension-resumen mono-num">
+                <strong className="ficha-dimension-promedio">{num(promedio, 1)} pts</strong>
+                <span>·</span>
+                <span>
+                  {items.length} {items.length === 1 ? 'métrica' : 'métricas'}
+                </span>
               </span>
             </div>
 
@@ -191,12 +191,17 @@ export default function MetricasPorDimension({
                     aria-label={`Ver fórmula y detalle de ${m.nombreMetrica}`}
                   >
                     <div className="ficha-metrica-card-top">
-                      <span className="ficha-metrica-tag-codigo mono-num">
-                        {m.codigoMetrica}
+                      <div className="ficha-metrica-card-top-meta">
+                        <span className="ficha-metrica-tag-codigo mono-num">
+                          {m.codigoMetrica}
+                        </span>
+                        {m.frecuencia && (
+                          <span className="ficha-metrica-tag-frec">{m.frecuencia}</span>
+                        )}
+                      </div>
+                      <span className="ficha-metrica-indicador-accion" aria-hidden="true">
+                        →
                       </span>
-                      {m.frecuencia && (
-                        <span className="ficha-metrica-tag-frec">{m.frecuencia}</span>
-                      )}
                     </div>
 
                     <strong className="ficha-metrica-card-nombre" title={m.nombreMetrica}>
@@ -205,7 +210,7 @@ export default function MetricasPorDimension({
 
                     <div className="ficha-metrica-card-valores">
                       <div className="ficha-metrica-card-dato">
-                        <span className="ficha-metrica-card-label">Valor</span>
+                        <span className="ficha-metrica-card-label">Valor crudo</span>
                         <strong className="ficha-metrica-card-val mono-num">
                           {m.valor !== null && m.valor !== undefined
                             ? num(m.valor, 2)
@@ -213,7 +218,7 @@ export default function MetricasPorDimension({
                         </strong>
                       </div>
 
-                      <div className="ficha-metrica-card-dato">
+                      <div className="ficha-metrica-card-dato ficha-metrica-card-dato-derecha">
                         <span className="ficha-metrica-card-label">Puntaje</span>
                         <strong className="ficha-metrica-card-score mono-num">
                           {textoPuntaje}
@@ -226,11 +231,6 @@ export default function MetricasPorDimension({
                         className="ficha-metrica-card-relleno"
                         style={{ width: `${pctNorm}%` }}
                       />
-                    </div>
-
-                    <div className="ficha-metrica-card-pie">
-                      <span>Ver fórmula y detalle</span>
-                      <ChevronRight size={14} aria-hidden="true" />
                     </div>
                   </button>
                 )

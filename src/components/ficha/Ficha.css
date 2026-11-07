@@ -616,3 +616,14 @@ html[data-theme='dark'] .ficha-modal-btn-cerrar:hover {
     grid-template-columns: 1fr;
   }
 }
+
+/* Integracion de Ficha dentro de la vista Terminal Split (>= 1100px) */
+.grafica-terminal-side .ficha-metricas-seccion {
+  margin-top: 0;
+}
+
+@media (min-width: 1100px) {
+  .grafica-terminal-side .ficha-metricas-grid {
+    grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+  }
+}

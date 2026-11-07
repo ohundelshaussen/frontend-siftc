@@ -40,6 +40,18 @@ export default function Layout() {
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [])
 
+  // Bloquea el scroll del body mientras el menú lateral esté abierto
+  useEffect(() => {
+    if (menuAbierto) {
+      document.body.style.overflow = 'hidden'
+    } else {
+      document.body.style.overflow = ''
+    }
+    return () => {
+      document.body.style.overflow = ''
+    }
+  }, [menuAbierto])
+
   return (
     <>
       <header className="nav">
@@ -85,10 +97,37 @@ export default function Layout() {
             {menuAbierto ? <X size={18} aria-hidden="true" /> : <Menu size={18} aria-hidden="true" />}
           </button>
         </div>
+      </header>
 
-        {/* Panel desplegable (Drawer) para móvil/tablet (<= 768px) */}
-        {menuAbierto && (
-          <div className="nav-drawer" role="dialog" aria-modal="true" aria-label="Menú de navegación">
+      {/* Backdrop y Panel Lateral (Side Drawer) para móvil/tablet (<= 768px) */}
+      {menuAbierto && (
+        <>
+          <div
+            className="nav-backdrop"
+            onClick={() => setMenuAbierto(false)}
+            aria-hidden="true"
+          />
+          <aside
+            className="nav-drawer"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Menú de navegación"
+          >
+            <div className="nav-drawer-header">
+              <div className="nav-drawer-logo">
+                <img src={logoAlza} alt="ALZA" className="nav-logo logo-claro" />
+                <img src={logoAlzaOscuro} alt="ALZA" className="nav-logo logo-oscuro" />
+              </div>
+              <button
+                type="button"
+                className="nav-drawer-close"
+                onClick={() => setMenuAbierto(false)}
+                aria-label="Cerrar menú"
+              >
+                <X size={18} aria-hidden="true" />
+              </button>
+            </div>
+
             <nav className="nav-drawer-links" aria-label="Navegación móvil">
               <NavLink to="/dashboard" onClick={() => setMenuAbierto(false)}>Tablero</NavLink>
               <NavLink to="/grafica" onClick={() => setMenuAbierto(false)}>Gráficas</NavLink>
@@ -116,9 +155,9 @@ export default function Layout() {
                 <span>Salir</span>
               </button>
             </div>
-          </div>
-        )}
-      </header>
+          </aside>
+        </>
+      )}
 
       <Ticker />
       <main className="contenido"><Outlet /></main>

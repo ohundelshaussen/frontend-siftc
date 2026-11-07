@@ -10,7 +10,7 @@
   gap: 20px;
   height: 52px;
   min-height: 52px;
-  padding: 0 clamp(14px, 2.5vw, 28px);
+  padding: 0 clamp(14px, 2vw, 28px);
   background: var(--superficie, #FFFFFF);
   border-bottom: 1px solid var(--color-border);
   position: relative;
@@ -149,21 +149,22 @@ html[data-theme='dark'] .nav-salir {
 
 /* Oculto en escritorio */
 .nav-movil-controles,
+.nav-backdrop,
 .nav-drawer {
   display: none;
 }
 
 /* Layout General */
 .contenido {
-  max-width: 1380px;
-  padding: clamp(12px, 2.5vw, 28px);
+  max-width: 1440px;
+  padding: clamp(12px, 2vw, 24px);
   margin: 0 auto;
   width: 100%;
   box-sizing: border-box;
 }
 
 /* ==========================================================================
-   Modo Móvil y Tablet (<= 768px): Header en 1 sola fila de 48px + Drawer
+   Modo Móvil y Tablet (<= 768px): Header en 1 sola fila de 48px + Side Drawer
    ========================================================================== */
 @media (max-width: 768px) {
   .nav {
@@ -225,38 +226,97 @@ html[data-theme='dark'] .nav-salir {
     outline-offset: 1px;
   }
 
-  /* Panel Desplegable (Drawer) bajo la cabecera */
+  /* Fondo oscurecido (Backdrop) con blur */
+  .nav-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.45);
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
+    z-index: 999;
+    animation: nav-fade-in 0.2s ease-out;
+  }
+
+  /* Panel Lateral Derecho (Side Drawer) de altura completa */
   .nav-drawer {
     display: flex;
     flex-direction: column;
-    gap: 12px;
-    position: absolute;
-    top: 48px;
-    left: 0;
+    position: fixed;
+    top: 0;
     right: 0;
+    bottom: 0;
+    width: min(280px, 82vw);
+    height: 100dvh;
     z-index: 1000;
     background: var(--superficie, #FFFFFF);
-    border-bottom: 1px solid var(--color-border);
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
-    padding: 12px 14px 16px;
-    animation: nav-drawer-slide 0.18s ease-out;
+    border-left: 1px solid var(--color-border);
+    box-shadow: -8px 0 24px rgba(0, 0, 0, 0.12);
+    padding: 16px;
+    box-sizing: border-box;
+    animation: nav-drawer-slide-in 0.22s cubic-bezier(0.16, 1, 0.3, 1);
   }
 
   html[data-theme='dark'] .nav-drawer {
     background: var(--superficie, #151D33);
-    border-bottom-color: rgba(255, 255, 255, 0.1);
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+    border-left-color: rgba(255, 255, 255, 0.1);
+    box-shadow: -8px 0 28px rgba(0, 0, 0, 0.5);
+  }
+
+  .nav-drawer-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--color-border);
+    margin-bottom: 12px;
+  }
+
+  html[data-theme='dark'] .nav-drawer-header {
+    border-bottom-color: rgba(255, 255, 255, 0.08);
+  }
+
+  .nav-drawer-logo .nav-logo {
+    height: 28px;
+  }
+
+  .nav-drawer-close {
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    border: 1px solid rgba(0, 0, 0, 0.12);
+    background: transparent;
+    color: var(--color-text-on-light);
+    display: inline-grid;
+    place-items: center;
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+  }
+
+  html[data-theme='dark'] .nav-drawer-close {
+    border-color: rgba(255, 255, 255, 0.12);
+    color: #FFFFFF;
+  }
+
+  .nav-drawer-close:hover {
+    background: rgba(0, 0, 0, 0.05);
+  }
+
+  html[data-theme='dark'] .nav-drawer-close:hover {
+    background: rgba(255, 255, 255, 0.08);
   }
 
   .nav-drawer-links {
     display: flex;
     flex-direction: column;
     gap: 4px;
+    overflow-y: auto;
+    flex: 1;
   }
 
   .nav-drawer-links a {
     height: 40px;
-    padding: 0 14px;
+    padding: 0 12px;
     border-radius: 6px;
     font-size: 13.5px;
     font-weight: 600;
@@ -294,8 +354,8 @@ html[data-theme='dark'] .nav-salir {
     align-items: center;
     justify-content: space-between;
     border-top: 1px solid var(--color-border);
-    padding-top: 12px;
-    margin-top: 4px;
+    padding-top: 14px;
+    margin-top: auto;
   }
 
   html[data-theme='dark'] .nav-drawer-footer {
@@ -313,13 +373,20 @@ html[data-theme='dark'] .nav-salir {
   }
 }
 
-@keyframes nav-drawer-slide {
+@keyframes nav-drawer-slide-in {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+@keyframes nav-fade-in {
   from {
     opacity: 0;
-    transform: translateY(-6px);
   }
   to {
     opacity: 1;
-    transform: translateY(0);
   }
 }

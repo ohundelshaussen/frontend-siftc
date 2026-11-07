@@ -310,7 +310,7 @@ export const FinancialChart = ({ entidadNombre, ticker }) => {
   useEffect(() => {
     if (!chartContainerRef.current || serieOhlc.length === 0) return undefined;
 
-    const chartHeight = window.innerWidth < 640 ? 280 : 380;
+    const chartHeight = window.innerWidth < 640 ? 270 : 380;
     const chart = createChart(chartContainerRef.current, {
       width: chartContainerRef.current.clientWidth,
       height: chartHeight,
@@ -323,7 +323,13 @@ export const FinancialChart = ({ entidadNombre, ticker }) => {
         horzLines: { color: C.rejilla },
       },
       rightPriceScale: { borderColor: C.borde },
-      timeScale: { borderColor: C.borde, timeVisible: true, rightOffset: 2 },
+      timeScale: {
+        borderColor: C.borde,
+        timeVisible: true,
+        rightOffset: 3,
+        barSpacing: 10,
+        maxBarSpacing: 18,
+      },
       crosshair: {
         vertLine: { color: C.cruz, labelBackgroundColor: C.etiqueta },
         horzLine: { color: C.cruz, labelBackgroundColor: C.etiqueta },
@@ -368,7 +374,7 @@ export const FinancialChart = ({ entidadNombre, ticker }) => {
       const entry = entries[0];
       if (entry && chartRef.current) {
         const { width } = entry.contentRect;
-        const h = window.innerWidth < 640 ? 280 : 380;
+        const h = window.innerWidth < 640 ? 270 : 380;
         chartRef.current.applyOptions({ width, height: h });
       }
     });
@@ -420,9 +426,9 @@ export const FinancialChart = ({ entidadNombre, ticker }) => {
   return (
     <div className="grafica-wrapper">
       <div className="grafica-card-container">
-        {/* Cabecera superior */}
+        {/* Cabecera superior unificada */}
         <div className="grafica-header-top">
-          <div>
+          <div className="grafica-header-left">
             <div className="grafica-title-row">
               <h1 className="grafica-title">{nombreMostrado}</h1>
               <span className="grafica-ticker mono-num">{codigoMostrado}</span>
@@ -437,31 +443,6 @@ export const FinancialChart = ({ entidadNombre, ticker }) => {
                 </span>
               )}
             </div>
-          </div>
-
-          <div className="grafica-header-right-group">
-            <div className="grafica-entidad-selector-wrapper">
-              <label htmlFor="selector-entidad-grafica" className="grafica-selector-label">
-                Entidad
-              </label>
-              <select
-                id="selector-entidad-grafica"
-                className="grafica-select-entidad"
-                value={entidadActiva?.codigo ?? entidadActiva?.codigo_entidad ?? ''}
-                onChange={handleEntidadChange}
-                disabled={listaEntidades.length === 0}
-              >
-                {listaEntidades.length === 0 ? (
-                  <option value="">{cargandoEntidades ? 'Cargando entidades…' : 'Sin entidades'}</option>
-                ) : (
-                  listaEntidades.map((ent) => (
-                    <option key={ent.codigo ?? ent.codigo_entidad} value={ent.codigo ?? ent.codigo_entidad}>
-                      {ent.nombre ?? ent.nombre_entidad} · {ent.codigo ?? ent.codigo_entidad}
-                    </option>
-                  ))
-                )}
-              </select>
-            </div>
 
             <div className="grafica-price-display-box">
               <span className="grafica-main-value mono-num">
@@ -472,130 +453,157 @@ export const FinancialChart = ({ entidadNombre, ticker }) => {
               </span>
             </div>
           </div>
+
+          <div className="grafica-header-right-group">
+            <select
+              id="selector-entidad-grafica"
+              className="grafica-select-entidad"
+              value={entidadActiva?.codigo ?? entidadActiva?.codigo_entidad ?? ''}
+              onChange={handleEntidadChange}
+              disabled={listaEntidades.length === 0}
+              aria-label="Seleccionar entidad"
+            >
+              {listaEntidades.length === 0 ? (
+                <option value="">{cargandoEntidades ? 'Cargando entidades…' : 'Sin entidades'}</option>
+              ) : (
+                listaEntidades.map((ent) => (
+                  <option key={ent.codigo ?? ent.codigo_entidad} value={ent.codigo ?? ent.codigo_entidad}>
+                    {ent.nombre ?? ent.nombre_entidad} · {ent.codigo ?? ent.codigo_entidad}
+                  </option>
+                ))
+              )}
+            </select>
+          </div>
         </div>
 
-        {/* Fila de controles (Velas/Línea y Periodos) */}
-        <div className="grafica-controls-row">
-          <div className="grafica-type-toggle" role="group" aria-label="Tipo de gráfica">
-            <button
-              type="button"
-              onClick={() => setTipoGrafica('velas')}
-              className={`grafica-toggle-btn ${tipoGrafica === 'velas' ? 'active' : ''}`}
-            >
-              Velas
-            </button>
-            <button
-              type="button"
-              onClick={() => setTipoGrafica('linea')}
-              className={`grafica-toggle-btn ${tipoGrafica === 'linea' ? 'active' : ''}`}
-            >
-              Línea
-            </button>
-          </div>
+        {/* Layout Split de Terminal en Pantallas Grandes (>= 1100px) */}
+        <div className="grafica-terminal-grid">
+          <div className="grafica-terminal-main">
+            {/* Fila de controles (Velas/Línea y Periodos) */}
+            <div className="grafica-controls-row">
+              <div className="grafica-type-toggle" role="group" aria-label="Tipo de gráfica">
+                <button
+                  type="button"
+                  onClick={() => setTipoGrafica('velas')}
+                  className={`grafica-toggle-btn ${tipoGrafica === 'velas' ? 'active' : ''}`}
+                >
+                  Velas
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setTipoGrafica('linea')}
+                  className={`grafica-toggle-btn ${tipoGrafica === 'linea' ? 'active' : ''}`}
+                >
+                  Línea
+                </button>
+              </div>
 
-          <div className="grafica-period-group" role="group" aria-label="Periodo de tiempo">
-            {PERIODOS.map((p) => (
-              <button
-                type="button"
-                key={p.id}
-                onClick={() => handlePeriodoChange(p.id)}
-                className={`grafica-period-btn ${periodo === p.id ? 'active' : ''}`}
+              <div className="grafica-period-group" role="group" aria-label="Periodo de tiempo">
+                {PERIODOS.map((p) => (
+                  <button
+                    type="button"
+                    key={p.id}
+                    onClick={() => handlePeriodoChange(p.id)}
+                    className={`grafica-period-btn ${periodo === p.id ? 'active' : ''}`}
+                  >
+                    {p.nombre}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Lienzo de la Gráfica o Estados de Carga / Error */}
+            {cargando && serieOhlc.length === 0 && (
+              <div
+                role="status"
+                style={{
+                  height: '380px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  borderRadius: '8px',
+                  border: '1px dashed var(--color-border)',
+                  color: 'var(--color-text-muted)',
+                  fontSize: '14px',
+                }}
               >
-                {p.nombre}
-              </button>
-            ))}
-          </div>
-        </div>
+                Cargando serie histórica OHLC…
+              </div>
+            )}
 
-        {/* Lienzo de la Gráfica o Estados de Carga / Error */}
-        {cargando && serieOhlc.length === 0 && (
-          <div
-            role="status"
-            style={{
-              height: '400px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              borderRadius: '12px',
-              border: '1px dashed var(--color-border)',
-              color: 'var(--color-text-muted)',
-              fontSize: '15px',
-            }}
-          >
-            Cargando serie histórica OHLC…
-          </div>
-        )}
+            {!cargando && errorOhlc && (
+              <div
+                role="alert"
+                style={{
+                  height: '380px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  borderRadius: '8px',
+                  border: '1px solid var(--rojo-bajada, #D9534F)',
+                  backgroundColor: 'rgba(217, 83, 79, 0.08)',
+                  color: 'var(--rojo-bajada, #D9534F)',
+                  padding: '24px',
+                  textAlign: 'center',
+                  fontSize: '14px',
+                  fontWeight: 500,
+                }}
+              >
+                {errorOhlc}
+              </div>
+            )}
 
-        {!cargando && errorOhlc && (
-          <div
-            role="alert"
-            style={{
-              height: '400px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              borderRadius: '12px',
-              border: '1px solid var(--rojo-bajada, #D9534F)',
-              backgroundColor: 'rgba(217, 83, 79, 0.08)',
-              color: 'var(--rojo-bajada, #D9534F)',
-              padding: '24px',
-              textAlign: 'center',
-              fontSize: '15px',
-              fontWeight: 500,
-            }}
-          >
-            {errorOhlc}
-          </div>
-        )}
+            <div
+              ref={chartContainerRef}
+              style={{
+                width: '100%',
+                borderRadius: '8px',
+                overflow: 'hidden',
+                display: serieOhlc.length > 0 ? 'block' : 'none',
+              }}
+            />
 
-        <div
-          ref={chartContainerRef}
-          style={{
-            width: '100%',
-            borderRadius: '12px',
-            overflow: 'hidden',
-            display: serieOhlc.length > 0 ? 'block' : 'none',
-          }}
-        />
-
-        {/* Tarjetas inferiores OHLC */}
-        <div className="grafica-cards-grid">
-          <div className="grafica-stat-card">
-            <span className="grafica-stat-label">Fecha</span>
-            <strong className="grafica-stat-value mono-num">{fechaIso(datoMostrar?.time) || '—'}</strong>
-          </div>
-          <div className="grafica-stat-card">
-            <span className="grafica-stat-label">Apertura</span>
-            <strong className="grafica-stat-value mono-num">{num(datoMostrar?.open, 1)}</strong>
-          </div>
-          <div className="grafica-stat-card">
-            <span className="grafica-stat-label">Máximo</span>
-            <strong className="grafica-stat-value mono-num">{num(datoMostrar?.high, 1)}</strong>
-          </div>
-          <div className="grafica-stat-card">
-            <span className="grafica-stat-label">Mínimo</span>
-            <strong className="grafica-stat-value mono-num">{num(datoMostrar?.low, 1)}</strong>
-          </div>
-          <div className="grafica-stat-card">
-            <span className="grafica-stat-label">Cierre del día</span>
-            <div className="grafica-stat-val-row">
-              <strong className="grafica-stat-value mono-num">{num(datoMostrar?.close, 1)}</strong>
-              <span className={`grafica-stat-change-tag mono-num ${bajaVela ? 'baja' : !subeVela ? 'igual' : ''}`}>
-                {variacionVela === null ? '–' : subeVela ? '▲' : bajaVela ? '▼' : '–'} {pct(variacionVela)}
-              </span>
+            {/* Tira OHLC compacta continua (Data Ribbon) */}
+            <div className="grafica-cards-grid" role="region" aria-label="Datos de sesión OHLC">
+              <div className="grafica-stat-card">
+                <span className="grafica-stat-label">Fecha</span>
+                <strong className="grafica-stat-value mono-num">{fechaIso(datoMostrar?.time) || '—'}</strong>
+              </div>
+              <div className="grafica-stat-card">
+                <span className="grafica-stat-label">Apertura</span>
+                <strong className="grafica-stat-value mono-num">{num(datoMostrar?.open, 1)}</strong>
+              </div>
+              <div className="grafica-stat-card">
+                <span className="grafica-stat-label">Máximo</span>
+                <strong className="grafica-stat-value mono-num">{num(datoMostrar?.high, 1)}</strong>
+              </div>
+              <div className="grafica-stat-card">
+                <span className="grafica-stat-label">Mínimo</span>
+                <strong className="grafica-stat-value mono-num">{num(datoMostrar?.low, 1)}</strong>
+              </div>
+              <div className="grafica-stat-card">
+                <span className="grafica-stat-label">Cierre</span>
+                <div className="grafica-stat-val-row">
+                  <strong className="grafica-stat-value mono-num">{num(datoMostrar?.close, 1)}</strong>
+                  <span className={`grafica-stat-change-tag mono-num ${bajaVela ? 'baja' : !subeVela ? 'igual' : ''}`}>
+                    {variacionVela === null ? '–' : subeVela ? '▲' : bajaVela ? '▼' : '–'} {pct(variacionVela)}
+                  </span>
+                </div>
+              </div>
             </div>
           </div>
+
+          <div className="grafica-terminal-side">
+            {/* Sección de Métricas por Dimensión (HU-FE-03 CA 1 y CA 2) */}
+            <MetricasPorDimension
+              metricas={metricasEntidad}
+              cargando={cargandoMetricas}
+              error={errorMetricas}
+              periodo={nombrePeriodo(periodo)}
+              onSeleccionarMetrica={(m) => setMetricaSeleccionada(m)}
+            />
+          </div>
         </div>
-
-
-        {/* Sección de Métricas por Dimensión (HU-FE-03 CA 1 y CA 2) */}
-        <MetricasPorDimension
-          metricas={metricasEntidad}
-          cargando={cargandoMetricas}
-          error={errorMetricas}
-          periodo={nombrePeriodo(periodo)}
-          onSeleccionarMetrica={(m) => setMetricaSeleccionada(m)}
-        />
       </div>
 
       {/* Modal Interactivo de Detalle y Fórmula de Métrica (HU-FE-03 CA 3) */}

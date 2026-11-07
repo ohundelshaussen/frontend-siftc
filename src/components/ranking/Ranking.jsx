@@ -69,7 +69,19 @@ export default function Ranking() {
     }
   }, [clave]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  const filas = useMemo(() => (datos ? ordenar(datos.items ?? [], orden, dir) : null), [datos, orden, dir])
+  const filas = useMemo(() => {
+    if (!datos?.items) return null
+    let lista = [...datos.items]
+
+    // Filtrado defensivo en el cliente si el backend no lo aplicó
+    if (sector) {
+      lista = lista.filter(
+        (item) => String(item.sector).trim().toLowerCase() === sector.trim().toLowerCase(),
+      )
+    }
+
+    return ordenar(lista, orden, dir)
+  }, [datos, sector, orden, dir])
 
   // los filtros se guardan en la url
   const cambiar = (cambios) => {
@@ -160,7 +172,7 @@ export default function Ranking() {
       {!error && filas && (
         <RankingTabla
           filas={filas}
-          total={datos.total ?? filas.length}
+          total={sector ? filas.length : (datos.total ?? filas.length)}
           orden={orden}
           dir={dir}
           dimension={dimension}

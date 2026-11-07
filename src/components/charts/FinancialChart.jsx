@@ -177,7 +177,12 @@ export const FinancialChart = ({ entidadNombre, ticker }) => {
       setErrorMetricas('');
     });
 
-    getMetricas({ periodo, size: 100 })
+    const params = { periodo, size: 100 };
+    if (entidadActiva?.sector) {
+      params.sector = entidadActiva.sector;
+    }
+
+    getMetricas(params)
       .then((res) => {
         if (!activo) return;
         const lista = Array.isArray(res) ? res : res?.items ?? [];
@@ -196,7 +201,7 @@ export const FinancialChart = ({ entidadNombre, ticker }) => {
     return () => {
       activo = false;
     };
-  }, [periodo]);
+  }, [periodo, entidadActiva?.sector]);
 
   const metricasEntidad = useMemo(() => {
     if (!entidadActiva || metricasServidor.length === 0) return [];

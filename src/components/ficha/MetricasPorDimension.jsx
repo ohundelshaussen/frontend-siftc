@@ -97,10 +97,10 @@ export default function MetricasPorDimension({
         <div className="ficha-metricas-vacia" role="status">
           <Info size={20} aria-hidden="true" />
           <div>
-            <strong>Sin métricas registradas en este periodo</strong>
+            <strong>Corte analítico en consolidación</strong>
             <p>
-              El servidor no reporta métricas individuales para esta entidad en la frecuencia {periodo}.
-              Prueba cambiando el periodo temporal en los botones superiores.
+              El corte analítico para esta entidad en la frecuencia {periodo} se encuentra en proceso de consolidación por el backend.
+              Puedes consultar otros periodos disponibles (Diaria, Mensual o Trimestral).
             </p>
           </div>
         </div>

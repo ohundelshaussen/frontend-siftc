@@ -172,10 +172,11 @@ export async function getTop() {
 }
 
 // GET /api/v1/entidades/{id}/ohlc
-// Parámetros en docs/api/openapi-v1.json: id (uuid en ruta), periodo ('Diaria' | 'Mensual' | 'Trimestral')
+// Parámetros en docs/api/openapi-v1.json: id (uuid en ruta), periodo ('diario' | 'mensual' | 'trimestral')
 export async function getOhlc(id, periodo = PERIODO_POR_DEFECTO) {
+  const periodoNormalizado = String(periodo ?? PERIODO_POR_DEFECTO).toLowerCase()
   const res = await conReintentoDeArranque(() =>
-    http.get(ENDPOINTS.ohlc(id), { params: { periodo } }),
+    http.get(ENDPOINTS.ohlc(id), { params: { periodo: periodoNormalizado } }),
   )
   return aSerieOhlc(res.data)
 }
@@ -243,7 +244,7 @@ export async function getDimensiones() {
   return derivadas.length > 0 ? derivadas : DIMENSIONES_RANKING
 }
 
-// Periodos: opciones documentadas en docs/api/openapi-v1.json ('Diaria', 'Mensual', 'Trimestral')
+// Periodos: opciones documentadas en docs/api/openapi-v1.json ('diario', 'mensual', 'trimestral')
 export async function getPeriodos() {
   return PERIODOS
 }

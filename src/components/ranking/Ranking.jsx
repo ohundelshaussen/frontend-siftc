@@ -105,9 +105,6 @@ export default function Ranking() {
     <div className="ranking">
       <header>
         <h1 className="titulo-pagina">Ranking de competitividad</h1>
-        <p className="texto-suave">
-          Entidades ordenadas por Índice de Competitividad (IC). Haz clic en el título de una columna para ordenar.
-        </p>
       </header>
 
       <section className="tarjeta filtros" aria-label="Filtros del ranking">
@@ -160,9 +157,6 @@ export default function Ranking() {
             disponible. El ranking que ves usa el Índice de Competitividad general.
           </p>
         )}
-        <p className="texto-suave nota-url">
-          Los filtros quedan guardados en la dirección: si recargas o compartes el enlace, se conservan.
-        </p>
       </section>
 
       {error && (

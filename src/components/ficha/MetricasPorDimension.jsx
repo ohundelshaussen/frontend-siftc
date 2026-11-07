@@ -92,7 +92,6 @@ export default function MetricasPorDimension({
         <div className="ficha-metricas-cabecera">
           <div>
             <h2 className="ficha-metricas-titulo">Métricas por Dimensión</h2>
-            <p className="ficha-metricas-subtitulo">Consultando indicadores oficiales…</p>
           </div>
         </div>
         <div className="ficha-metricas-estado" role="status">
@@ -108,7 +107,6 @@ export default function MetricasPorDimension({
         <div className="ficha-metricas-cabecera">
           <div>
             <h2 className="ficha-metricas-titulo">Métricas por Dimensión</h2>
-            <p className="ficha-metricas-subtitulo">Indicadores financieros y operativos</p>
           </div>
         </div>
         <div className="ficha-metricas-alerta-error" role="alert">
@@ -125,7 +123,6 @@ export default function MetricasPorDimension({
         <div className="ficha-metricas-cabecera">
           <div>
             <h2 className="ficha-metricas-titulo">Métricas por Dimensión</h2>
-            <p className="ficha-metricas-subtitulo">Indicadores financieros y de competitividad</p>
           </div>
         </div>
         <div className="ficha-metricas-vacia" role="status">
@@ -147,9 +144,6 @@ export default function MetricasPorDimension({
       <div className="ficha-metricas-cabecera">
         <div>
           <h2 className="ficha-metricas-titulo">Métricas por Dimensión</h2>
-          <p className="ficha-metricas-subtitulo">
-            Indicadores oficiales ({periodo}) · Selecciona una celda para consultar fórmula y linaje
-          </p>
         </div>
         <span className="ficha-metricas-total-badge mono-num">
           {totalUnicas} {totalUnicas === 1 ? 'indicador' : 'indicadores'}
@@ -174,13 +168,11 @@ export default function MetricasPorDimension({
 
             <div className="ficha-metricas-grid">
               {items.map((m) => {
-                const { rawNorm, escala100, pctNorm } = aEscala100(m.valorNormalizado)
+                const { escala100, pctNorm } = aEscala100(m.valorNormalizado)
                 const tieneNorm = m.valorNormalizado !== null && m.valorNormalizado !== undefined
                 const textoPuntaje = !tieneNorm
                   ? '—'
-                  : rawNorm >= 0 && rawNorm <= 1
-                    ? `${num(escala100, 1)} pts (${num(rawNorm, 2)})`
-                    : `${num(escala100, 1)} pts`
+                  : `${num(escala100, 1)} pts`
 
                 return (
                   <button
@@ -195,9 +187,6 @@ export default function MetricasPorDimension({
                         <span className="ficha-metrica-tag-codigo mono-num">
                           {m.codigoMetrica}
                         </span>
-                        {m.frecuencia && (
-                          <span className="ficha-metrica-tag-frec">{m.frecuencia}</span>
-                        )}
                       </div>
                       <span className="ficha-metrica-indicador-accion" aria-hidden="true">
                         →
@@ -210,7 +199,6 @@ export default function MetricasPorDimension({
 
                     <div className="ficha-metrica-card-valores">
                       <div className="ficha-metrica-card-dato">
-                        <span className="ficha-metrica-card-label">Valor crudo</span>
                         <strong className="ficha-metrica-card-val mono-num">
                           {m.valor !== null && m.valor !== undefined
                             ? num(m.valor, 2)
@@ -219,7 +207,6 @@ export default function MetricasPorDimension({
                       </div>
 
                       <div className="ficha-metrica-card-dato ficha-metrica-card-dato-derecha">
-                        <span className="ficha-metrica-card-label">Puntaje</span>
                         <strong className="ficha-metrica-card-score mono-num">
                           {textoPuntaje}
                         </strong>

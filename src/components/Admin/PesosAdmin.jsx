@@ -101,9 +101,6 @@ export default function PesosAdmin() {
       <div className="adm-seccion-cabecera">
         <div>
           <h2 id="adm-pesos-titulo">Pesos del índice de competitividad</h2>
-          <p className="adm-texto-suave">
-            Define cuánto aporta cada dimensión al índice (0 a 100). Los pesos deben sumar exactamente 100 %.
-          </p>
         </div>
       </div>
 

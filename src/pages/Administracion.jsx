@@ -2,7 +2,6 @@ import { useSearchParams } from 'react-router-dom'
 import { Users, SlidersHorizontal, ShieldCheck } from 'lucide-react'
 import UsuariosAdmin from '../components/Admin/UsuariosAdmin'
 import PesosAdmin from '../components/Admin/PesosAdmin'
-import { API_BASE_URL } from '../services/api'
 import '../components/Admin/Admin.css'
 
 // HU-FE-07 Usuarios, roles y parámetros
@@ -33,7 +32,6 @@ export default function Administracion() {
         <span className="adm-cabecera-icono" aria-hidden="true"><ShieldCheck size={26} /></span>
         <div>
           <h1 className="adm-titulo">Administración</h1>
-          <p className="adm-texto-suave">Gestiona usuarios, roles y parámetros del sistema.</p>
         </div>
       </header>
 
@@ -54,10 +52,6 @@ export default function Administracion() {
           </button>
         ))}
       </div>
-
-      <p className="adm-conexion">
-        <span className="adm-punto" aria-hidden="true" /> Conectado al backend: <code>{API_BASE_URL}</code>
-      </p>
 
       <div id={`adm-panel-${activa}`} role="tabpanel" aria-labelledby={`adm-tab-${activa}`}>
         {activa === 'usuarios' ? <UsuariosAdmin /> : <PesosAdmin />}

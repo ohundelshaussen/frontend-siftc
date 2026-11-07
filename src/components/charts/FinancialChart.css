@@ -240,7 +240,7 @@ html[data-theme='dark'] .grafica-period-btn.active {
 /* Tarjetas Inferiores OHLC en 5 columnas (estilo barra de datos compacta) */
 .grafica-cards-grid {
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
   gap: 10px;
   margin-top: 18px;
 }
@@ -309,6 +309,7 @@ html[data-theme='dark'] .grafica-stat-card {
 }
 
 @media (max-width: 768px) {
+  .grafica-header-top { width: 100%; }
   .grafica-card-container { padding: 14px 12px; border-radius: 8px; }
   .grafica-title { font-size: 20px; }
   .grafica-main-value { font-size: 24px; }

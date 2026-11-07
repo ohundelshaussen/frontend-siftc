@@ -90,8 +90,8 @@ export default function RankingTabla({ filas, total, orden, dir, dimension, peri
           </tbody>
         </table>
       </div>
-      <p className="texto-suave pie">
-        Mostrando {filas.length} de {total} entidades · Periodo {periodo.toLowerCase()} · Clic en una entidad para ver su gráfica
+      <p className="texto-suave pie mono-num">
+        {filas.length} de {total} entidades · {periodo}
       </p>
     </section>
   )

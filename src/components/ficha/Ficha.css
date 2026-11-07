@@ -172,7 +172,7 @@
 /* Rejilla de tarjetas de métricas (alta densidad, cero elevación artificial) */
 .ficha-metricas-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
   gap: 10px;
 }
 
@@ -608,5 +608,11 @@ html[data-theme='dark'] .ficha-modal-btn-cerrar:hover {
   }
   .ficha-modal-tarjeta {
     padding: 18px;
+  }
+}
+
+@media (max-width: 480px) {
+  .ficha-metricas-grid {
+    grid-template-columns: 1fr;
   }
 }

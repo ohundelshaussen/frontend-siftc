@@ -310,9 +310,10 @@ export const FinancialChart = ({ entidadNombre, ticker }) => {
   useEffect(() => {
     if (!chartContainerRef.current || serieOhlc.length === 0) return undefined;
 
+    const chartHeight = window.innerWidth < 640 ? 280 : 380;
     const chart = createChart(chartContainerRef.current, {
       width: chartContainerRef.current.clientWidth,
-      height: 400,
+      height: chartHeight,
       layout: {
         background: { type: ColorType.Solid, color: C.fondo },
         textColor: C.texto,
@@ -363,15 +364,18 @@ export const FinancialChart = ({ entidadNombre, ticker }) => {
       if (dataPoint) setHoverData(dataPoint);
     });
 
-    const handleResize = () => {
-      if (chartContainerRef.current) {
-        chart.applyOptions({ width: chartContainerRef.current.clientWidth });
+    const ro = new ResizeObserver((entries) => {
+      const entry = entries[0];
+      if (entry && chartRef.current) {
+        const { width } = entry.contentRect;
+        const h = window.innerWidth < 640 ? 280 : 380;
+        chartRef.current.applyOptions({ width, height: h });
       }
-    };
-    window.addEventListener('resize', handleResize);
+    });
+    ro.observe(chartContainerRef.current);
 
     return () => {
-      window.removeEventListener('resize', handleResize);
+      ro.disconnect();
       chart.remove();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -419,7 +423,6 @@ export const FinancialChart = ({ entidadNombre, ticker }) => {
         {/* Cabecera superior */}
         <div className="grafica-header-top">
           <div>
-            <div className="grafica-breadcrumb">Gráficas / {nombreMostrado}</div>
             <div className="grafica-title-row">
               <h1 className="grafica-title">{nombreMostrado}</h1>
               <span className="grafica-ticker mono-num">{codigoMostrado}</span>
@@ -427,10 +430,10 @@ export const FinancialChart = ({ entidadNombre, ticker }) => {
               {infoRanking && (
                 <span
                   className="grafica-badge-ranking"
-                  title={`Puesto #${infoRanking.puesto} de ${infoRanking.total} en el ranking (${nombrePeriodo(periodo)})`}
+                  title={`#${infoRanking.puesto} / ${infoRanking.total} (${nombrePeriodo(periodo)})`}
                 >
                   <Trophy size={14} aria-hidden="true" />
-                  <span>Puesto #{infoRanking.puesto} de {infoRanking.total}</span>
+                  <span>#{infoRanking.puesto} / {infoRanking.total}</span>
                 </span>
               )}
             </div>
@@ -584,9 +587,6 @@ export const FinancialChart = ({ entidadNombre, ticker }) => {
           </div>
         </div>
 
-        <div className="grafica-footer-note">
-          Serie del Índice de Competitividad ({nombrePeriodo(periodo)}) · Pasa el cursor sobre la gráfica para ver el detalle de cada sesión.
-        </div>
 
         {/* Sección de Métricas por Dimensión (HU-FE-03 CA 1 y CA 2) */}
         <MetricasPorDimension

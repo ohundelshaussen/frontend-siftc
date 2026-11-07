@@ -34,7 +34,7 @@ export default function useComparacion(entidades) {
   const periodo = normalizarPeriodo(params.get(PARAM_PERIODO) ?? ultima.periodo, PERIODOS, PERIODO_POR_DEFECTO)
 
   const listo = Array.isArray(entidades)
-  const codigosValidos = useMemo(() => (listo ? entidades.map((e) => e.codigo_entidad) : []), [listo, entidades])
+  const codigosValidos = useMemo(() => (listo ? entidades.map((e) => e.codigo ?? e.codigo_entidad) : []), [listo, entidades])
   const saneado = useMemo(
     () => (listo ? sanearSeleccion(pedidos, codigosValidos) : { seleccion: [], excedentes: [], desconocidos: [] }),
     [listo, pedidos, codigosValidos],

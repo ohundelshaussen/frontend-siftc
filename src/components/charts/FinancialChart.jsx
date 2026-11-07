@@ -65,8 +65,8 @@ export const FinancialChart = ({ entidadNombre, ticker }) => {
       const limpio = buscado.replace('-', '');
       const encontrada = listaEntidades.find(
         (e, idx) =>
-          String(e.codigo_entidad).toUpperCase() === buscado ||
-          String(e.codigo_entidad).toUpperCase() === limpio ||
+          String(e.codigo ?? e.codigo_entidad).toUpperCase() === buscado ||
+          String(e.codigo ?? e.codigo_entidad).toUpperCase() === limpio ||
           String(e.id).toUpperCase() === buscado ||
           String(idx + 1) === parametroUrl.trim(),
       );
@@ -220,13 +220,13 @@ export const FinancialChart = ({ entidadNombre, ticker }) => {
   };
 
   const cargando = cargandoEntidades || cargandoOhlc;
-  const nombreMostrado = entidadActiva?.nombre_entidad ?? entidadNombre ?? (cargando ? 'Cargando…' : 'Sin entidad');
-  const codigoMostrado = entidadActiva?.codigo_entidad ?? ticker ?? '—';
+  const nombreMostrado = entidadActiva?.nombre ?? entidadActiva?.nombre_entidad ?? entidadNombre ?? (cargando ? 'Cargando…' : 'Sin entidad');
+  const codigoMostrado = entidadActiva?.codigo ?? entidadActiva?.codigo_entidad ?? ticker ?? '—';
   const sectorMostrado = entidadActiva?.sector ?? '—';
 
   const ultimoDato = serieOhlc[serieOhlc.length - 1];
   const datoMostrar = hoverData || ultimoDato;
-  const variacionEntidad = entidadActiva?.variacion_porcentual ?? null;
+  const variacionEntidad = entidadActiva?.variacionPct ?? entidadActiva?.variacion_porcentual ?? null;
   const sube = Number(variacionEntidad) > 0;
   const baja = Number(variacionEntidad) < 0;
   const simboloVar = variacionEntidad === null ? '–' : sube ? '▲' : baja ? '▼' : '–';
@@ -260,7 +260,7 @@ export const FinancialChart = ({ entidadNombre, ticker }) => {
               <select
                 id="selector-entidad-grafica"
                 className="grafica-select-entidad"
-                value={entidadActiva?.codigo_entidad ?? ''}
+                value={entidadActiva?.codigo ?? entidadActiva?.codigo_entidad ?? ''}
                 onChange={handleEntidadChange}
                 disabled={listaEntidades.length === 0}
               >
@@ -268,8 +268,8 @@ export const FinancialChart = ({ entidadNombre, ticker }) => {
                   <option value="">{cargandoEntidades ? 'Cargando entidades…' : 'Sin entidades'}</option>
                 ) : (
                   listaEntidades.map((ent) => (
-                    <option key={ent.codigo_entidad} value={ent.codigo_entidad}>
-                      {ent.nombre_entidad} · {ent.codigo_entidad}
+                    <option key={ent.codigo ?? ent.codigo_entidad} value={ent.codigo ?? ent.codigo_entidad}>
+                      {ent.nombre ?? ent.nombre_entidad} · {ent.codigo ?? ent.codigo_entidad}
                     </option>
                   ))
                 )}
@@ -278,7 +278,7 @@ export const FinancialChart = ({ entidadNombre, ticker }) => {
 
             <div className="grafica-price-display-box">
               <span className="grafica-main-value mono-num">
-                {num(entidadActiva?.indice_competitividad, 1)}
+                {num(entidadActiva?.ic ?? entidadActiva?.indice_competitividad, 1)}
               </span>
               <span className={`grafica-main-change mono-num ${claseVariacion}`}>
                 {simboloVar} {pct(variacionEntidad)}

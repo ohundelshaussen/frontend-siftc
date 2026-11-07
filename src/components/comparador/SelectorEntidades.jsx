@@ -14,7 +14,9 @@ export default function SelectorEntidades({ entidades, seleccion, lleno, onAlter
   const filtradas = useMemo(() => {
     const texto = sinTildes(busqueda.trim())
     if (!texto) return entidades
-    return entidades.filter((e) => sinTildes(`${e.nombre_entidad} ${e.codigo_entidad} ${e.sector}`).includes(texto))
+    return entidades.filter((e) =>
+      sinTildes(`${e.nombre ?? e.nombre_entidad} ${e.codigo ?? e.codigo_entidad} ${e.sector}`).includes(texto)
+    )
   }, [entidades, busqueda])
 
   return (
@@ -44,25 +46,28 @@ export default function SelectorEntidades({ entidades, seleccion, lleno, onAlter
       ) : (
         <ul className="cmp-lista" aria-label="Entidades disponibles">
           {filtradas.map((e) => {
-            const elegida = seleccion.includes(e.codigo_entidad)
+            const cod = e.codigo ?? e.codigo_entidad
+            const nom = e.nombre ?? e.nombre_entidad
+            const ic = e.ic ?? e.indice_competitividad
+            const elegida = seleccion.includes(cod)
             const bloqueada = lleno && !elegida
             return (
-              <li key={e.codigo_entidad}>
+              <li key={cod}>
                 <button
                   type="button"
                   className={`cmp-opcion${elegida ? ' elegida' : ''}${bloqueada ? ' bloqueada' : ''}`}
                   aria-pressed={elegida}
                   aria-disabled={bloqueada || undefined}
                   title={bloqueada ? `Ya hay ${MAX_ENTIDADES} entidades. Quita una para agregar otra.` : undefined}
-                  onClick={() => onAlternar(e.codigo_entidad)}
+                  onClick={() => onAlternar(cod)}
                 >
                   <span className="cmp-check" aria-hidden="true">{elegida ? '✓' : ''}</span>
                   <span className="cmp-opcion-texto">
-                    <span className="cmp-opcion-nombre">{e.nombre_entidad}</span>
-                    <small className="mono-num">{e.codigo_entidad} · {e.sector}</small>
+                    <span className="cmp-opcion-nombre">{nom}</span>
+                    <small className="mono-num">{cod} · {e.sector}</small>
                   </span>
                   <span className="cmp-opcion-ic mono-num">
-                    <span className="cmp-sr">IC </span>{num(e.indice_competitividad, 1)}
+                    <span className="cmp-sr">IC </span>{num(ic, 1)}
                   </span>
                 </button>
               </li>

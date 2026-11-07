@@ -50,11 +50,11 @@ export default function Comparador() {
   const errorEntidades = !cargandoEntidades && respEntidades.error
   const entidades = useMemo(
     () => (!cargandoEntidades && respEntidades.lista
-      ? [...respEntidades.lista].sort((a, b) => String(a.nombre_entidad).localeCompare(String(b.nombre_entidad), 'es'))
+      ? [...respEntidades.lista].sort((a, b) => String(a.nombre ?? a.nombre_entidad).localeCompare(String(b.nombre ?? b.nombre_entidad), 'es'))
       : null),
     [cargandoEntidades, respEntidades.lista],
   )
-  const porCodigo = useMemo(() => new Map((entidades ?? []).map((e) => [e.codigo_entidad, e])), [entidades])
+  const porCodigo = useMemo(() => new Map((entidades ?? []).map((e) => [e.codigo ?? e.codigo_entidad, e])), [entidades])
 
   // --- Selección (CA 1 y CA 3) ---
   const comp = useComparacion(entidades)
@@ -66,7 +66,7 @@ export default function Comparador() {
     () => comp.seleccion
       .map((codigo, i) => ({ codigo, entidad: porCodigo.get(codigo), serie: SERIES_COMPARADOR[i] }))
       .filter((x) => x.entidad)
-      .map(({ codigo, entidad, serie }) => ({ id: entidad.id, codigo, nombre: entidad.nombre_entidad, sector: entidad.sector, entidad, serie })),
+      .map(({ codigo, entidad, serie }) => ({ id: entidad.id, codigo, nombre: entidad.nombre ?? entidad.nombre_entidad, sector: entidad.sector, entidad, serie })),
     [comp.seleccion, porCodigo],
   )
 
@@ -104,8 +104,8 @@ export default function Comparador() {
   const filas = useMemo(() => elegidas.map((e) => {
     const general = rankingVigente ? respRanking.general?.get(e.id) : undefined
     const valores = {
-      ic: aNumeroONulo(general?.ic) ?? aNumeroONulo(e.entidad.indice_competitividad),
-      variacionPct: aNumeroONulo(general?.variacionPct) ?? aNumeroONulo(e.entidad.variacion_porcentual),
+      ic: aNumeroONulo(general?.ic) ?? aNumeroONulo(e.entidad.ic ?? e.entidad.indice_competitividad),
+      variacionPct: aNumeroONulo(general?.variacionPct) ?? aNumeroONulo(e.entidad.variacionPct ?? e.entidad.variacion_porcentual),
       posicion: aNumeroONulo(general?.posicion),
     }
     for (const d of DIMENSIONES_COMPARADOR) {
@@ -117,7 +117,7 @@ export default function Comparador() {
   const sinDimensiones = rankingVigente && filas.length > 0
     && DIMENSIONES_COMPARADOR.every((d) => filas.every((f) => f.valores[d] === null))
 
-  const nombreDe = (codigo) => porCodigo.get(codigo)?.nombre_entidad ?? codigo
+  const nombreDe = (codigo) => porCodigo.get(codigo)?.nombre ?? porCodigo.get(codigo)?.nombre_entidad ?? codigo
   const huecos = Math.max(0, MAX_ENTIDADES - elegidas.length)
 
   return (

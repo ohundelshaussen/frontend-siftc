@@ -14,8 +14,10 @@ export default function MetricaDetalleModal({ metrica, onCerrar }) {
 
   if (!metrica) return null
 
-  const valorNorm = Number(metrica.valorNormalizado ?? 0)
-  const pctNorm = Math.min(100, Math.max(0, valorNorm))
+  const rawNorm = Number(metrica.valorNormalizado ?? 0)
+  const escala100 = rawNorm > 0 && rawNorm <= 1 ? rawNorm * 100 : rawNorm
+  const pctNorm = Math.min(100, Math.max(0, escala100))
+  const tieneNorm = metrica.valorNormalizado !== null && metrica.valorNormalizado !== undefined
 
   return (
     <div
@@ -89,8 +91,8 @@ export default function MetricaDetalleModal({ metrica, onCerrar }) {
             </span>
             <div className="ficha-modal-dato-norm-row">
               <strong className="ficha-modal-dato-valor mono-num">
-                {metrica.valorNormalizado !== null && metrica.valorNormalizado !== undefined
-                  ? `${num(metrica.valorNormalizado, 1)} pts`
+                {tieneNorm
+                  ? `${num(escala100, 1)} / 100 pts (${num(rawNorm, 4)})`
                   : '—'}
               </strong>
             </div>

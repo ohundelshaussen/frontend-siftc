@@ -5,22 +5,24 @@ export const ROLES = {
   GERENTE: 'Gerente / Directivo',
   AUDITOR: 'Auditor',
   USUARIO_CONSULTA: 'Usuario de consulta',
+  USUARIO_MOVIL: 'Usuario de consulta',
 }
 
-export const ROLES_LISTA = Object.values(ROLES)
+export const ROLES_LISTA = [...new Set(Object.values(ROLES))]
 
-// Mapa de alias para mantener compatibilidad con tokens que traigan variantes previas
+// Mapa de alias para mantener compatibilidad bidireccional entre 'Usuario móvil', 'Usuario de consulta' y 'Gerente'
 const ALIAS_ROLES = {
-  Gerente: ROLES.GERENTE,
-  'Gerente / Directivo': ROLES.GERENTE,
-  'Usuario móvil': ROLES.USUARIO_CONSULTA,
-  'Usuario movil': ROLES.USUARIO_CONSULTA,
-  'Usuario de consulta': ROLES.USUARIO_CONSULTA,
+  gerente: ROLES.GERENTE,
+  'gerente / directivo': ROLES.GERENTE,
+  'usuario móvil': ROLES.USUARIO_CONSULTA,
+  'usuario movil': ROLES.USUARIO_CONSULTA,
+  'usuario de consulta': ROLES.USUARIO_CONSULTA,
 }
 
 const normalizarNombreRol = (rol) => {
   const limpio = String(rol ?? '').normalize('NFC').trim()
-  return ALIAS_ROLES[limpio] ?? limpio
+  const clave = limpio.toLowerCase()
+  return ALIAS_ROLES[clave] ?? limpio
 }
 
 // Comparación exacta normalizada en UTF-8 NFC (estándar OWASP de control de acceso basado en roles)

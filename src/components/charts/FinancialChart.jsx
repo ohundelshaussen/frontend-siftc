@@ -169,7 +169,19 @@ export const FinancialChart = ({ entidadNombre, ticker }) => {
   const [metricaSeleccionada, setMetricaSeleccionada] = useState(null);
 
   useEffect(() => {
+    if (!entidadActiva) return undefined;
     let activo = true;
+
+    const filtrarDeEntidad = (lista) => {
+      const entidadId = entidadActiva.id;
+      const cod = String(entidadActiva.codigo ?? entidadActiva.codigo_entidad ?? '').toUpperCase();
+      return (Array.isArray(lista) ? lista : []).filter(
+        (m) =>
+          (m.entidadId && m.entidadId === entidadId) ||
+          (m.codigo && String(m.codigo).toUpperCase() === cod) ||
+          (m.codigoEntidad && String(m.codigoEntidad).toUpperCase() === cod),
+      );
+    };
 
     Promise.resolve().then(() => {
       if (!activo) return;
@@ -177,16 +189,27 @@ export const FinancialChart = ({ entidadNombre, ticker }) => {
       setErrorMetricas('');
     });
 
-    const params = { periodo, size: 100 };
-    if (entidadActiva?.sector) {
-      params.sector = entidadActiva.sector;
+    const baseParams = { sort: 'fecha', dir: 'desc', size: 100 };
+    if (entidadActiva.sector) {
+      baseParams.sector = entidadActiva.sector;
     }
 
-    getMetricas(params)
-      .then((res) => {
+    getMetricas({ ...baseParams, periodo })
+      .then(async (res) => {
         if (!activo) return;
         const lista = Array.isArray(res) ? res : res?.items ?? [];
-        setMetricasServidor(lista);
+        const propias = filtrarDeEntidad(lista);
+
+        if (propias.length > 0) {
+          setMetricasServidor(propias);
+          return;
+        }
+
+        // Fallback automático de frecuencia si el backend solo tiene corte mensual consolidado
+        const resFallback = await getMetricas(baseParams);
+        if (!activo) return;
+        const listaFallback = Array.isArray(resFallback) ? resFallback : resFallback?.items ?? [];
+        setMetricasServidor(filtrarDeEntidad(listaFallback));
       })
       .catch((err) => {
         if (!activo) return;
@@ -201,7 +224,7 @@ export const FinancialChart = ({ entidadNombre, ticker }) => {
     return () => {
       activo = false;
     };
-  }, [periodo, entidadActiva?.sector]);
+  }, [periodo, entidadActiva]);
 
   const metricasEntidad = useMemo(() => {
     if (!entidadActiva || metricasServidor.length === 0) return [];
@@ -210,7 +233,8 @@ export const FinancialChart = ({ entidadNombre, ticker }) => {
     return metricasServidor.filter(
       (m) =>
         (m.entidadId && m.entidadId === entidadId) ||
-        (m.codigo && String(m.codigo).toUpperCase() === cod),
+        (m.codigo && String(m.codigo).toUpperCase() === cod) ||
+        (m.codigoEntidad && String(m.codigoEntidad).toUpperCase() === cod),
     );
   }, [entidadActiva, metricasServidor]);
 

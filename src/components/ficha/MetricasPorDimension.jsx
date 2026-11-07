@@ -11,6 +11,14 @@ const ORDEN_DIMENSIONES_PREFERIDO = [
   'Trazabilidad',
 ]
 
+// Convierte valorNormalizado en escala [0..1] (contrato OpenAPI) a base 100 para el cálculo del IC
+function aEscala100(valorNormalizado) {
+  const rawNorm = Number(valorNormalizado ?? 0)
+  const escala100 = rawNorm > 0 && rawNorm <= 1 ? rawNorm * 100 : rawNorm
+  const pctNorm = Math.min(100, Math.max(0, escala100))
+  return { rawNorm, escala100, pctNorm }
+}
+
 // HU-FE-03 CA 1 y CA 2: Métricas por Dimensión de la entidad seleccionada
 export default function MetricasPorDimension({
   metricas = [],
@@ -19,11 +27,25 @@ export default function MetricasPorDimension({
   periodo = '',
   onSeleccionarMetrica,
 }) {
-  const agrupadas = useMemo(() => {
-    if (!Array.isArray(metricas) || metricas.length === 0) return []
+  const { agrupadas, totalUnicas } = useMemo(() => {
+    if (!Array.isArray(metricas) || metricas.length === 0) {
+      return { agrupadas: [], totalUnicas: 0 }
+    }
 
-    const mapa = new Map()
+    // Deduplicar por codigoMetrica (o nombreMetrica si no hay código) conservando la fecha más reciente
+    const porCodigo = new Map()
     for (const m of metricas) {
+      const clave = m.codigoMetrica || m.nombreMetrica || ''
+      if (!clave) continue
+      const previa = porCodigo.get(clave)
+      if (!previa || String(m.fecha ?? '') > String(previa.fecha ?? '')) {
+        porCodigo.set(clave, m)
+      }
+    }
+
+    const deduplicadas = Array.from(porCodigo.values())
+    const mapa = new Map()
+    for (const m of deduplicadas) {
       const dim = m.dimension || 'General'
       if (!mapa.has(dim)) {
         mapa.set(dim, [])
@@ -41,15 +63,27 @@ export default function MetricasPorDimension({
       return a.localeCompare(b, 'es')
     })
 
-    return dimensiones.map((dimension) => ({
-      dimension,
-      items: mapa.get(dimension).sort((x, y) =>
+    const grupos = dimensiones.map((dimension) => {
+      const items = mapa.get(dimension).sort((x, y) =>
         String(x.nombreMetrica || x.codigoMetrica).localeCompare(
           String(y.nombreMetrica || y.codigoMetrica),
           'es',
         ),
-      ),
-    }))
+      )
+      const sumaEscala100 = items.reduce(
+        (acc, item) => acc + aEscala100(item.valorNormalizado).escala100,
+        0,
+      )
+      const promedio = items.length > 0 ? sumaEscala100 / items.length : 0
+
+      return {
+        dimension,
+        items,
+        promedio,
+      }
+    })
+
+    return { agrupadas: grupos, totalUnicas: deduplicadas.length }
   }, [metricas])
 
   if (cargando) {
@@ -118,12 +152,12 @@ export default function MetricasPorDimension({
           </p>
         </div>
         <span className="ficha-metricas-total-badge mono-num">
-          {metricas.length} {metricas.length === 1 ? 'métrica' : 'métricas'}
+          {totalUnicas} {totalUnicas === 1 ? 'métrica' : 'métricas'}
         </span>
       </div>
 
       <div className="ficha-dimensiones-lista">
-        {agrupadas.map(({ dimension, items }) => (
+        {agrupadas.map(({ dimension, items, promedio }) => (
           <div key={dimension} className="ficha-dimension-bloque">
             <div className="ficha-dimension-cabecera">
               <div className="ficha-dimension-nombre-grupo">
@@ -132,15 +166,21 @@ export default function MetricasPorDimension({
                 </span>
                 <h3 className="ficha-dimension-nombre">{dimension}</h3>
               </div>
-              <span className="ficha-dimension-conteo">
-                {items.length} {items.length === 1 ? 'indicador' : 'indicadores'}
+              <span className="ficha-dimension-conteo mono-num">
+                Promedio: {num(promedio, 1)} pts · {items.length}{' '}
+                {items.length === 1 ? 'indicador' : 'indicadores'}
               </span>
             </div>
 
             <div className="ficha-metricas-grid">
               {items.map((m) => {
-                const valorNorm = Number(m.valorNormalizado ?? 0)
-                const pctNorm = Math.min(100, Math.max(0, valorNorm))
+                const { rawNorm, escala100, pctNorm } = aEscala100(m.valorNormalizado)
+                const tieneNorm = m.valorNormalizado !== null && m.valorNormalizado !== undefined
+                const textoPuntaje = !tieneNorm
+                  ? '—'
+                  : rawNorm >= 0 && rawNorm <= 1
+                    ? `${num(escala100, 1)} pts (${num(rawNorm, 2)})`
+                    : `${num(escala100, 1)} pts`
 
                 return (
                   <button
@@ -176,9 +216,7 @@ export default function MetricasPorDimension({
                       <div className="ficha-metrica-card-dato">
                         <span className="ficha-metrica-card-label">Puntaje</span>
                         <strong className="ficha-metrica-card-score mono-num">
-                          {m.valorNormalizado !== null && m.valorNormalizado !== undefined
-                            ? `${num(m.valorNormalizado, 1)} pts`
-                            : '—'}
+                          {textoPuntaje}
                         </strong>
                       </div>
                     </div>

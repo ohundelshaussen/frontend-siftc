@@ -1,92 +1,84 @@
 ---
 name: clean-financial-design
 description: >-
-  Guía de diseño y estándares visuales de interfaz financiera institucional (alta densidad y bajo ruido).
-  Usar para diseñar, refactorizar o auditar componentes de interfaz en SIFTC (ALZA), eliminando el
-  ruido visual típico de plantillas de IA (cajas anidadas, sombras pesadas, exceso de bordes y badges redundantes).
+  Guía de diseño, métricas visuales exactas y estándares de interfaz financiera institucional (alta densidad,
+  cero prosa explicativa y adaptabilidad responsiva multi-pantalla). Usar obligatoriamente para diseñar,
+  refactorizar o auditar cualquier componente en SIFTC (ALZA).
 ---
 
-# 🏛️ Guía de Diseño Financiero Institucional: Clean Financial Design (ALZA)
+# 🏛️ Guía y Métricas de Diseño Financiero Institucional: Clean Financial Design (ALZA)
 
-Esta guía define las reglas de diseño para transformar la interfaz de **SIFTC (ALZA)** en una plataforma financiera moderna, sobria y de nivel profesional (inspirada en terminales como Koyfin, TradingView, Bloomberg Web y el minimalismo de Linear), eliminando el "ruido visual de IA".
-
----
-
-## 1. El Manifiesto Anti-Ruido Visual
-
-### 🚫 Patrones Prohibidos (Vicios Típicos de IA)
-1. **Cajas anidadas (Cards within Cards):** Nunca coloques tarjetas con fondo blanco, bordes y sombras dentro de un contenedor que ya tiene borde o fondo de tarjeta.
-2. **Sombras y elevaciones pesadas:** Prohibido usar sombras difusas de más de `2px` o elevaciones `translateY(-3px)` con rebotes artificiales. La información bursátil debe sentirse sólida, plana y precisa.
-3. **Sobre-etiquetado redundante:** No agregues etiquetas como `"Puntaje:"`, `"Valor:"`, `"Frecuencia:"` antes de cada dato. El contexto y la jerarquía tipográfica deben comunicar qué es cada número.
-4. **Badges y pastillas multicolores en cada esquina:** Limitar el uso de badges con bordes redondeados completos (`pill badges`). En finanzas, los datos se presentan en celdas limpias, no en botones de juguete.
-5. **Barras de progreso infladas:** Las barras de métricas no deben superar `3px` o `4px` de altura (`hairline progress`). Deben ser discretas, no barras de videojuegos.
+Esta skill define las **métricas numéricas exactas**, reglas de redacción y principios de diseño responsivo para que **SIFTC (ALZA)** mantenga siempre una estética de terminal financiera institucional (inspirada en Koyfin, TradingView, Bloomberg Web y Linear), libre de ruido visual y de vicios típicos de plantillas de IA.
 
 ---
 
-## 2. Principios de Diseño Bursátil Institucional
+## 1. Matriz de Métricas Visuales y Tokens Cuantitativos
 
-### A. Jerarquía Plana y Superficies Limpias (Flat & Border-Subtle)
-- Las secciones se delimitan por **espaciado (`gap`)** o **divisores ultra finos de 1px** (`border-bottom: 1px solid var(--color-border)`).
-- Fondos: Fondo general en blanco hueso neutro (`#F8F9FA` / `#F6F5F3`) y superficies de trabajo en blanco puro (`#FFFFFF`) con bordes sutiles de contraste bajo (`rgba(0, 0, 0, 0.07)` en tema claro, `rgba(255, 255, 255, 0.08)` en tema oscuro).
+Todo componente nuevo o refactorizado debe cumplir estrictamente estas medidas:
 
-### B. Tipografía de Datos y Cifras Numéricas
-- **Números:** Todo valor numérico debe llevar la clase `.mono-num` (`font-variant-numeric: tabular-nums`).
-- **Alineación:** Las cifras en tablas y resúmenes siempre se alinean a la **derecha**.
-- **Etiquetas de soporte:** Micro-tipografía en mayúsculas sutiles:
-  ```css
-  font-size: 0.72rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--color-text-muted);
-  ```
-
-### C. Paleta Semántica Restringida (Uso Funcional del Color)
-- El color comunica **estado de mercado**, no decoración:
-  - **Verde bursátil:** Exclusivamente para variaciones positivas (`▲ +X.X %`).
-  - **Rojo bursátil:** Exclusivamente para variaciones negativas (`▼ -X.X %`).
-  - **Azul pizarra / noche:** Color de marca y navegación.
-  - **Gris neutro:** Para todo lo demás (bordes, fondos de métricas, textos secundarios).
+| Categoría | Elemento / Token | Métrica / Valor Exacto | Regla / Restricción |
+| :--- | :--- | :--- | :--- |
+| **Layout Global** | Contenedor `.contenido` | `max-width: 1380px`<br>`padding: clamp(12px, 2.5vw, 28px)` | Fluido desde `360px` hasta monitores `1440px+`. |
+| **Layout Global** | Barra de navegación `.nav` | `min-height: 52px`<br>`padding: 8px clamp(12px, 2.5vw, 28px)` | Compacta; scroll horizontal limpio en móvil (`<= 640px`). |
+| **Superficies** | Contenedores / Tarjetas | `border-radius: 8px`<br>`padding: 18px 20px` (`14px` en móvil) | Prohibido `border-radius > 10px` o `padding > 24px`. |
+| **Bordes** | Bordes de contenedor y celdas | `1px solid rgba(0, 0, 0, 0.08)` (claro)<br>`1px solid rgba(255, 255, 255, 0.08)` (oscuro) | Prohibido usar bordes de `1.5px` o `2px` en cajas o inputs. |
+| **Sombras** | Elevación de contenedores | `0 1px 2px rgba(0, 0, 0, 0.03)` (`none` en oscuro) | Prohibidas sombras difusas (`> 4px`) y efectos `translateY` en hover. |
+| **Controles** | Inputs, Selects y Botones | `height: 36px` (`min-height: 36px`)<br>`padding: 6px 12px`<br>`border-radius: 6px`<br>`font-size: 13px` | Alineación horizontal uniforme en barras de filtros. |
+| **Segmented Controls** | Selector de Periodo / Tipo | Contenedor: `padding: 3px`, `border-radius: 6px`, `bg: #F1F3F5`<br>Botón: `min-height: 28px`, `padding: 4px 10px`, `font-size: 12px` | Botón activo con fondo `#FFFFFF` y sombra `0 1px 2px rgba(0,0,0,0.06)`. |
+| **Tipografía** | Título de página (`h1`) | `font-size: clamp(1.35rem, 2vw, 1.65rem)`<br>`font-weight: 700`<br>`letter-spacing: -0.02em` | Sin subtítulos explicativos debajo del `h1`. |
+| **Tipografía** | Cabeceras de sección (`h2`, `h3`) | `font-size: 0.95rem` a `1.05rem`<br>`font-weight: 700` | Acompañadas solo de datos o contadores `mono-num`. |
+| **Tipografía** | Micro-etiquetas y `thead th` | `font-size: 0.70rem` a `0.72rem`<br>`text-transform: uppercase`<br>`letter-spacing: 0.05em`<br>`font-weight: 600–700` | Color `var(--color-text-muted)`. |
+| **Datos Numéricos** | Cifras, precios, IC, variaciones | Clase obligatoria `.mono-num`<br>(`font-variant-numeric: tabular-nums`) | Alineación obligatoria a la derecha en tablas y comparaciones. |
+| **Barras de Progreso** | Indicadores de IC, dimensión y pesos | `height: 3px` a `4px` (`hairline`)<br>`border-radius: 9999px` | Prohibidas barras gruesas (`>= 6px`). |
+| **Tablas Bursátiles** | Filas y celdas (`th`, `td`) | `min-height: 38px–42px`<br>`padding: 10px 14px` (`8px 10px` en móvil) | Separador inferior `1px solid rgba(0,0,0,0.06)` y hover `rgba(0,0,0,0.02)`. |
+| **Gráficas** | Lienzo `lightweight-charts` | Escritorio (`>= 640px`): `height: 360px–380px`<br>Móvil (`< 640px`): `height: 260px–280px` | Uso obligatorio de `ResizeObserver` para redimensionado fluido. |
+| **Rejillas (Grids)** | Tira OHLC / Celdas resumen | `grid-template-columns: repeat(auto-fit, minmax(120px, 1fr))`<br>`gap: 10px` | Se adapta sola de 5 columnas (desktop) a 2 columnas (móvil). |
+| **Rejillas (Grids)** | Celdas de Métricas por Dimensión | `grid-template-columns: repeat(auto-fill, minmax(200px, 1fr))`<br>`gap: 10px` | Padding de celda `10px 12px`, máximo 3 datos visibles por celda. |
 
 ---
 
-## 3. Especificación de Componentes Clave
+## 2. Reglas de Redacción y Densidad de Texto (Zero Instructional Copy)
 
-### 📊 Ficha de Entidad y Rejilla de Métricas
-- En vez de tarjetas independientes con bordes pesados:
-  - Organizar las métricas como una **cuadrícula de datos (Data Grid)** o celdas compactas.
-  - Cada celda muestra:
-    1. Código de métrica discreto (ej. `ROE`, `ROA`).
-    2. Nombre descriptivo en gris legible.
-    3. Valor principal en número grande tabular (`mono-num`).
-    4. Barra de calibración ultra fina (`h: 3px`) integrada en la base.
+En una plataforma financiera profesional, la interfaz se explica por su estructura visual, nunca mediante párrafos de ayuda:
 
-### 📈 Gráfica Financiera
-- La gráfica interactiva de TradingView debe ser la protagonista:
-  - Contenedor con borde simple de 1px, sin bordes redondeados gigantescos (`border-radius: 8px`).
-  - Selectores de periodo (Diaria / Mensual / Trimestral) como botones segmentados compactos (`segmented controls`), no botones flotantes con sombras.
-
-### 📋 Tablas de Ranking y Comparador
-- Tablas estilo terminal bursátil:
-  - Filas compactas con altura uniforme (`min-height: 40px`).
-  - Línea separadora horizontal de 1px.
-  - Efecto hover sobrio (`background: rgba(0, 0, 0, 0.02)`).
+1. **Cero subtítulos redundantes bajo el `<h1>`:**
+   - ❌ Prohibido: *"Resumen del Índice de Competitividad de las entidades"*, *"Gestiona usuarios, roles y parámetros del sistema"*, *"Elige de 2 a 4 entidades para ver sus métricas..."*.
+   - ✅ Permitido: Únicamente el `<h1>` limpio (y, si aporta valor real, un contador o fecha de corte en `.mono-num`).
+2. **Cero instrucciones de uso de la interfaz:**
+   - ❌ Prohibido: *"Haz clic en el título de una columna para ordenar"*, *"Pasa el cursor sobre la gráfica para ver el detalle"*, *"Haz clic de nuevo sobre una elegida para quitarla"*, *"Los filtros quedan guardados en la dirección..."*, *"Clic en una entidad para ver su gráfica"*.
+3. **Máximo 3 elementos de texto por celda en rejillas (`MetricasPorDimension`):**
+   - Cada celda de métrica solo puede mostrar:
+     1. **Fila superior:** Código en `.mono-num` (`ROE`) + indicador sutil `→`. (Sin repetir la palabra `"Mensual"` en cada tarjeta).
+     2. **Centro:** Nombre de la métrica truncado a máximo 1–2 líneas.
+     3. **Fila inferior:** Valor crudo (`18,40`) a la izquierda y puntaje (`78,5 pts`) a la derecha sobre la barra de `3px`. (Sin repetir las etiquetas `"Valor crudo"` ni `"Puntaje"` en cada tarjeta, y sin duplicar el decimal `(0,79)` que pertenece solo al modal de detalle).
+4. **Cero banners promocionales internos y cero líneas de debug:**
+   - ❌ Prohibido mostrar banners tipo *"Compara, decide, avanza"* dentro del Tablero o rutas técnicas como *"Conectado al backend: https://..."* en las vistas de usuario.
 
 ---
 
-## 4. Cero Prosa Explicativa (Zero Instructional Copy) y Adaptabilidad Multi-Pantalla
+## 3. Reglas de Adaptabilidad Responsiva Multi-Pantalla (Breakpoints Oficiales)
 
-### A. Prohibición de Textos Tutoriales y Subtítulos Redundantes
-En una aplicación financiera profesional, la interfaz se explica por su estructura, no con párrafos de ayuda:
-1. **Sin subtítulos obvios bajo el `<h1>`:** No pongas frases como *"Resumen del Índice de Competitividad de las entidades"* o *"Gestiona usuarios, roles y parámetros del sistema"*. El título de la sección es suficiente.
-2. **Sin instrucciones de uso de UI:** Prohibido escribir textos como *"Haz clic en el título de una columna para ordenar"*, *"Pasa el cursor sobre la gráfica para ver el detalle"*, *"Haz clic de nuevo para quitarla"* o *"Los filtros quedan guardados en la dirección"*.
-3. **Sin etiquetas repetidas en cada celda:** En rejillas de métricas (`MetricasPorDimension`), no repitas las palabras `"Valor crudo"`, `"Puntaje"` ni la frecuencia (`"Mensual"`) ni el valor entre paréntesis `(0,79)` dentro de cada tarjeta. Muestra solo el código (`ROE`), el nombre del indicador, el valor principal a la izquierda y el puntaje (`78,5 pts`) a la derecha sobre la barra de 3px. El desglose técnico va exclusivamente en el modal al hacer clic.
-4. **Sin banners promocionales internos ni líneas de debug:** No mostrar banners de *"Compara, decide, avanza"* dentro del Tablero ni líneas técnicas como *"Conectado al backend: https://..."* en Administración.
+Todo componente debe probarse y responder limpiamente en los siguientes 4 puntos de corte:
 
-### B. Diseño Fluido y Responsivo Multi-Pantalla (360px → 1440px+)
-- **Contenedor principal (`.contenido`):** Ancho máximo fluido (`max-width: 1380px`) con `padding: clamp(12px, 2.5vw, 28px)`.
-- **Rejillas adaptativas (`auto-fit` / `auto-fill`):**
-  - Estadísticas OHLC y celdas de resumen: `grid-template-columns: repeat(auto-fit, minmax(120px, 1fr))` (5 en escritorio, 2-3 en tablet/móvil).
-  - Rejilla de métricas por dimensión: `grid-template-columns: repeat(auto-fill, minmax(210px, 1fr))` (4-5 por fila en escritorio, 2 en tablet, 1 en móvil).
-- **Gráficas responsivas:** El lienzo de `lightweight-charts` debe usar `ResizeObserver` (además de `window.resize`) y ajustar su altura automáticamente (`380px` en escritorio, `280px` en pantallas `< 640px`).
-- **Tablas en móvil y tablet:** Contenedor con `overflow-x: auto`, `-webkit-overflow-scrolling: touch` y columnas clave compactas.
+1. **`>= 1280px` (Desktop / Monitores amplios):**
+   - Contenedor hasta `1380px`.
+   - Tablero en 2 columnas asimétricas (`1.8fr 1fr`).
+   - Rejilla de métricas de 4 a 5 columnas por fila.
+2. **`768px – 1024px` (Tablet / Laptop compacta):**
+   - Paneles de dos columnas (`.fila-principal`, `.cmp-panel`) pasan a `1fr` debajo de `900px`.
+   - Cabeceras de gráfica y selectores mantienen alineación horizontal con `flex-wrap: wrap`.
+3. **`480px – 767px` (Móvil horizontal / Phablet):**
+   - Filtros de Ranking en rejilla de 2 columnas (`grid-template-columns: 1fr 1fr`).
+   - Gráficas reducen su altura a `280px`.
+   - Tira OHLC y celdas de resumen en 2–3 columnas automáticas.
+4. **`360px – 479px` (Móvil vertical estándar):**
+   - Padding de contenedor reducido a `12px`.
+   - Selectores de entidad y filtros al `100%` de ancho.
+   - Tablas con `overflow-x: auto` sin desbordar jamás el `body` (`overflow-x: hidden` o contenido encajado al viewport).
+
+---
+
+## 4. Uso Funcional del Color (Semáforo Bursátil)
+- **Verde (`--color-bullish` / `--color-verde-alza`):** Exclusivamente para variaciones positivas (`▲`) o validación exitosa.
+- **Rojo (`--color-bearish`):** Exclusivamente para variaciones negativas (`▼`) o errores.
+- **Neutralidad:** Superficies, etiquetas de sector y roles usan grises neutros (`#F1F3F5` en claro, `rgba(255,255,255,0.06)` en oscuro) con texto `var(--color-text-muted)`.

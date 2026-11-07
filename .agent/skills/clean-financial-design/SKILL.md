@@ -19,7 +19,9 @@ Todo componente nuevo o refactorizado debe cumplir estrictamente estas medidas:
 | Categoría | Elemento / Token | Métrica / Valor Exacto | Regla / Restricción |
 | :--- | :--- | :--- | :--- |
 | **Layout Global** | Contenedor `.contenido` | `max-width: 1380px`<br>`padding: clamp(12px, 2.5vw, 28px)` | Fluido desde `360px` hasta monitores `1440px+`. |
-| **Layout Global** | Barra de navegación `.nav` | `min-height: 52px`<br>`padding: 8px clamp(12px, 2.5vw, 28px)` | Compacta; scroll horizontal limpio en móvil (`<= 640px`). |
+| **Header & Nav** | Barra `.nav` y navegación | Escritorio (`> 768px`): 1 sola fila de `52px`, enlaces visibles (`height: 34px`, `font-size: 13px`)<br>Móvil/Tablet (`<= 768px`): 1 sola fila de `48px` con **Menú Hamburguesa** (`Menu`/`X`) | Prohibido hacer wrap en 2 filas en móvil o mostrar barras de scroll horizontal en `.nav-links`. |
+| **Header Controles** | `.boton-tema`, `.nav-salir`, `.nav-avatar` | `height: 32px–34px`<br>`border-radius: 6px` (`50%` avatar `30px`)<br>`font-size: 12.5px` | En móvil (`<= 768px`), la info de usuario y el botón `Salir` pasan dentro del panel desplegable del menú hamburguesa. |
+| **Cinta Bursátil** | `.ticker` | Escritorio: `height: 34px` (`font-size: 0.82rem`)<br>Móvil (`<= 768px`): `height: 28px` (`font-size: 0.76rem`) | Compacta para no restar espacio vertical al área de trabajo. |
 | **Superficies** | Contenedores / Tarjetas | `border-radius: 8px`<br>`padding: 18px 20px` (`14px` en móvil) | Prohibido `border-radius > 10px` o `padding > 24px`. |
 | **Bordes** | Bordes de contenedor y celdas | `1px solid rgba(0, 0, 0, 0.08)` (claro)<br>`1px solid rgba(255, 255, 255, 0.08)` (oscuro) | Prohibido usar bordes de `1.5px` o `2px` en cajas o inputs. |
 | **Sombras** | Elevación de contenedores | `0 1px 2px rgba(0, 0, 0, 0.03)` (`none` en oscuro) | Prohibidas sombras difusas (`> 4px`) y efectos `translateY` en hover. |
@@ -64,17 +66,16 @@ Todo componente debe probarse y responder limpiamente en los siguientes 4 puntos
    - Contenedor hasta `1380px`.
    - Tablero en 2 columnas asimétricas (`1.8fr 1fr`).
    - Rejilla de métricas de 4 a 5 columnas por fila.
-2. **`768px – 1024px` (Tablet / Laptop compacta):**
+2. **`769px – 1024px` (Tablet horizontal / Laptop compacta):**
+   - Barra `.nav` de una sola fila compacta (`52px`).
    - Paneles de dos columnas (`.fila-principal`, `.cmp-panel`) pasan a `1fr` debajo de `900px`.
-   - Cabeceras de gráfica y selectores mantienen alineación horizontal con `flex-wrap: wrap`.
-3. **`480px – 767px` (Móvil horizontal / Phablet):**
-   - Filtros de Ranking en rejilla de 2 columnas (`grid-template-columns: 1fr 1fr`).
-   - Gráficas reducen su altura a `280px`.
-   - Tira OHLC y celdas de resumen en 2–3 columnas automáticas.
+3. **`<= 768px` (Tablet vertical y Móvil — Menú Hamburguesa Activo):**
+   - La barra `.nav` se mantiene en **1 sola fila de `48px`**: Logo (`height: 28px`) a la izquierda, y `BotonTema` (`32px`) + botón **Hamburguesa (`32px`)** a la derecha.
+   - Los enlaces de navegación y el bloque de usuario (`Avatar + Nombre + Rol + Salir`) se muestran dentro de un panel desplegable limpio (`drawer`/`dropdown`) al abrir el menú, cerrándose automáticamente al cambiar de ruta o presionar `Escape`.
 4. **`360px – 479px` (Móvil vertical estándar):**
    - Padding de contenedor reducido a `12px`.
    - Selectores de entidad y filtros al `100%` de ancho.
-   - Tablas con `overflow-x: auto` sin desbordar jamás el `body` (`overflow-x: hidden` o contenido encajado al viewport).
+   - Tablas con `overflow-x: auto` sin desbordar jamás el `body`.
 
 ---
 

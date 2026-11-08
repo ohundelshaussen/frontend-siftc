@@ -1,121 +1,188 @@
+/* Fuente con serifa solo para el titulo grande */
+@import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display&display=swap');
+
 :root {
   --azul-noche: #151D33;
   --azul-acero: #264E7A;
   --verde-alza: #24A460;
+  --verde-claro: #6CC48B;
   --blanco-hueso: #F6F5F3;
   --texto-gris: #5A6375;
   --borde-input: #264E7A;
 }
 
+/* Pantalla completa con la foto de la oficina de fondo */
 .login-container {
-  display: flex;
-  width: 100%;
+  position: relative;
+  isolation: isolate;
   min-height: 100vh;
-  background-color: var(--blanco-hueso);
+  min-height: 100dvh;
+  width: 100%;
   margin: 0;
-  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 72px 24px;
+  box-sizing: border-box;
   font-family: var(--font-family);
+  color-scheme: light;
+
+  /* El login siempre va en claro: se fijan los colores aqui
+     para que el modo oscuro del resto de la app no lo cambie */
+  --superficie: #FFFFFF;
+  --blanco-hueso: #F6F5F3;
+  --texto-gris: #5A6375;
+  --borde-input: #264E7A;
+  --color-text-on-light: #151D33;
+  --color-text-muted: #5A6379;
+  --color-border: #E2E0DC;
+  --color-azul-acero: #264E7A;
+  --color-azul-acero-light: #EBF2F9;
+  --color-bearish: #B83232;
+  --color-bearish-bg: #FBE8E6;
+  --color-bearish-border: #F5B5B5;
+
+  background: #07090D url('../assets/login-fondo-oficina.jpg') center / cover no-repeat;
 }
 
-/* Panel Izquierdo Oscuro */
-.login-panel-left {
-  flex: 1;
-  background-color: var(--azul-noche);
-  color: #FFFFFF;
-  padding: 80px 70px;
+/* Capa azul oscura sobre la foto para que la tarjeta resalte */
+.login-container::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: rgba(13, 22, 40, 0.72);
+}
+
+/* ============ Tarjeta central (dos columnas) ============ */
+.login-tarjeta {
+  width: 100%;
+  max-width: 880px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  border-radius: 16px;
+  overflow: hidden;
+  background: var(--superficie, #FFFFFF);
+  box-shadow: 0 30px 70px rgba(0, 0, 0, 0.45), 0 2px 8px rgba(0, 0, 0, 0.2);
+  animation: login-aparecer 0.6s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+
+/* ============ Lado izquierdo: marca ============ */
+.login-marca {
   display: flex;
   flex-direction: column;
+  align-items: center;
   justify-content: center;
-  align-items: flex-start;
+  text-align: center;
+  padding: 40px 36px;
+  background: var(--blanco-hueso);
 }
 
-.login-tag {
-  color: var(--verde-alza);
-  font-weight: 600;
-  font-size: 13px;
-  letter-spacing: 3px;
-  margin-bottom: 36px;
+.login-marca-logo {
+  width: 170px;
+  height: auto;
+  margin-bottom: 20px;
+}
+
+.login-marca-logo.logo-claro { display: block; }
+
+.login-marca-ingreso {
+  margin: 0 0 4px 0;
+  color: var(--texto-gris);
+  font-size: 14px;
+}
+
+.login-marca-portal {
+  margin: 0;
+  color: var(--azul-acero);
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.login-marca-linea {
+  display: block;
+  width: 40px;
+  height: 3px;
+  border-radius: 2px;
+  margin: 16px auto 18px;
+  background: var(--verde-alza);
 }
 
 .login-title {
-  font-size: 50px;
-  font-weight: 700;
-  line-height: 1.15;
-  margin: 0 0 48px 0;
-  color: #FFFFFF;
-  text-align: left;
+  margin: 0 0 20px 0;
+  font-family: 'DM Serif Display', Georgia, 'Times New Roman', serif;
+  font-weight: 400;
+  font-size: 23px;
+  line-height: 1.25;
+  color: var(--azul-noche);
 }
 
-.login-features {
-  display: flex;
-  flex-direction: column;
-  gap: 28px;
-  max-width: 460px;
-}
-
-.login-feature-item {
-  display: flex;
-  gap: 20px;
-  align-items: flex-start;
-}
-
-.login-feature-num {
+.login-title-acento {
   color: var(--verde-alza);
-  font-weight: 700;
-  font-size: 16px;
-  font-family: var(--font-mono);
 }
 
-.login-feature-text {
+/* Lista con checks verdes */
+.login-beneficios {
+  list-style: none;
   margin: 0;
-  color: #E2E8F0;
-  font-size: 16px;
-  line-height: 1.4;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
   text-align: left;
 }
 
-/* Panel Derecho Claro */
-.login-panel-right {
-  flex: 1;
+.login-beneficios li {
   display: flex;
-  justify-content: center;
   align-items: center;
-  padding: 40px;
-  background-color: var(--blanco-hueso);
+  gap: 10px;
+  color: var(--azul-noche);
+  font-size: 13.5px;
 }
 
-.login-card {
-  background-color: #FFFFFF;
-  padding: 40px 40px 32px 40px;
-  border-radius: 20px;
+.login-beneficios svg {
+  color: var(--verde-alza);
+  flex-shrink: 0;
+}
+
+/* ============ Lado derecho: formulario ============ */
+.login-panel-form {
+  display: flex;
+  align-items: center;
+  padding: 44px 40px;
+  background-color: var(--superficie, #FFFFFF);
+}
+
+.login-form-caja {
   width: 100%;
-  max-width: 420px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
   display: flex;
   flex-direction: column;
-  align-items: center;
-}
-
-.login-logo-img {
-  width: 220px;
-  height: auto;
-  object-fit: contain;
-  margin-bottom: 20px;
 }
 
 .login-card-title {
   color: var(--azul-noche);
-  font-size: 24px;
+  font-size: 22px;
   font-weight: 700;
-  margin: 0 0 8px 0;
-  text-align: center;
+  margin: 0 0 6px 0;
 }
 
 .login-card-subtitle {
   color: var(--texto-gris);
-  font-size: 14px;
-  margin: 0 0 28px 0;
-  text-align: center;
+  font-size: 13.5px;
+  margin: 0 0 24px 0;
+}
+
+/* Aviso cuando se intento entrar a una pagina sin sesion */
+.login-aviso {
+  margin: -10px 0 18px 0;
+  padding: 9px 12px;
+  border-radius: 8px;
+  background: rgba(36, 164, 96, 0.1);
+  border: 1px solid rgba(36, 164, 96, 0.35);
+  color: #1E874E;
+  font-size: 13px;
+  font-weight: 600;
 }
 
 .login-form {
@@ -137,8 +204,10 @@
 .login-label {
   display: block;
   color: var(--azul-noche);
-  font-size: 14px;
-  font-weight: 600;
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
   margin-bottom: 0;
   transition: color 0.15s ease;
 }
@@ -155,7 +224,7 @@
 
 .login-input {
   width: 100%;
-  padding: 12px 16px;
+  padding: 11px 16px;
   border-radius: 8px;
   border: 1.5px solid var(--borde-input);
   background-color: #FFFFFF;
@@ -198,6 +267,26 @@
 .login-input-password-wrapper {
   position: relative;
   width: 100%;
+}
+
+/* Campo con icono a la izquierda */
+.login-input-wrap {
+  position: relative;
+  width: 100%;
+}
+
+.login-input-wrap .login-input {
+  padding-left: 46px;
+}
+
+.login-input-icono {
+  position: absolute;
+  left: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  color: var(--texto-gris);
+  pointer-events: none;
 }
 
 .login-input-password-wrapper .login-input {
@@ -252,14 +341,26 @@
   width: 100%;
   background-color: var(--verde-alza);
   color: #FFFFFF;
-  padding: 14px;
+  padding: 12px;
   border-radius: 8px;
   border: none;
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 600;
   cursor: pointer;
   margin-top: 8px;
-  transition: background-color 0.2s, opacity 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: background-color 0.2s, opacity 0.2s, transform 0.2s;
+}
+
+.login-submit-btn:hover:not(:disabled) svg {
+  transform: translateX(3px);
+}
+
+.login-submit-btn svg {
+  transition: transform 0.2s;
 }
 
 .login-submit-btn:hover:not(:disabled) {
@@ -272,29 +373,86 @@
 }
 
 .login-footer-text {
-  font-size: 12px;
+  font-size: 12.5px;
   color: var(--texto-gris);
-  margin-top: 28px;
+  margin-top: 22px;
   text-align: center;
-  line-height: 1.4;
+  line-height: 1.6;
 }
 
-/* Diseño Responsive para dispositivos móviles */
-@media (max-width: 900px) {
+/* Fila de recordarme y olvide la contrasena */
+.login-opciones {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 2px 0 18px;
+}
+
+.login-recordar {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--color-text-on-light, #151D33);
+  font-size: 13.5px;
+  cursor: pointer;
+}
+
+.login-recordar input {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--verde-alza);
+  cursor: pointer;
+}
+
+.login-olvido {
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--color-azul-acero, #264E7A);
+  font-size: 13.5px;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.login-olvido:hover {
+  color: var(--verde-alza);
+}
+
+.login-ayuda {
+  margin: -6px 0 16px 0;
+  padding: 10px 14px;
+  border-radius: 8px;
+  background: var(--color-azul-acero-light, #EAF1F8);
+  color: var(--color-text-on-light, #151D33);
+  font-size: 12.5px;
+  line-height: 1.5;
+}
+
+/* Animaciones */
+@keyframes login-aparecer {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .login-tarjeta { animation: none; }
+}
+
+/* Celular y tablet pequena: la tarjeta pasa a una sola columna */
+@media (max-width: 760px) {
   .login-container {
-    flex-direction: column;
+    padding: 72px 16px 32px;
+    align-items: flex-start;
   }
-  .login-panel-left {
-    padding: 40px 24px;
+  .login-tarjeta {
+    grid-template-columns: 1fr;
+    max-width: 440px;
   }
-  .login-title {
-    font-size: 32px;
-    margin-bottom: 28px;
-  }
-  .login-panel-right {
-    padding: 24px 16px;
-  }
-  .login-card {
-    padding: 32px 24px 28px;
-  }
+  .login-marca { padding: 28px 24px 24px; }
+  .login-marca-logo { width: 120px; margin-bottom: 12px; }
+  .login-marca-portal { font-size: 19px; }
+  .login-beneficios { display: none; }
+  .login-title { margin-bottom: 0; font-size: 21px; }
+  .login-panel-form { padding: 28px 24px 30px; }
 }

@@ -12,26 +12,24 @@ export default function Ticker() {
 
   if (entidades.length === 0) return <div className="ticker" aria-hidden="true" />
 
-  // La lista se repite para que el desplazamiento sea continuo.
+  // La lista se repite para que el desplazamiento en bucle sea continuo.
   const items = [...entidades, ...entidades]
 
   return (
     <div className="ticker" role="marquee" aria-label="Cotizaciones de las entidades">
       <div className="ticker-pista">
         {items.map((e, i) => {
-          // Usamos los nombres reales de la API de Render: variacionPct y ic (o variacion)
-          const variacion = e.variacionPct ?? e.variacion ?? 0
-          const indice = e.ic ?? e.indice_competitividad ?? 0
-
-          const sube = variacion > 0
-          const baja = variacion < 0
-
+          const varPct = Number(e.variacionPct ?? e.variacion_porcentual ?? 0)
+          const sube = varPct > 0
+          const baja = varPct < 0
+          const codigo = e.codigo ?? e.codigo_entidad
+          const ic = e.ic ?? e.indice_competitividad
           return (
-            <span className="ticker-item mono-num" key={`${e.codigo || e.id}-${i}`}>
-              <span className="ticker-coigo">{e.codigo || e.nombre}</span>
-              <strong>{num(indice, 1)}</strong>
+            <span className="ticker-item mono-num" key={`${codigo}-${i}`}>
+              <span className="ticker-codigo">{codigo}</span>
+              <strong>{num(ic, 1)}</strong>
               <span className={sube ? 'ticker-sube' : baja ? 'ticker-baja' : ''}>
-                {sube ? '▲' : baja ? '▼' : '▬'} {pct(variacion)}
+                {sube ? '▲' : baja ? '▼' : '–'} {pct(varPct)}
               </span>
             </span>
           )

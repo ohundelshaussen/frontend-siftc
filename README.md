@@ -6,84 +6,69 @@
 
 ---
 
-## Requisitos Previos
+## 1. Arquitectura y Tecnologías
+
+- **Framework & Build:** React 19 + Vite 8 + React Router v7.
+- **Gráficos Financieros:** TradingView Lightweight Charts (`lightweight-charts`).
+- **Iconografía & Estilos:** Lucide React (`lucide-react`) + CSS Modular con variables de diseño.
+- **Servicio Backend:** Desplegado de forma externa e independiente en **Render**:
+  - URL Base: `https://siftc.onrender.com`
+  - Prefijo de API: `/api/v1`
+- **Fuente de Verdad Única:** [`docs/api/openapi-v1.json`](./docs/api/openapi-v1.json) (especificación OpenAPI 3.1.1 provista por el servicio en Render).
+- **Entorno Limpio:** **Sin modo simulado (mock) ni backend local**. Toda la aplicación consulta exclusivamente la API externa en Render y maneja estados explícitos de carga, error y datos vacíos.
+
+---
+
+## 2. Requisitos Previos e Instalación
 
 - **Node.js** `20+` y **npm**
-- *(Opcional, solo si deseas conectar con la base de datos y API real)*: **Docker Desktop** encendido
-
----
-
-## Cómo ejecutar el proyecto en tu computadora
-
-### Opción A — Modo Rápido (Sin Docker ni Backend, en 1 minuto)
-
-Ideal para revisar diseño, responsive, gráficas, ranking, modo claro/oscuro y validaciones de seguridad sin instalar contenedores:
 
 ```powershell
-# 1. Descargar la versión unificada de la rama Oscar
-git fetch origin
-git checkout Oscar
-git pull origin Oscar
-
-# 2. Instalar dependencias
+# 1. Instalar dependencias
 npm install
 
-# 3. Asegurar modo simulado (si no tienes archivo .env, usa mock por defecto)
+# 2. Configurar variables de entorno desde la plantilla
 Copy-Item .env.example .env -Force
 
-# 4. Iniciar servidor de desarrollo (http://localhost:5173)
-npm run dev
-```
-En este modo puedes ingresar con cualquier correo/usuario válido (ej. `analista@siftc.edu.co` o `analista`) y cualquier contraseña válida de 6 a 64 caracteres (ej. `alza2026`).
-
----
-
-### Opción B — Modo Completo con Backend Real (`.NET 10` + `PostgreSQL 15` en Docker)
-
-Mientras el equipo de Backend incorpora en su repositorio los ajustes reportados en Docker (`SIFTC.Api.dll`) y el script de semilla UTF-8, incluimos un asistente automático en `docs/setup-backend/` para que cualquier compañero levante todo con un solo comando sin tocar código C#:
-
-#### Paso 1: Descargar la rama `Oscar` en `frontend-siftc`
-```powershell
-git fetch origin
-git checkout Oscar
-git pull origin Oscar
-```
-
-#### Paso 2: Ejecutar el script automático de preparación (con Docker Desktop abierto)
-```powershell
-powershell -ExecutionPolicy Bypass -File .\docs\setup-backend\preparar-backend.ps1
-```
-*(Si aún no tienes clonado `SIFTC`, el script lo clona automáticamente en `..\SIFTC`, crea `..\SIFTC\.env`, ajusta localmente `SIFTC.Api.dll` en el `dockerfile`, levanta los contenedores `siftc_database` y `siftc_api_csharp`, carga los roles y usuarios en UTF-8 puro y configura `.env` del frontend con `VITE_USE_MOCK=false`).*
-
-#### Paso 3: Iniciar el Frontend
-```powershell
-npm install
+# 3. Iniciar servidor de desarrollo (http://localhost:5173)
 npm run dev
 ```
 
-#### Credenciales reales cargadas en PostgreSQL
-| Rol | Correo / Usuario | Contraseña | Nombre en BD |
-| :--- | :--- | :--- | :--- |
-| **Analista financiero** | `analista@siftc.edu.co` *(o `analista`)* | `alza2026` | Juan Pérez |
-| **Administrador** | `admin@siftc.edu.co` *(o `admin`)* | `alza2026` | Oscar Administrador |
+### Configuración de Entorno (`.env`)
+
+Por defecto, la plantilla `.env.example` apunta directamente al backend oficial en Render:
+
+```env
+VITE_API_URL=https://siftc.onrender.com
+VITE_API_PREFIX=/api/v1
+```
 
 ---
 
-## Scripts Disponibles
+## 3. Scripts del Proyecto
 
 | Comando | Descripción |
 | :--- | :--- |
-| `npm run dev` | Levanta el servidor local de Vite con HMR en `http://localhost:5173`. |
-| `npm run lint` | Ejecuta validación estática ESLint sobre todo el proyecto. |
-| `npm run build` | Genera el empaquetado optimizado de producción en `dist/`. |
-| `npm run preview` | Sirve localmente el empaquetado de producción compilado. |
+| `npm run dev` | Levanta el servidor local de desarrollo con HMR en `http://localhost:5173`. |
+| `npm run build` | Ejecuta la compilación y empaquetado optimizado de producción en `dist/`. |
+| `npm run lint` | Ejecuta el análisis estático de código mediante ESLint. |
+| `npm run preview` | Sirve localmente el paquete de producción generado en `dist/`. |
 
 ---
 
-## Documentación Técnica del Repositorio
+## 4. Estructura de Documentación del Repositorio
 
-- [`DOC_PROYECTO_FRONTEND.md`](./DOC_PROYECTO_FRONTEND.md): Contexto funcional, alcance de Sprints y arquitectura.
-- [`DICCIONARIO_DATOS_FRONTEND.md`](./DICCIONARIO_DATOS_FRONTEND.md): Contrato de las 15 columnas CSV y 10 métricas núcleo.
-- [`MANUAL_MARCA_ALZA.md`](./MANUAL_MARCA_ALZA.md): Paleta cromática, tipografía y reglas de accesibilidad visual.
-- [`UNIFICACION_DISCREPANCIAS_EQUIPO.md`](./UNIFICACION_DISCREPANCIAS_EQUIPO.md): Integración de los aportes de Rafael, Reynel, Belén y Oscar.
-- [`SEGURIDAD_Y_VALIDACIONES_AUTENTICACION.md`](./SEGURIDAD_Y_VALIDACIONES_AUTENTICACION.md): Estándares OWASP, RFC 5322, UTF-8, tope de 10 intentos y validaciones en tiempo real.
+La documentación del proyecto se encuentra estructurada y organizada según su propósito:
+
+### Documentación General en la Raíz
+- [`README.md`](./README.md): Visión general, arquitectura, instalación y ejecución.
+- [`DESPLIEGUE.md`](./DESPLIEGUE.md): Guía de despliegue en producción (Vercel / Netlify / Render Static).
+- [`LIBRERIAS.md`](./LIBRERIAS.md): Catálogo y justificación de dependencias de producción y desarrollo.
+- [`MANUAL_MARCA_ALZA.md`](./MANUAL_MARCA_ALZA.md): Guía de identidad visual, paleta cromática, tipografías y reglas de accesibilidad.
+
+### Documentación Técnica y de Auditoría (`docs/`)
+- [`docs/api/openapi-v1.json`](./docs/api/openapi-v1.json): Contrato OpenAPI 3.1.1 oficial del backend (fuente de verdad única del servicio).
+- [`docs/LOGIN_CONTEXT.md`](./docs/LOGIN_CONTEXT.md): Contexto y auditoría de seguridad del módulo de autenticación bajo controles ISO/IEC 27001:2022 y OWASP ASVS v4.0.3.
+- [`docs/auditoria-nombres-api.md`](./docs/auditoria-nombres-api.md): Auditoría de modelos y nombres de campo del frontend contrastados contra el OpenAPI.
+- [`docs/LIMPIEZA_BACKEND_OBSOLETO_Y_ALCANCE_FRONTEND.md`](./docs/LIMPIEZA_BACKEND_OBSOLETO_Y_ALCANCE_FRONTEND.md): Registro de saneamiento del backend local previo y redefinición del alcance frontend.
+- [`docs/PR_LIMPIEZA_MOCK.md`](./docs/PR_LIMPIEZA_MOCK.md): Descripción técnica de la eliminación integral del modo simulado (mocks).

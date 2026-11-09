@@ -247,3 +247,29 @@ export async function getDimensiones() {
 export async function getPeriodos() {
   return PERIODOS
 }
+
+// --- Módulo de Aprobaciones por Lote (HU-FE-08) ---
+
+// 1. Obtener la lista de lotes pendientes
+export async function getLotesPendientes() {
+  const res = await conReintentoDeArranque(() =>
+    http.get(ENDPOINTS.aprobacionesPendientes)
+  )
+  return res.data;
+}
+
+// 2. Aprobar un lote completo (responde 204)
+export async function aprobarLote(idLote) {
+  const res = await conReintentoDeArranque(() =>
+    http.post(ENDPOINTS.aprobarLote(idLote))
+  )
+  return res.data;
+}
+
+// 3. Rechazar un lote con comentario obligatorio (máx 500 caracteres, responde 204)
+export async function rechazarLote(idLote, comentario) {
+  const res = await conReintentoDeArranque(() =>
+    http.post(ENDPOINTS.rechazarLote(idLote), { comentario })
+  )
+  return res.data;
+}

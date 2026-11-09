@@ -3,6 +3,7 @@ import { Routes, Route, Navigate } from 'react-router-dom'
 import Login from '../pages/Login'
 import Layout from '../components/layout/Layout'
 import ProtectedRoute from './ProtectedRoute'
+import BandejaAprobaciones from '../pages/BandejaAprobaciones';
 import { ROLES } from '../constants/roles'
 
 // Cada pantalla se descarga solo cuando se entra a ella (menos peso al cargar el tablero)
@@ -31,6 +32,12 @@ export default function AppRouter() {
             <Route path="/administracion" element={<Administracion />} />
           </Route>
         </Route>
+        {/* HU-FE-08: Bandeja de aprobaciones para el analista financiero */}
+      <Route element={<ProtectedRoute />}>
+        <Route element={<Layout />}>
+          <Route path="/aprobaciones" element={<BandejaAprobaciones />} />
+        </Route>
+      </Route>
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
     </Suspense>

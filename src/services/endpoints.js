@@ -44,6 +44,12 @@ export const ENDPOINTS = {
 
   // --- Cargas (subida de la matriz financiera CSV) ---
   cargas: '/cargas',
+
+
+ // --- --- Aprobaciones por Lote (HU-FE-08 / HU-BE-05) --- ---
+  aprobacionesPendientes: '/aprobaciones',
+  aprobarLote: (idLote) => `/aprobaciones/${idLote}/aprobar`,
+  rechazarLote: (idLote) => `/aprobaciones/${idLote}/rechazar`,
 }
 
 export default ENDPOINTS

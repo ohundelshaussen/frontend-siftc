@@ -30,7 +30,7 @@ const BENEFICIOS = [
   'Toma decisiones con datos reales',
 ];
 
-// Llave para recordar solo el usuario (nunca la contrasena) en este navegador
+// Llave para recordar solo el usuario (nunca la contraseña) en este navegador
 const LLAVE_USUARIO_RECORDADO = 'alza_usuario_recordado';
 
 const leerUsuarioRecordado = () => {
@@ -190,7 +190,7 @@ export const Login = () => {
         if (recordar) localStorage.setItem(LLAVE_USUARIO_RECORDADO, identificador.trim());
         else localStorage.removeItem(LLAVE_USUARIO_RECORDADO);
       } catch {
-        // Si el navegador no deja guardar, solo se ignora
+        // Si el navegador no deja guardar, se ignora
       }
       setEstadoIntentos(obtenerEstadoIntentos());
       navigate(location.state?.desde ?? '/dashboard', { replace: true });
@@ -207,9 +207,6 @@ export const Login = () => {
             `Cuenta bloqueada temporalmente tras ${SEGURIDAD_LOGIN.MAX_INTENTOS} intentos fallidos. Intenta de nuevo en ${formatearTiempoBloqueo(nuevoEstado.segundosRestantes)}.`,
           );
         } else {
-          // El backend responde 401 con el texto "Token invalido o vencido" aunque el error real
-          // sea usuario o clave incorrectos (ControllerBase.cs reemplaza el detalle). Por eso en el
-          // login un 401 siempre se muestra como credenciales incorrectas.
           const baseMsg =
             err?.response?.status === 401
               ? 'Usuario o contraseña incorrectos.'
@@ -237,11 +234,11 @@ export const Login = () => {
 
   return (
     <div className="login-container">
-      {/* Tarjeta central sobre la foto de fondo */}
+      {/* Tarjeta central flotante */}
       <main className="login-tarjeta">
         {/* Lado izquierdo: marca y mensaje */}
-        <section className="login-marca" aria-label="Presentacion de ALZA">
-          <img src={logoAlza} alt="ALZA · Compara, decide, avanza" className="login-marca-logo" />
+        <section className="login-marca" aria-label="Presentación de ALZA">
+          <img src={logoAlza} alt="ALZA · Compara, decide, avanza" className="login-marca-logo logo-claro" />
 
           <p className="login-marca-ingreso">Ingreso a</p>
           <p className="login-marca-portal">SIFTC · Portal web</p>

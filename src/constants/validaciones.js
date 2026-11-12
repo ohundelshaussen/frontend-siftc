@@ -247,6 +247,7 @@ export function validarPasswordAcceso(valor = '') {
   return { valido: true, error: null }
 }
 
+
 // ============================================================================
 // HU-FE-07: validaciones del modulo de administracion (usuarios y pesos)
 // ============================================================================

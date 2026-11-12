@@ -1,7 +1,7 @@
 import { PlugZap } from 'lucide-react'
 
-// Aviso cuando el backend aun no publica una ruta que esta pantalla necesita.
-// No se muestran datos inventados: se dice exactamente que ruta falta (HU-BE-02 / HU-BE-09).
+// Aviso cuando el backend aún no publica una ruta que esta pantalla necesita.
+// No se muestran datos inventados: se indica exactamente qué ruta falta en el backend.
 export default function RutaPendiente({ texto, rutas = [] }) {
   return (
     <div className="adm-pendiente" role="status">
@@ -13,7 +13,7 @@ export default function RutaPendiente({ texto, rutas = [] }) {
           {rutas.map((r) => <li key={r}><code>{r}</code></li>)}
         </ul>
         <p className="adm-pendiente-nota">
-          Cuando estén publicadas, se escriben en <code>src/services/endpoints.js</code> y esta sección queda conectada.
+          Cuando estén publicadas en producción, se configuran en <code>src/services/endpoints.js</code> y esta sección quedará enlazada automáticamente.
         </p>
       </div>
     </div>

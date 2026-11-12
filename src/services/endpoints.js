@@ -16,12 +16,6 @@ export const ENDPOINTS = {
 
   // --- Usuarios (grupo "Usuarios") ---
   registrarUsuario: '/usuarios/registrar',
-  // HU-FE-07: estas rutas aun no existen en el servidor (dependen de HU-BE-02 y HU-BE-09).
-  // Mientras sigan en null, el modulo de administracion usa datos de prueba.
-  // Cuando Backend las publique, solo se escribe la ruta aqui.
-  listarUsuarios: null,              // GET    /usuarios
-  editarUsuario: null,               // PUT    /usuarios/{id}
-  cambiarEstadoUsuario: null,        // PATCH  /usuarios/{id}/estado
   // NO EXISTE en el servidor (verificado 2026-11-01): no hay endpoint para listar roles.
   // Los UUID de rol siguen hardcodeados; pídeselos a Backend.
   roles: null,
@@ -40,18 +34,28 @@ export const ENDPOINTS = {
   ranking: '/ranking',
 
   // --- Parámetros ---
-  // NO EXISTEN los catálogos de filtros (verificado 2026-11-01). Lo único publicado
-  // es POST /parametros/actualizar-umbral. Mientras Backend no los implemente,
-  // sectores/dimensiones/periodos se sirven desde los mocks locales.
+  // NO EXISTEN endpoints propios de catálogos de filtros (verificado en docs/api/openapi-v1.json).
+  // Lo único publicado es POST /parametros/actualizar-umbral.
+  // Sectores y dimensiones se derivan de /entidades y /metricas; periodos viene de src/constants/periodos.js.
   sectores: null,
   dimensiones: null,
   periodos: null,
   actualizarUmbral: '/parametros/actualizar-umbral',
-  // HU-FE-07: pesos de las dimensiones del indice (aun no existe en el servidor)
-  pesosDimensiones: null,            // GET y PUT /parametros/pesos
 
   // --- Cargas (subida de la matriz financiera CSV) ---
   cargas: '/cargas',
+
+
+ // --- --- Aprobaciones por Lote (HU-FE-08 / HU-BE-05) --- ---
+  aprobacionesPendientes: '/aprobaciones',
+  aprobarLote: (idLote) => `/aprobaciones/${idLote}/aprobar`,
+  rechazarLote: (idLote) => `/aprobaciones/${idLote}/rechazar`,
+
+  // --- Diccionario y glosario (HU-DD-08) ---
+  // Endpoint de busqueda que expone Backend: GET /api/v1/diccionario?q=texto
+  // Busca por nombre, codigo o sinonimo y filtra por rol en el servidor.
+  // Mientras Backend no lo publique (responde 404), la pantalla usa el CSV de Frell (src/data/).
+  diccionario: '/diccionario',
 }
 
 export default ENDPOINTS

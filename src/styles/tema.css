@@ -32,14 +32,12 @@ html[data-theme='dark'] {
   --columna-activa: #1B2744;
   --nav-activo: #264E7A;
 
-  /* Variables propias de login y gráfica */
+  /* Variables propias de gráfica */
   --blanco-hueso: #0E1424;
   --texto-gris: #A9B3CA;
   --borde-tarjeta: #2D3958;
   --borde-input: #4A6B93;
 }
-
-/* Login: siempre en modo claro, no lleva reglas oscuras */
 
 /* Tablero: Banner CTA en modo oscuro */
 html[data-theme='dark'] .cta {
@@ -71,7 +69,7 @@ html[data-theme='dark'] .grafica-toggle-btn { color: #E8EDF7; }
 html[data-theme='dark'] .grafica-toggle-btn.active,
 html[data-theme='dark'] .grafica-period-btn.active { background-color: #264E7A; color: #FFFFFF; }
 
-/* Logo: versión clara en modo claro, versión para fondo oscuro en modo oscuro */
+/* Logo de barra de navegación: versión clara en modo claro, versión para fondo oscuro en modo oscuro */
 .logo-oscuro { display: none; }
 html[data-theme='dark'] .logo-claro { display: none; }
 html[data-theme='dark'] .logo-oscuro { display: inline; }

@@ -1,28 +1,16 @@
 import axios from 'axios'
 import { ENDPOINTS } from './endpoints'
-import { PERIODOS, PERIODO_POR_DEFECTO } from '../constants/periodos'
+import { PERIODOS, PERIODO_POR_DEFECTO, DIMENSIONES_RANKING } from '../constants/periodos'
 import { aEntidades, aSesion, aSerieOhlc } from './adaptadores'
-import { obtenerOhlcMock } from './mocks/ohlcMocks'
-import { entidades, indiceGeneral } from './mocks/marketMocks'
-import { consultarRanking, catalogoSectores, catalogoDimensiones } from './mocks/rankingMocks'
 import { esTokenVigente } from '../utils/jwt'
 import { normalizarIdentificador, normalizarPassword } from '../utils/texto'
-
-const USE_MOCK = import.meta.env.VITE_USE_MOCK !== 'false'
-
-// Respaldo con datos simulados cuando un endpoint real falla.
-// Por defecto DESACTIVADO: contra un servidor real conviene ver el error, no datos falsos.
-const FALLBACK_MOCK = import.meta.env.VITE_FALLBACK_MOCK === 'true'
 
 // Render (plan gratuito) duerme el servicio tras ~15 min sin tráfico:
 // la primera petición puede tardar 30-60 s mientras la instancia arranca.
 const TIMEOUT_MS = Number(import.meta.env.VITE_API_TIMEOUT ?? 60000)
 
-// Para avisar en pantalla cuando los datos provienen de simulación o respaldo local.
-export let USA_DATOS_DE_EJEMPLO = USE_MOCK
-
-// Puerto por defecto: 7123 para Docker Compose (.NET), 5057 para dotnet run local
-const RAIZ_SERVIDOR = import.meta.env.VITE_API_URL ?? 'http://localhost:7123'
+// Servidor de la API externo desplegado en Render (contrato oficial: docs/api/openapi-v1.json)
+const RAIZ_SERVIDOR = import.meta.env.VITE_API_URL || 'https://siftc.onrender.com'
 export const API_BASE_URL = `${RAIZ_SERVIDOR}${import.meta.env.VITE_API_PREFIX ?? '/api/v1'}`
 
 // /health cuelga de la raíz del servidor, no de /api/v1: se pide con URL absoluta.
@@ -92,13 +80,20 @@ async function conReintentoDeArranque(peticion, intentos = 2) {
   throw ultimoError
 }
 
+// Normaliza el parámetro periodo ('diario' | 'mensual' | 'trimestral') para /ranking y /metricas
+function normalizarPeriodoMinusculas(periodo) {
+  if (!periodo) return undefined
+  const p = String(periodo).trim().toLowerCase()
+  if (p === 'diaria') return 'diario'
+  return p
+}
+
 /**
  * Despierta la instancia de Render antes de que el usuario intente iniciar sesión.
  * Se llama una sola vez al arrancar la app (src/main.jsx).
  * Nunca lanza: si falla, la app sigue y el error aparecerá en la petición real.
  */
 export async function despertarBackend() {
-  if (USE_MOCK) return { despierto: true, mock: true }
   const inicio = Date.now()
   try {
     await conReintentoDeArranque(() => http.get(URL_HEALTH))
@@ -111,160 +106,104 @@ export async function despertarBackend() {
   }
 }
 
-const respuesta = (dato) => new Promise((ok) => setTimeout(() => ok(dato), 150))
-
-// Ejecuta la petición real. Si VITE_FALLBACK_MOCK='true' y el endpoint analítico
-// todavía no existe (404/5xx/red), cae a datos simulados; en caso contrario propaga
-// el error para que el fallo sea visible en vez de disfrazarse de dato bueno.
-// Los errores de autorización (401/403) siempre se propagan.
-async function conRespaldoMock(peticionReal, obtenerMock, nombre = 'endpoint') {
-  if (USE_MOCK) return respuesta(obtenerMock())
-  try {
-    const dato = await conReintentoDeArranque(peticionReal)
-    if (Array.isArray(dato) && dato.length === 0 && FALLBACK_MOCK) {
-      console.warn(`[API] ${nombre} devolvió una lista vacía; usando datos de ejemplo.`)
-      USA_DATOS_DE_EJEMPLO = true
-      return obtenerMock()
-    }
-    return dato
-  } catch (err) {
-    const status = err?.response?.status
-    if (status === 401 || status === 403) throw err
-    console.error(`[API] Falló ${nombre} (${status ?? err?.code ?? 'sin respuesta'}):`, err?.message)
-    if (!FALLBACK_MOCK) throw err
-    USA_DATOS_DE_EJEMPLO = true
-    return obtenerMock()
-  }
-}
-
-// Endpoint que el backend TODAVÍA no publica (ver src/services/endpoints.js: ruta en null).
-// Se sirve el mock y se marca la pantalla como "datos de ejemplo", sin intentar la llamada.
-function pendienteEnBackend(nombre, obtenerMock) {
-  if (!USE_MOCK) {
-    console.warn(`[API] ${nombre} aún no existe en el servidor; mostrando datos de ejemplo.`)
-    USA_DATOS_DE_EJEMPLO = true
-  }
-  return respuesta(obtenerMock())
-}
-
-// Duracion de la sesion de prueba (modo mock): 8 horas
-const DURACION_SESION_MOCK_SEG = 8 * 60 * 60
-
-// Pasa un objeto a Base64URL aceptando tildes y enies (UTF-8)
-function aBase64Url(objeto) {
-  const bytes = new TextEncoder().encode(JSON.stringify(objeto))
-  let binario = ''
-  bytes.forEach((b) => { binario += String.fromCharCode(b) })
-  return btoa(binario).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')
-}
-
-// Crea un token con forma de JWT para el modo mock.
-// Antes era un texto fijo sin forma de JWT: al recargar la pagina se tomaba como
-// vencido, se borraba la sesion y la app mandaba al login.
-// No lleva firma real porque solo sirve para pruebas sin servidor.
-function crearTokenMock({ idUsuario, email, nombre, rol }) {
-  const ahora = Math.floor(Date.now() / 1000)
-  const cabecera = { alg: 'none', typ: 'JWT' }
-  const datos = {
-    sub: idUsuario,
-    email,
-    name: nombre,
-    role: rol,
-    iat: ahora,
-    exp: ahora + DURACION_SESION_MOCK_SEG,
-  }
-  return `${aBase64Url(cabecera)}.${aBase64Url(datos)}.mock`
-}
-
-// Autentica contra el Backend .NET (POST /api/v1/auth/login) o Mock, devolviendo la sesión normalizada
+// Autentica contra el Backend .NET (POST /api/v1/auth/login), devolviendo la sesión normalizada
+// Contrato docs/api/openapi-v1.json:
+// Request: { usuario: string, password: string }
+// Response 200: { token: string, expiraEn: int32, usuario: { id: uuid, nombre: string, rol: string } }
 export async function login(identificador, password) {
   const usuarioNormalizado = normalizarIdentificador(identificador)
   const passwordNormalizado = normalizarPassword(password)
 
-  if (USE_MOCK) {
-    if (!usuarioNormalizado || !passwordNormalizado) throw new Error('Credenciales inválidas')
-    const rolSimulado = usuarioNormalizado.includes('admin')
-      ? 'Administrador'
-      : usuarioNormalizado.includes('gerente')
-      ? 'Gerente'
-      : 'Analista financiero'
-
-    const idUsuario = '01966f2a-4c3b-7a10-9e21-8b3d4c5e6f70'
-    const email = usuarioNormalizado.includes('@') ? usuarioNormalizado : `${usuarioNormalizado}@siftc.edu.co`
-    const nombreCompleto = usuarioNormalizado.includes('@') ? usuarioNormalizado.split('@')[0] : identificador.trim()
-
-    return aSesion({
-      idUsuario,
-      email,
-      nombreCompleto,
-      rol: rolSimulado,
-      token: crearTokenMock({ idUsuario, email, nombre: nombreCompleto, rol: rolSimulado }),
-    })
-  }
-
-  // Contrato real verificado en el OpenAPI (2026-11-01):
-  // POST /api/v1/auth/login recibe { usuario, password } -- NO { email }.
-  // Se envía el identificador tal cual lo escribió la persona (alias o correo).
-  // El login NO cae a mock: una credencial debe validarse siempre contra el servidor real.
   const res = await conReintentoDeArranque(() =>
     http.post(ENDPOINTS.login, { usuario: usuarioNormalizado, password: passwordNormalizado }),
   )
-  // Respuesta: { token, expiraEn, usuario: { id, nombre, rol } }
-  return aSesion(res.data)
+
+  const sesion = aSesion(res.data)
+  if (!sesion || !sesion.token) {
+    throw new Error('Respuesta de autenticación inválida del servidor.')
+  }
+  return sesion
 }
 
-export async function getEntidades() {
-  return conRespaldoMock(
-    async () => aEntidades((await http.get(ENDPOINTS.entidades)).data),
-    () => entidades,
-    ENDPOINTS.entidades,
+// GET /api/v1/entidades
+// Parámetros admitidos en docs/api/openapi-v1.json: sector, page (>=1), size (1..100), sort, dir
+export async function getEntidades(filtros = {}) {
+  const params = { ...filtros }
+  if (params.size !== undefined) {
+    params.size = Math.min(100, Math.max(1, Number(params.size) || 100))
+  }
+  const res = await conReintentoDeArranque(() =>
+    http.get(ENDPOINTS.entidades, { params }),
   )
+  return aEntidades(res.data)
 }
 
-// El servidor sólo expone GET /api/v1/metricas. Falta confirmar si su respuesta
-// trae el índice general y el top: ejecuta `npm run explorar:api` y ajusta aquí.
+// GET /api/v1/entidades/{id}
+// Devuelve EntidadDetalleDto (id: uuid, codigo, nombre, sector, nit, estado, icActual, variacion, variacionPct, ultimaActualizacion)
+export async function getEntidad(id) {
+  const res = await conReintentoDeArranque(() =>
+    http.get(ENDPOINTS.entidad(id)),
+  )
+  return res.data
+}
+
+// Calcula el resumen agregado del Índice General a partir de los registros reales de GET /api/v1/entidades
 export async function getIndiceGeneral() {
-  return pendienteEnBackend('indice general', () => indiceGeneral)
+  const lista = await getEntidades()
+  const validas = lista.filter((e) => Number.isFinite(e.ic ?? e.indice_competitividad))
+  if (validas.length === 0) throw new Error('Sin entidades disponibles en el servidor para calcular el índice general.')
+  const prom = (campo, alt) => validas.reduce((s, e) => s + (Number(e[campo] ?? (alt ? e[alt] : 0)) || 0), 0) / validas.length
+  const valor = prom('ic', 'indice_competitividad')
+  const puntos = prom('variacion')
+  const anterior = valor - puntos
+  return {
+    fecha: new Date().toISOString().slice(0, 10),
+    valor,
+    puntos,
+    variacion: anterior ? (puntos / anterior) * 100 : 0,
+  }
 }
 
-// No existe /mercado/top en el servidor, pero el top son las mismas entidades
-// ordenadas por variación: se calcula aquí con los datos REALES de /entidades.
+// Obtiene las 5 entidades con mayor alza y 5 con mayor baja a partir de GET /api/v1/entidades
 export async function getTop() {
   const lista = await getEntidades()
-  const orden = [...lista].sort((a, b) => b.variacion_porcentual - a.variacion_porcentual)
+  const orden = [...lista].sort((a, b) => Number(b.variacionPct ?? b.variacion_porcentual ?? 0) - Number(a.variacionPct ?? a.variacion_porcentual ?? 0))
   return { ganadores: orden.slice(0, 5), perdedores: orden.slice(-5).reverse() }
 }
 
-// El periodo viaja tal cual a la API: 'diario' | 'quincenal' | 'mensual' | 'semestral' | 'anual'
-// (ver src/constants/periodos.js)
+// GET /api/v1/entidades/{id}/ohlc
+// Parámetros en docs/api/openapi-v1.json: id (uuid en ruta), periodo ('Diaria' | 'Mensual' | 'Trimestral')
 export async function getOhlc(id, periodo = PERIODO_POR_DEFECTO) {
-  return conRespaldoMock(
-    async () => aSerieOhlc((await http.get(ENDPOINTS.ohlc(id), { params: { periodo } })).data),
-    () => obtenerOhlcMock(id, periodo),
-    ENDPOINTS.ohlc(id),
+  const res = await conReintentoDeArranque(() =>
+    http.get(ENDPOINTS.ohlc(id), { params: { periodo } }),
   )
+  return aSerieOhlc(res.data)
 }
 
-// GET /api/v1/metricas -> array de métricas por entidad, fecha y dimensión.
-// Parámetros admitidos: sector, periodo, fecha, dimension, page, size, sort, dir
+// GET /api/v1/metricas
+// Parámetros admitidos en docs/api/openapi-v1.json:
+// sector, periodo ('diario'|'mensual'|'trimestral'), fecha ('yyyy-MM-dd'),
+// dimension ('Rentabilidad'|'Liquidez'|'Solvencia'|'Crecimiento'|'Mercado'|'Trazabilidad'),
+// page (>=1), size (1..100, default 100), sort, dir
 export async function getMetricas(filtros = {}) {
-  return conRespaldoMock(
-    async () => (await http.get(ENDPOINTS.metricas, { params: filtros })).data,
-    () => [],
-    ENDPOINTS.metricas,
+  const params = { ...filtros }
+  if (params.periodo) {
+    params.periodo = normalizarPeriodoMinusculas(params.periodo)
+  }
+  if (params.size !== undefined) {
+    params.size = Math.min(100, Math.max(1, Number(params.size) || 100))
+  }
+  const res = await conReintentoDeArranque(() =>
+    http.get(ENDPOINTS.metricas, { params }),
   )
+  return res.data
 }
 
-// Los catálogos de filtros no tienen endpoint propio: se derivan de los datos reales.
-// Si la derivación falla, se cae a los catálogos de ejemplo para no romper la pantalla.
-async function catalogoDerivado(nombre, obtenerValores, mock) {
-  if (USE_MOCK) return respuesta(mock)
+// Deriva opciones únicas ordenadas alfabéticamente a partir de los endpoints reales de la API
+async function catalogoDerivado(nombre, obtenerValores) {
   try {
     const valores = [...new Set((await obtenerValores()).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'es'))
-    // Lista vacía = el servidor todavía no tiene esos datos. Se devuelve vacío a propósito:
-    // ofrecer opciones de ejemplo que no filtran nada confunde más que no ofrecer ninguna.
     if (valores.length === 0) {
-      console.warn(`[API] El servidor no tiene datos de ${nombre}; el filtro queda deshabilitado.`)
       return []
     }
     return valores.map((nombreValor, i) => ({ id: i + 1, nombre: nombreValor }))
@@ -274,26 +213,63 @@ async function catalogoDerivado(nombre, obtenerValores, mock) {
   }
 }
 
+// GET /api/v1/ranking
+// Parámetros admitidos en docs/api/openapi-v1.json:
+// sector, dimension ('Rentabilidad'|'Liquidez'|'Solvencia'|'Crecimiento'),
+// periodo ('diario'|'mensual'|'trimestral'), orden ('posicion'|'entidad'|'sector'|'ic'|'variacionPct'),
+// dir ('asc'|'desc'), limit (1..200, default 50), offset (>=0, default 0)
 export async function getRanking(filtros = {}) {
-  return conRespaldoMock(
-    async () => (await http.get(ENDPOINTS.ranking, { params: filtros })).data,
-    () => consultarRanking(filtros),
-    ENDPOINTS.ranking,
+  const periodo = normalizarPeriodoMinusculas(filtros.periodo)
+  const params = { ...filtros, ...(periodo && { periodo }) }
+  if (params.limit !== undefined) {
+    params.limit = Math.min(200, Math.max(1, Number(params.limit) || 50))
+  }
+  const res = await conReintentoDeArranque(() =>
+    http.get(ENDPOINTS.ranking, { params }),
   )
+  return res.data
 }
 
-// Sectores: valores únicos del campo 'sector' en /entidades
+// Sectores: valores únicos del campo 'sector' en GET /api/v1/entidades
 export async function getSectores() {
-  return catalogoDerivado('sectores', async () => (await getEntidades()).map((e) => e.sector), catalogoSectores)
+  return catalogoDerivado('sectores', async () => (await getEntidades({ size: 100 })).map((e) => e.sector))
 }
 
-// Dimensiones: valores únicos del campo 'dimension' en /metricas
+// Dimensiones: valores únicos de GET /api/v1/metricas (size máx 100 según OpenAPI) o las 4 dimensiones del contrato de /ranking
 export async function getDimensiones() {
-  return catalogoDerivado('dimensiones', async () => (await getMetricas({ size: 500 })).map((m) => m.dimension), catalogoDimensiones)
+  const derivadas = await catalogoDerivado('dimensiones', async () =>
+    (await getMetricas({ size: 100 })).map((m) => m.dimension),
+  )
+  return derivadas.length > 0 ? derivadas : DIMENSIONES_RANKING
 }
 
-// Periodos: lista acordada con Backend (no hay endpoint de catálogo en la API).
+// Periodos: opciones documentadas en docs/api/openapi-v1.json ('Diaria', 'Mensual', 'Trimestral')
 export async function getPeriodos() {
-  return respuesta(PERIODOS)
+  return PERIODOS
 }
 
+// --- Módulo de Aprobaciones por Lote (HU-FE-08) ---
+
+// 1. Obtener la lista de lotes pendientes
+export async function getLotesPendientes() {
+  const res = await conReintentoDeArranque(() =>
+    http.get(ENDPOINTS.aprobacionesPendientes)
+  )
+  return res.data;
+}
+
+// 2. Aprobar un lote completo (responde 204)
+export async function aprobarLote(idLote) {
+  const res = await conReintentoDeArranque(() =>
+    http.post(ENDPOINTS.aprobarLote(idLote))
+  )
+  return res.data;
+}
+
+// 3. Rechazar un lote con comentario obligatorio (máx 500 caracteres, responde 204)
+export async function rechazarLote(idLote, comentario) {
+  const res = await conReintentoDeArranque(() =>
+    http.post(ENDPOINTS.rechazarLote(idLote), { comentario })
+  )
+  return res.data;
+}

@@ -1,0 +1,198 @@
+/* HU-DD-08 Diccionario en el portal */
+/* Usa las variables de variables.css y tema.css, asi funciona en modo claro y oscuro */
+
+.dic { display: flex; flex-direction: column; gap: 18px; }
+.solo-lector { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+
+/* ---------- Cabecera ---------- */
+.dic-cabecera { display: flex; align-items: center; gap: 14px; }
+.dic-cabecera-icono {
+  width: 48px; height: 48px; flex-shrink: 0; display: grid; place-items: center; border-radius: var(--radius-md);
+  background: var(--color-azul-acero-light); color: var(--color-azul-acero);
+}
+.dic-titulo { margin: 0; font-size: 1.9rem; color: var(--color-text-on-light); }
+.dic-texto-suave { margin: 2px 0 0; color: var(--color-text-muted); font-size: .92rem; line-height: 1.5; }
+
+/* ---------- Buscador ---------- */
+.dic-buscador {
+  display: flex; align-items: center; gap: 10px; padding: 0 8px 0 16px; min-height: 56px;
+  background: var(--superficie); border: 1.5px solid var(--color-azul-acero); border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm); color: var(--color-text-muted);
+}
+.dic-buscador:focus-within { box-shadow: 0 0 0 4px rgba(38, 78, 122, .18); }
+.dic-buscador input {
+  flex: 1; min-width: 0; border: none; background: transparent; outline: none;
+  font-size: 1.05rem; color: var(--color-text-on-light); min-height: 52px;
+}
+.dic-buscador input::-webkit-search-cancel-button { display: none; }
+.dic-icono-btn {
+  display: flex; padding: 8px; border: none; border-radius: var(--radius-sm); background: none;
+  color: var(--color-text-muted); cursor: pointer;
+}
+.dic-icono-btn:hover { background: var(--color-blanco-hueso); color: var(--color-text-on-light); }
+.dic-icono-btn:focus-visible, .dic-filtro:focus-visible, .dic-item:focus-visible, .dic-enlace-rel:focus-visible, .dic-btn:focus-visible {
+  outline: 3px solid var(--color-azul-acero); outline-offset: 2px;
+}
+
+/* ---------- Filtros por tipo ---------- */
+.dic-filtros { display: flex; gap: 8px; flex-wrap: wrap; }
+.dic-filtro {
+  display: inline-flex; align-items: center; gap: 6px; min-height: 38px; padding: 0 16px;
+  border-radius: var(--radius-full); border: 1px solid var(--color-border); background: var(--superficie);
+  color: var(--color-text-on-light); font-weight: 600; font-size: .88rem; cursor: pointer;
+}
+.dic-filtro:hover { border-color: var(--color-azul-acero); }
+.dic-filtro.activo { background: var(--color-azul-noche); border-color: var(--color-azul-noche); color: #FFFFFF; }
+.dic-filtro-num {
+  min-width: 22px; padding: 1px 7px; border-radius: var(--radius-full); font-size: .75rem;
+  background: var(--color-azul-acero-light); color: var(--color-azul-acero);
+}
+
+/* ---------- Barra de informacion ---------- */
+.dic-barra-info { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+.dic-barra-info p { margin: 0; font-size: .86rem; color: var(--color-text-muted); }
+.dic-permiso { display: inline-flex; align-items: center; gap: 6px; }
+.dic-permiso svg { color: var(--color-verde-alza); }
+.dic-alerta {
+  margin: 0; padding: 10px 14px; border-radius: var(--radius-md); font-weight: 600; font-size: .9rem;
+  background: var(--color-bearish-bg); color: var(--color-bearish); border: 1px solid var(--color-bearish-border);
+}
+.dic-vacio {
+  padding: 32px 20px; text-align: center; border: 1px dashed var(--color-border); border-radius: var(--radius-lg);
+  color: var(--color-text-on-light); background: var(--superficie);
+}
+.dic-vacio p { margin: 6px 0 0; color: var(--color-text-muted); }
+.dic-fuente { margin: 6px 0 0; font-size: .8rem; color: var(--color-text-muted); }
+
+/* ---------- Lista de resultados ---------- */
+.dic-lista { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 14px; }
+.dic-item {
+  width: 100%; height: 100%; text-align: left; display: flex; flex-direction: column; gap: 8px; padding: 16px 18px;
+  background: var(--superficie); border: 1px solid var(--color-border); border-radius: var(--radius-lg);
+  cursor: pointer; color: inherit; font: inherit; box-shadow: var(--shadow-sm);
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast), transform var(--transition-fast);
+}
+.dic-item:hover { border-color: var(--color-azul-acero); box-shadow: var(--shadow-md); transform: translateY(-1px); }
+.dic-item-top { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.dic-item-nombre { font-size: 1.02rem; color: var(--color-text-on-light); }
+.dic-item-desc {
+  margin: 0; color: var(--color-text-muted); font-size: .86rem; line-height: 1.45;
+  display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+.dic-item-pie { margin-top: auto; display: inline-flex; align-items: center; gap: 2px; font-size: .82rem; font-weight: 600; color: var(--color-azul-acero); }
+
+/* ---------- Etiquetas ---------- */
+.dic-tipo, .dic-codigo, .dic-nivel, .dic-tecnico {
+  display: inline-flex; align-items: center; padding: 2px 9px; border-radius: var(--radius-full);
+  font-size: .74rem; font-weight: 700; white-space: nowrap;
+}
+.dic-tipo { text-transform: uppercase; letter-spacing: .04em; }
+.dic-tipo-metrica { background: var(--color-verde-alza-bg); color: #187A45; }
+.dic-tipo-termino { background: var(--color-azul-acero-light); color: var(--color-azul-acero); }
+.dic-tipo-dato { background: #F1ECFA; color: #5B3A9B; }
+.dic-codigo { font-family: var(--font-mono); background: var(--color-azul-noche); color: #FFFFFF; }
+.dic-codigo-suave { background: var(--color-blanco-hueso); color: var(--color-text-muted); border: 1px solid var(--color-border); }
+.dic-tecnico { font-family: var(--font-mono); font-weight: 500; background: var(--color-blanco-hueso); color: var(--color-text-on-light); border: 1px solid var(--color-border); }
+.dic-nivel { margin-left: auto; border: 1px solid; }
+.dic-nivel-publico { color: #187A45; border-color: #A3E0BF; }
+.dic-nivel-interno { color: var(--color-azul-acero); border-color: #B9CDE3; }
+.dic-nivel-confidencial { color: #9A5B06; border-color: var(--color-warning-border); background: var(--color-warning-bg); }
+.dic-nivel-restringido { color: var(--color-bearish); border-color: var(--color-bearish-border); background: var(--color-bearish-bg); }
+
+/* ---------- Ficha (ventana) ---------- */
+.dic-fondo {
+  position: fixed; inset: 0; z-index: 60; display: grid; place-items: center; padding: 16px;
+  background: rgba(10, 15, 28, .55);
+}
+.dic-ficha {
+  width: 100%; max-width: 680px; max-height: calc(100vh - 32px); overflow-y: auto; box-sizing: border-box;
+  padding: 24px 26px; border-radius: var(--radius-lg); background: var(--superficie);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, .3); animation: dic-entrar .18s ease-out;
+}
+.dic-ficha-chica { max-width: 440px; }
+.dic-ficha-cabecera { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+.dic-ficha-etiquetas { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; flex: 1; }
+.dic-ficha-etiquetas .dic-nivel { margin-left: 0; }
+.dic-ficha-titulo { margin: 12px 0 4px; font-size: 1.45rem; line-height: 1.25; color: var(--color-text-on-light); }
+.dic-ficha-tecnico { margin: 0 0 6px; font-size: .85rem; color: var(--color-text-muted); }
+.dic-ficha-tecnico code, .dic-formula { font-family: var(--font-mono); }
+.dic-ficha-descripcion { margin: 10px 0 12px; font-size: .98rem; line-height: 1.6; color: var(--color-text-on-light); }
+
+.dic-sinonimos { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 0 0 6px; font-size: .84rem; color: var(--color-text-muted); }
+.dic-chip { padding: 2px 10px; border-radius: var(--radius-full); background: var(--color-blanco-hueso); border: 1px solid var(--color-border); color: var(--color-text-on-light); }
+
+.dic-ficha-bloque { margin-top: 16px; }
+.dic-ficha-bloque h3 {
+  display: flex; align-items: center; gap: 7px; margin: 0 0 8px; font-size: .78rem; font-weight: 700;
+  letter-spacing: .06em; text-transform: uppercase; color: var(--color-text-muted);
+}
+.dic-formula {
+  display: block; padding: 12px 14px; border-radius: var(--radius-md); font-size: .92rem; line-height: 1.5;
+  background: var(--color-azul-noche); color: #E8EDF7; white-space: pre-wrap; word-break: break-word;
+}
+.dic-ficha-bloque .dic-texto-suave { margin-top: 6px; font-size: .85rem; }
+
+.dic-fila-datos { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; margin-top: 16px; }
+.dic-dato { padding: 10px 14px; border-radius: var(--radius-md); border: 1px solid var(--color-border); background: var(--color-blanco-hueso); }
+.dic-dato span { display: flex; align-items: center; gap: 6px; font-size: .74rem; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--color-text-muted); }
+.dic-dato strong { display: block; margin-top: 4px; font-size: .92rem; color: var(--color-text-on-light); }
+
+.dic-umbrales { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.dic-umbral { display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-radius: var(--radius-md); font-size: .9rem; border: 1px solid; }
+.dic-umbral-color { min-width: 70px; font-weight: 700; display: inline-flex; align-items: center; gap: 6px; }
+.dic-umbral-color::before { content: ''; width: 10px; height: 10px; border-radius: 50%; background: currentColor; }
+.dic-umbral-verde { color: var(--color-bullish); background: var(--color-bullish-bg); border-color: var(--color-bullish-border); }
+.dic-umbral-amarillo { color: #8A5A05; background: var(--color-warning-bg); border-color: var(--color-warning-border); }
+.dic-umbral-rojo { color: var(--color-bearish); background: var(--color-bearish-bg); border-color: var(--color-bearish-border); }
+.dic-umbral-nota { color: var(--color-text-muted); background: var(--color-blanco-hueso); border-color: var(--color-border); font-style: italic; }
+
+.dic-ejemplo { margin: 0; padding: 12px 14px; border-left: 3px solid var(--color-verde-alza); background: var(--color-verde-alza-bg); border-radius: 0 var(--radius-md) var(--radius-md) 0; color: var(--color-text-on-light); line-height: 1.55; font-size: .92rem; }
+
+.dic-relacionados { display: flex; flex-wrap: wrap; gap: 8px; }
+.dic-enlace-rel {
+  min-height: 34px; padding: 0 14px; border-radius: var(--radius-full); cursor: pointer; font-weight: 600; font-size: .86rem;
+  border: 1px solid var(--color-azul-acero); background: var(--superficie); color: var(--color-azul-acero);
+}
+.dic-enlace-rel:hover { background: var(--color-azul-acero); color: #FFFFFF; }
+
+.dic-ficha-pie {
+  display: flex; flex-wrap: wrap; gap: 8px 16px; margin-top: 20px; padding-top: 14px; border-top: 1px solid var(--color-border);
+  font-size: .8rem; color: var(--color-text-muted);
+}
+.dic-ficha-pie span { display: inline-flex; align-items: center; gap: 5px; }
+.dic-estado { padding: 1px 9px; border-radius: var(--radius-full); background: var(--color-warning-bg); color: #8A5A05; font-weight: 700; }
+.dic-estado-ok { background: var(--color-bullish-bg); color: var(--color-bullish); }
+
+.dic-acciones { display: flex; justify-content: flex-end; margin-top: 18px; }
+.dic-btn {
+  min-height: 44px; padding: 0 18px; border-radius: var(--radius-md); border: none; cursor: pointer;
+  background: var(--color-verde-alza); color: #FFFFFF; font-weight: 600;
+}
+
+/* ---------- Modo oscuro ---------- */
+html[data-theme='dark'] .dic-tipo-metrica { background: #12301F; color: #6CC48B; }
+html[data-theme='dark'] .dic-tipo-dato { background: #2A2145; color: #C4B2F0; }
+html[data-theme='dark'] .dic-codigo { background: #264E7A; }
+html[data-theme='dark'] .dic-nivel-publico { color: #6CC48B; border-color: #1F5B3A; }
+html[data-theme='dark'] .dic-nivel-interno { color: #8DB8E8; border-color: #2D4A6E; }
+html[data-theme='dark'] .dic-nivel-confidencial,
+html[data-theme='dark'] .dic-umbral-amarillo,
+html[data-theme='dark'] .dic-estado { background: #3A2E12; color: #F4CF7A; border-color: #6B5320; }
+html[data-theme='dark'] .dic-estado-ok { background: #12301F; color: #6CC48B; }
+html[data-theme='dark'] .dic-formula { background: #0B1020; border: 1px solid #2D3958; }
+html[data-theme='dark'] .dic-filtro.activo { background: #264E7A; border-color: #264E7A; }
+html[data-theme='dark'] .dic-ejemplo { background: #12301F; }
+html[data-theme='dark'] .dic-buscador { border-color: #4A6B93; }
+
+@keyframes dic-entrar { from { opacity: 0; transform: translateY(8px) scale(.98); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .dic-ficha, .dic-item { animation: none; transition: none; } }
+
+/* ---------- Celular ---------- */
+@media (max-width: 640px) {
+  .dic-titulo { font-size: 1.5rem; }
+  .dic-lista { grid-template-columns: 1fr; }
+  .dic-ficha { padding: 18px; }
+  .dic-ficha-titulo { font-size: 1.25rem; }
+  .dic-buscador input { font-size: 1rem; }
+  .dic-umbral { flex-direction: column; align-items: flex-start; gap: 2px; }
+}

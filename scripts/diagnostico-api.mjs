@@ -50,14 +50,14 @@ function parecido(a, b) {
 }
 
 const env = leerEnv()
-const base = (env.VITE_API_URL || 'http://localhost:7123').replace(/\/$/, '')
+const base = (env.VITE_API_URL || 'https://siftc.onrender.com').replace(/\/$/, '')
 const prefijo = env.VITE_API_PREFIX ?? '/api/v1'
 
 log(`\n${c.azul}=== Diagnóstico API SIFTC ===${c.reset}`)
 log(`Servidor : ${base}`)
 log(`Prefijo  : ${prefijo}`)
-log(`Mock     : VITE_USE_MOCK=${env.VITE_USE_MOCK ?? '(sin definir -> true)'}`)
-if (env.VITE_USE_MOCK !== 'false') log(`${c.amarillo}\n/!\\ VITE_USE_MOCK no está en 'false': el front usará datos simulados.${c.reset}`)
+log(`Modo     : Producción externa (Render) · Modo simulado eliminado`)
+
 
 log(`\n${c.azul}1) Despertando la instancia (hasta 60 s si estaba dormida)...${c.reset}`)
 const inicio = Date.now()

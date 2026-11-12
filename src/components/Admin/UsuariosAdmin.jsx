@@ -48,7 +48,7 @@ export default function UsuariosAdmin() {
         setUsuarios([])
       })
 
-  // Carga inicial al abrir la pestana
+  // Carga inicial al abrir la pestaña
   useEffect(() => {
     let vigente = true
     listarUsuarios()
@@ -88,7 +88,7 @@ export default function UsuariosAdmin() {
       .sort((a, b) => a.nombreCompleto.localeCompare(b.nombreCompleto, 'es'))
   }, [usuarios, busqueda, filtroRol])
 
-  // El administrador no se puede desactivar a si mismo (se quedaria sin acceso)
+  // El administrador no se puede desactivar a sí mismo (se quedaría sin acceso)
   const esUnoMismo = (u) =>
     (sesion?.idUsuario && sesion.idUsuario === u.id) ||
     (sesion?.email && sesion.email.toLowerCase() === u.email.toLowerCase())
@@ -140,12 +140,20 @@ export default function UsuariosAdmin() {
           <h2 id="adm-usuarios-titulo">Usuarios</h2>
           <p className="adm-texto-suave">
             {listaPendiente
-              ? 'Puedes crear usuarios; la lista aparece cuando backend publique la ruta.'
+              ? 'Puedes crear usuarios; la lista aparecerá cuando el backend publique la ruta correspondiente.'
               : usuarios ? `${usuarios.length} usuarios · ${activos} activos` : 'Cargando…'}
           </p>
         </div>
-        <button type="button" className="adm-btn adm-btn-principal" onClick={() => setFormulario({})}>
-          <UserPlus size={18} aria-hidden="true" /> Nuevo usuario
+        <button
+          type="button"
+          className="adm-btn adm-btn-principal adm-btn-deshabilitado"
+          disabled={true}
+          title="Función temporalmente deshabilitada: pendiente de activación en el backend"
+          aria-disabled="true"
+        >
+          <UserPlus size={18} aria-hidden="true" />
+          <span>Nuevo usuario</span>
+          <span className="adm-badge-pendiente">(Próximamente)</span>
         </button>
       </div>
 

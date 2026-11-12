@@ -1,0 +1,186 @@
+.bandeja-container {
+  padding: 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+  font-family: inherit;
+}
+
+.bandeja-container h2 {
+  margin-bottom: 1.5rem;
+  color: #1a1a1a;
+}
+
+.bandeja-mensaje {
+  text-align: center;
+  padding: 2rem;
+  color: #666;
+}
+
+.bandeja-mensaje.error {
+  color: #dc3545;
+}
+
+.table-responsive {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  overflow-x: auto;
+}
+
+.bandeja-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.bandeja-table th, .bandeja-table td {
+  padding: 12px 16px;
+  border-bottom: 1px solid #edf2f7;
+}
+
+.bandeja-table th {
+  background-color: #f7fafc;
+  font-weight: 600;
+  color: #4a5568;
+}
+
+.mono-num {
+  font-variant-numeric: tabular-nums;
+}
+
+.text-success {
+  color: #2e7d32;
+}
+
+.text-danger {
+  color: #c62828;
+}
+
+.btn-aprobar {
+  background-color: #2e7d32;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-right: 8px;
+  font-weight: 500;
+}
+
+.btn-aprobar:hover {
+  background-color: #1b5e20;
+}
+
+.btn-rechazar {
+  background-color: #c62828;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.btn-rechazar:hover {
+  background-color: #b71c1c;
+}
+
+/* Estilos del Modal */
+.modal-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background: white;
+  padding: 2rem;
+  border-radius: 8px;
+  width: 450px;
+  max-width: 90%;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+.modal-content h3 {
+  margin-bottom: 0.5rem;
+  color: #1a1a1a;
+}
+
+.modal-content p {
+  font-size: 0.9rem;
+  color: #4a5568;
+  margin-bottom: 1rem;
+}
+
+.modal-content textarea {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #cbd5e0;
+  border-radius: 4px;
+  resize: vertical;
+  font-family: inherit;
+}
+
+.error-text {
+  color: #c62828;
+  font-size: 0.8rem;
+  display: block;
+  margin-top: 4px;
+}
+
+.modal-buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 1rem;
+}
+
+.btn-cancelar {
+  background-color: #e2e8f0;
+  color: #4a5568;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.btn-cancelar:hover {
+  background-color: #cbd5e0;
+}
+
+.btn-confirmar {
+  background-color: #c62828;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.btn-confirmar:hover {
+  background-color: #b71c1c;
+}
+
+
+
+
+
+
+/* Asegura que los textos dentro de la tabla (sobre la tarjeta blanca) sean oscuros y legibles */
+.bandeja-table th {
+  color: #111827; /* Gris muy oscuro / casi negro */
+  background-color: #f3f4f6;
+}
+
+.bandeja-table td {
+  color: #1f2937; /* Gris oscuro para contraste perfecto sobre el fondo blanco */
+}
+
+/* Título principal de la bandeja (sobre el fondo oscuro general de la app) */
+.bandeja-container h2 {
+  color: #ffffff; /* Blanco puro */
+}

@@ -1,0 +1,13 @@
+/* HU-DD-08 CA 2: enlace al diccionario desde las metricas del tablero */
+.enlace-diccionario {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px; vertical-align: middle;
+  min-width: 24px; height: 24px; margin-left: 6px; border-radius: var(--radius-full);
+  color: var(--color-azul-acero); background: var(--color-azul-acero-light); text-decoration: none;
+}
+.enlace-diccionario:hover { background: var(--color-azul-acero); color: #FFFFFF; }
+.enlace-diccionario:focus-visible { outline: 3px solid var(--color-azul-acero); outline-offset: 2px; }
+.enlace-diccionario.con-texto { height: auto; min-height: 36px; padding: 0 14px; margin-left: 0; font-weight: 600; font-size: .88rem; }
+
+
+/* En la ventana de detalle de metrica, el enlace va a la izquierda y Cerrar a la derecha */
+.ficha-modal-acciones .enlace-diccionario { margin-right: auto; }

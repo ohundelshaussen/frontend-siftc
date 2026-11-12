@@ -1,11 +1,15 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { createChart, ColorType, CandlestickSeries, AreaSeries } from 'lightweight-charts';
-import { getEntidades, getOhlc } from '../../services/api';
-import { mockOhlcData } from '../../services/mocks/ohlcMocks';
+import { Trophy } from 'lucide-react';
+import { getEntidades, getOhlc, getRanking, getMetricas } from '../../services/api';
 import { useTema } from '../../context/ThemeContext';
 import { PERIODOS, PERIODO_POR_DEFECTO, nombrePeriodo } from '../../constants/periodos';
 import { num, pct, fechaIso } from '../../utils/format';
+import MetricasPorDimension from '../ficha/MetricasPorDimension';
+import MetricaDetalleModal from '../ficha/MetricaDetalleModal';
+import EnlaceDiccionario from '../diccionario/EnlaceDiccionario';
+import '../ficha/Ficha.css';
 import './FinancialChart.css';
 
 const PALETTE = {
@@ -16,86 +20,236 @@ const PALETTE = {
   textoGris: '#5A6375',
 };
 
-const ENTIDAD_INICIAL = {
-  codigo_entidad: 'ENT002',
-  nombre_entidad: 'Entidad Beta',
-  sector: 'Finanzas',
-  indice_competitividad: 78.5,
-  variacion_porcentual: 1.55,
-};
-
 export const FinancialChart = ({ entidadNombre, ticker }) => {
   const chartContainerRef = useRef(null);
   const chartRef = useRef(null);
   const [searchParams, setSearchParams] = useSearchParams();
 
   const [listaEntidades, setListaEntidades] = useState([]);
-  const [serieOhlc, setSerieOhlc] = useState(mockOhlcData);
-  // Arranca con la serie de ejemplo precargada; pasa a false en cuanto llega la real.
-  const [serieEsEjemplo, setSerieEsEjemplo] = useState(true);
+  const [cargandoEntidades, setCargandoEntidades] = useState(true);
+  const [serieOhlc, setSerieOhlc] = useState([]);
+  const [cargandoOhlc, setCargandoOhlc] = useState(false);
+  const [errorOhlc, setErrorOhlc] = useState('');
   const [tipoGrafica, setTipoGrafica] = useState('velas');
-  const [periodo, setPeriodo] = useState(PERIODO_POR_DEFECTO);
-  const [hoverData, setHoverData] = useState(null);
 
   const parametroUrl = searchParams.get('entidad');
+  const parametroPeriodo = searchParams.get('periodo');
 
+  // Deriva el periodo directamente de la URL (si es válido) o usa el predeterminado
+  const periodo = useMemo(() => {
+    if (parametroPeriodo) {
+      const match = PERIODOS.find(
+        (p) =>
+          p.id.toLowerCase() === parametroPeriodo.toLowerCase() ||
+          p.nombre.toLowerCase() === parametroPeriodo.toLowerCase(),
+      );
+      if (match) return match.id;
+    }
+    return PERIODO_POR_DEFECTO;
+  }, [parametroPeriodo]);
+
+  const [hoverData, setHoverData] = useState(null);
+
+  // Consulta entidades disponibles (GET /api/v1/entidades)
   useEffect(() => {
     let activo = true;
     getEntidades()
       .then((lista) => {
-        if (activo && Array.isArray(lista)) setListaEntidades(lista);
+        if (!activo) return;
+        if (Array.isArray(lista) && lista.length > 0) {
+          setListaEntidades(lista);
+          setErrorOhlc('');
+        } else {
+          setListaEntidades([]);
+          setErrorOhlc('No hay entidades disponibles en el servidor.');
+        }
       })
-      .catch(() => {});
+      .catch((err) => {
+        if (!activo) return;
+        console.error('[Gráfica] Error consultando entidades:', err?.message);
+        setListaEntidades([]);
+        setErrorOhlc('No se pudo conectar con el servidor para cargar las entidades.');
+      })
+      .finally(() => {
+        if (activo) setCargandoEntidades(false);
+      });
     return () => {
       activo = false;
     };
   }, []);
 
   const entidadActiva = useMemo(() => {
-    if (listaEntidades.length === 0) {
-      return {
-        ...ENTIDAD_INICIAL,
-        nombre_entidad: entidadNombre ?? ENTIDAD_INICIAL.nombre_entidad,
-        codigo_entidad: ticker ? ticker.replace('-', '0') : ENTIDAD_INICIAL.codigo_entidad,
-      };
-    }
+    if (listaEntidades.length === 0) return null;
     if (parametroUrl) {
       const buscado = parametroUrl.trim().toUpperCase();
       const limpio = buscado.replace('-', '');
       const encontrada = listaEntidades.find(
         (e, idx) =>
-          String(e.codigo_entidad).toUpperCase() === buscado ||
-          String(e.codigo_entidad).toUpperCase() === limpio ||
+          String(e.codigo ?? e.codigo_entidad).toUpperCase() === buscado ||
+          String(e.codigo ?? e.codigo_entidad).toUpperCase() === limpio ||
           String(e.id).toUpperCase() === buscado ||
           String(idx + 1) === parametroUrl.trim(),
       );
       if (encontrada) return encontrada;
     }
-    return listaEntidades[1] ?? listaEntidades[0];
-  }, [listaEntidades, parametroUrl, entidadNombre, ticker]);
+    return listaEntidades[0];
+  }, [listaEntidades, parametroUrl]);
+
+  // Consulta ranking oficial para deducir / obtener la posición de la entidad (HU-FE-03 CA 1)
+  const [rankingDatos, setRankingDatos] = useState(null);
 
   useEffect(() => {
     let activo = true;
-    const idConsulta = entidadActiva.id ?? entidadActiva.codigo_entidad;
+    getRanking({ periodo, limit: 100 })
+      .then((res) => {
+        if (!activo) return;
+        setRankingDatos(res);
+      })
+      .catch((err) => {
+        if (!activo) return;
+        console.warn('[Ficha] Error consultando ranking:', err?.message);
+        setRankingDatos(null);
+      });
+
+    return () => {
+      activo = false;
+    };
+  }, [periodo]);
+
+  const infoRanking = useMemo(() => {
+    if (!entidadActiva) return null;
+    const entidadId = entidadActiva.id;
+    const cod = String(entidadActiva.codigo ?? entidadActiva.codigo_entidad ?? '').toUpperCase();
+    const nom = String(entidadActiva.nombre ?? entidadActiva.nombre_entidad ?? '').toUpperCase();
+
+    // 1. Buscar en el ranking oficial del servidor
+    if (rankingDatos?.items?.length) {
+      const encontrado = rankingDatos.items.find(
+        (it) =>
+          it.entidadId === entidadId ||
+          String(it.codigo ?? '').toUpperCase() === cod ||
+          String(it.entidad ?? '').toUpperCase() === nom,
+      );
+      if (encontrado) {
+        return {
+          puesto: encontrado.posicion,
+          total: rankingDatos.total ?? rankingDatos.items.length,
+          cambioPosicion: encontrado.cambioPosicion ?? 0,
+        };
+      }
+    }
+
+    // 2. Deducir de la lista de entidades ordenadas por IC si el ranking no estuviera disponible
+    if (listaEntidades.length > 0) {
+      const ordenadas = [...listaEntidades].sort((a, b) => {
+        const icA = Number(a.ic ?? a.indice_competitividad ?? 0);
+        const icB = Number(b.ic ?? b.indice_competitividad ?? 0);
+        return icB - icA;
+      });
+      const idx = ordenadas.findIndex(
+        (e) =>
+          e.id === entidadId ||
+          String(e.codigo ?? e.codigo_entidad ?? '').toUpperCase() === cod,
+      );
+      if (idx !== -1) {
+        return {
+          puesto: idx + 1,
+          total: ordenadas.length,
+          cambioPosicion: 0,
+        };
+      }
+    }
+
+    return null;
+  }, [entidadActiva, rankingDatos, listaEntidades]);
+
+  // Consulta métricas reales por entidad (HU-FE-03 CA 1 y CA 2)
+  const [metricasServidor, setMetricasServidor] = useState([]);
+  const [cargandoMetricas, setCargandoMetricas] = useState(false);
+  const [errorMetricas, setErrorMetricas] = useState('');
+  const [metricaSeleccionada, setMetricaSeleccionada] = useState(null);
+
+  useEffect(() => {
+    let activo = true;
+
+    Promise.resolve().then(() => {
+      if (!activo) return;
+      setCargandoMetricas(true);
+      setErrorMetricas('');
+    });
+
+    getMetricas({ periodo, size: 100 })
+      .then((res) => {
+        if (!activo) return;
+        const lista = Array.isArray(res) ? res : res?.items ?? [];
+        setMetricasServidor(lista);
+      })
+      .catch((err) => {
+        if (!activo) return;
+        console.warn('[Ficha] Error consultando métricas:', err?.message);
+        setErrorMetricas('No se pudieron cargar las métricas desde el servidor.');
+        setMetricasServidor([]);
+      })
+      .finally(() => {
+        if (activo) setCargandoMetricas(false);
+      });
+
+    return () => {
+      activo = false;
+    };
+  }, [periodo]);
+
+  const metricasEntidad = useMemo(() => {
+    if (!entidadActiva || metricasServidor.length === 0) return [];
+    const entidadId = entidadActiva.id;
+    const cod = String(entidadActiva.codigo ?? entidadActiva.codigo_entidad ?? '').toUpperCase();
+    return metricasServidor.filter(
+      (m) =>
+        (m.entidadId && m.entidadId === entidadId) ||
+        (m.codigo && String(m.codigo).toUpperCase() === cod),
+    );
+  }, [entidadActiva, metricasServidor]);
+
+  // El endpoint GET /api/v1/entidades/{id}/ohlc exige que {id} tenga formato UUID
+  const idConsulta = entidadActiva?.id ?? null;
+
+  useEffect(() => {
+    if (!idConsulta) return undefined;
+    let activo = true;
+
+    Promise.resolve().then(() => {
+      if (!activo) return;
+      setCargandoOhlc(true);
+      setErrorOhlc('');
+    });
+
     getOhlc(idConsulta, periodo)
       .then((datos) => {
         if (!activo) return;
         if (Array.isArray(datos) && datos.length > 0) {
           setSerieOhlc(datos);
-          setSerieEsEjemplo(false);
+          setErrorOhlc('');
           setHoverData(null);
         } else {
-          // Antes esto fallaba en silencio y la gráfica se quedaba con los datos de ejemplo.
           console.warn(`[Gráfica] Sin serie OHLC para ${idConsulta} (${periodo}).`);
+          setSerieOhlc([]);
+          setErrorOhlc('No hay datos históricos OHLC disponibles para esta entidad en el periodo seleccionado.');
         }
       })
       .catch((err) => {
+        if (!activo) return;
         console.error(`[Gráfica] Error pidiendo OHLC de ${idConsulta} (${periodo}):`, err?.message);
+        setSerieOhlc([]);
+        setErrorOhlc('No se pudo cargar la serie OHLC desde el servidor.');
+      })
+      .finally(() => {
+        if (activo) setCargandoOhlc(false);
       });
+
     return () => {
       activo = false;
     };
-  }, [entidadActiva.id, entidadActiva.codigo_entidad, periodo]);
+  }, [idConsulta, periodo]);
 
   // Colores de la gráfica según el tema (claro u oscuro)
   const { tema } = useTema();
@@ -116,7 +270,7 @@ export const FinancialChart = ({ entidadNombre, ticker }) => {
         fondo: '#FFFFFF',
         texto: PALETTE.textoGris,
         rejilla: '#F1F5F9',
-        borde: '#E2E8F0',
+        borde: '#E2E0DC',
         cruz: PALETTE.azulAcero,
         etiqueta: PALETTE.azulNoche,
         rojo: PALETTE.rojoBajada,
@@ -126,7 +280,7 @@ export const FinancialChart = ({ entidadNombre, ticker }) => {
       };
 
   useEffect(() => {
-    if (!chartContainerRef.current || serieOhlc.length === 0) return;
+    if (!chartContainerRef.current || serieOhlc.length === 0) return undefined;
 
     const chart = createChart(chartContainerRef.current, {
       width: chartContainerRef.current.clientWidth,
@@ -197,22 +351,39 @@ export const FinancialChart = ({ entidadNombre, ticker }) => {
 
   const handleEntidadChange = (e) => {
     const nuevoCodigo = e.target.value;
-    setSearchParams({ entidad: nuevoCodigo });
+    const params = new URLSearchParams(searchParams);
+    params.set('entidad', nuevoCodigo);
+    params.set('periodo', periodo);
+    setSearchParams(params);
   };
+
+  const handlePeriodoChange = (nuevoPeriodo) => {
+    const params = new URLSearchParams(searchParams);
+    params.set('periodo', nuevoPeriodo);
+    if (entidadActiva) {
+      params.set('entidad', entidadActiva.codigo ?? entidadActiva.codigo_entidad);
+    }
+    setSearchParams(params);
+  };
+
+  const cargando = cargandoEntidades || cargandoOhlc;
+  const nombreMostrado = entidadActiva?.nombre ?? entidadActiva?.nombre_entidad ?? entidadNombre ?? (cargando ? 'Cargando…' : 'Sin entidad');
+  const codigoMostrado = entidadActiva?.codigo ?? entidadActiva?.codigo_entidad ?? ticker ?? '—';
+  const sectorMostrado = entidadActiva?.sector ?? '—';
 
   const ultimoDato = serieOhlc[serieOhlc.length - 1];
   const datoMostrar = hoverData || ultimoDato;
-  const variacionEntidad = entidadActiva.variacion_porcentual ?? 0;
-  const sube = variacionEntidad > 0;
-  const baja = variacionEntidad < 0;
-  const simboloVar = sube ? '▲' : baja ? '▼' : '–';
+  const variacionEntidad = entidadActiva?.variacionPct ?? entidadActiva?.variacion_porcentual ?? null;
+  const sube = Number(variacionEntidad) > 0;
+  const baja = Number(variacionEntidad) < 0;
+  const simboloVar = variacionEntidad === null ? '–' : sube ? '▲' : baja ? '▼' : '–';
   const claseVariacion = baja ? 'baja' : !sube ? 'igual' : '';
 
   const variacionVela = datoMostrar && datoMostrar.open
     ? ((datoMostrar.close - datoMostrar.open) / datoMostrar.open) * 100
-    : variacionEntidad;
-  const subeVela = variacionVela > 0;
-  const bajaVela = variacionVela < 0;
+    : null;
+  const subeVela = Number(variacionVela) > 0;
+  const bajaVela = Number(variacionVela) < 0;
 
   return (
     <div className="grafica-wrapper">
@@ -220,11 +391,20 @@ export const FinancialChart = ({ entidadNombre, ticker }) => {
         {/* Cabecera superior */}
         <div className="grafica-header-top">
           <div>
-            <div className="grafica-breadcrumb">Gráficas / {entidadActiva.nombre_entidad}</div>
+            <div className="grafica-breadcrumb">Gráficas / {nombreMostrado}</div>
             <div className="grafica-title-row">
-              <h1 className="grafica-title">{entidadActiva.nombre_entidad}</h1>
-              <span className="grafica-ticker mono-num">{entidadActiva.codigo_entidad}</span>
-              <span className="grafica-badge-finanzas">{entidadActiva.sector}</span>
+              <h1 className="grafica-title">{nombreMostrado}</h1>
+              <span className="grafica-ticker mono-num">{codigoMostrado}</span>
+              <span className="grafica-badge-finanzas">{sectorMostrado}</span>
+              {infoRanking && (
+                <span
+                  className="grafica-badge-ranking"
+                  title={`Puesto #${infoRanking.puesto} de ${infoRanking.total} en el ranking (${nombrePeriodo(periodo)})`}
+                >
+                  <Trophy size={14} aria-hidden="true" />
+                  <span>Puesto #{infoRanking.puesto} de {infoRanking.total}</span>
+                </span>
+              )}
             </div>
           </div>
 
@@ -236,24 +416,32 @@ export const FinancialChart = ({ entidadNombre, ticker }) => {
               <select
                 id="selector-entidad-grafica"
                 className="grafica-select-entidad"
-                value={entidadActiva.codigo_entidad}
+                value={entidadActiva?.codigo ?? entidadActiva?.codigo_entidad ?? ''}
                 onChange={handleEntidadChange}
+                disabled={listaEntidades.length === 0}
               >
-                {(listaEntidades.length > 0 ? listaEntidades : [entidadActiva]).map((ent) => (
-                  <option key={ent.codigo_entidad} value={ent.codigo_entidad}>
-                    {ent.nombre_entidad} · {ent.codigo_entidad}
-                  </option>
-                ))}
+                {listaEntidades.length === 0 ? (
+                  <option value="">{cargandoEntidades ? 'Cargando entidades…' : 'Sin entidades'}</option>
+                ) : (
+                  listaEntidades.map((ent) => (
+                    <option key={ent.codigo ?? ent.codigo_entidad} value={ent.codigo ?? ent.codigo_entidad}>
+                      {ent.nombre ?? ent.nombre_entidad} · {ent.codigo ?? ent.codigo_entidad}
+                    </option>
+                  ))
+                )}
               </select>
             </div>
 
             <div className="grafica-price-display-box">
               <span className="grafica-main-value mono-num">
-                {num(entidadActiva.indice_competitividad, 1)}
+                {num(entidadActiva?.ic ?? entidadActiva?.indice_competitividad, 1)}
               </span>
               <span className={`grafica-main-change mono-num ${claseVariacion}`}>
                 {simboloVar} {pct(variacionEntidad)}
               </span>
+              {/* HU-DD-08 CA 2: que es el IC y su variacion, en el diccionario */}
+              <EnlaceDiccionario termino="TER-01" nombre="el Índice de Competitividad (IC)" />
+              <EnlaceDiccionario termino="CRE-02" nombre="la variación de cotización" />
             </div>
           </div>
         </div>
@@ -282,7 +470,7 @@ export const FinancialChart = ({ entidadNombre, ticker }) => {
               <button
                 type="button"
                 key={p.id}
-                onClick={() => setPeriodo(p.id)}
+                onClick={() => handlePeriodoChange(p.id)}
                 className={`grafica-period-btn ${periodo === p.id ? 'active' : ''}`}
               >
                 {p.nombre}
@@ -291,14 +479,62 @@ export const FinancialChart = ({ entidadNombre, ticker }) => {
           </div>
         </div>
 
-        {/* Lienzo de la Gráfica */}
-        <div ref={chartContainerRef} style={{ width: '100%', borderRadius: '12px', overflow: 'hidden' }} />
+        {/* Lienzo de la Gráfica o Estados de Carga / Error */}
+        {cargando && serieOhlc.length === 0 && (
+          <div
+            role="status"
+            style={{
+              height: '400px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              borderRadius: '12px',
+              border: '1px dashed var(--color-border)',
+              color: 'var(--color-text-muted)',
+              fontSize: '15px',
+            }}
+          >
+            Cargando serie histórica OHLC…
+          </div>
+        )}
+
+        {!cargando && errorOhlc && (
+          <div
+            role="alert"
+            style={{
+              height: '400px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              borderRadius: '12px',
+              border: '1px solid var(--rojo-bajada, #D9534F)',
+              backgroundColor: 'rgba(217, 83, 79, 0.08)',
+              color: 'var(--rojo-bajada, #D9534F)',
+              padding: '24px',
+              textAlign: 'center',
+              fontSize: '15px',
+              fontWeight: 500,
+            }}
+          >
+            {errorOhlc}
+          </div>
+        )}
+
+        <div
+          ref={chartContainerRef}
+          style={{
+            width: '100%',
+            borderRadius: '12px',
+            overflow: 'hidden',
+            display: serieOhlc.length > 0 ? 'block' : 'none',
+          }}
+        />
 
         {/* Tarjetas inferiores OHLC */}
         <div className="grafica-cards-grid">
           <div className="grafica-stat-card">
             <span className="grafica-stat-label">Fecha</span>
-            <strong className="grafica-stat-value mono-num">{fechaIso(datoMostrar?.time)}</strong>
+            <strong className="grafica-stat-value mono-num">{fechaIso(datoMostrar?.time) || '—'}</strong>
           </div>
           <div className="grafica-stat-card">
             <span className="grafica-stat-label">Apertura</span>
@@ -317,17 +553,33 @@ export const FinancialChart = ({ entidadNombre, ticker }) => {
             <div className="grafica-stat-val-row">
               <strong className="grafica-stat-value mono-num">{num(datoMostrar?.close, 1)}</strong>
               <span className={`grafica-stat-change-tag mono-num ${bajaVela ? 'baja' : !subeVela ? 'igual' : ''}`}>
-                {subeVela ? '▲' : bajaVela ? '▼' : '–'} {pct(variacionVela)}
+                {variacionVela === null ? '–' : subeVela ? '▲' : bajaVela ? '▼' : '–'} {pct(variacionVela)}
               </span>
             </div>
           </div>
         </div>
 
         <div className="grafica-footer-note">
-          {serieEsEjemplo ? 'Datos de ejemplo · ' : ''}
           Serie del Índice de Competitividad ({nombrePeriodo(periodo)}) · Pasa el cursor sobre la gráfica para ver el detalle de cada sesión.
         </div>
+
+        {/* Sección de Métricas por Dimensión (HU-FE-03 CA 1 y CA 2) */}
+        <MetricasPorDimension
+          metricas={metricasEntidad}
+          cargando={cargandoMetricas}
+          error={errorMetricas}
+          periodo={nombrePeriodo(periodo)}
+          onSeleccionarMetrica={(m) => setMetricaSeleccionada(m)}
+        />
       </div>
+
+      {/* Modal Interactivo de Detalle y Fórmula de Métrica (HU-FE-03 CA 3) */}
+      {metricaSeleccionada && (
+        <MetricaDetalleModal
+          metrica={metricaSeleccionada}
+          onCerrar={() => setMetricaSeleccionada(null)}
+        />
+      )}
     </div>
   );
 };

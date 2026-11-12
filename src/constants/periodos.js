@@ -1,11 +1,7 @@
-// Periodos que ACEPTA el servidor, verificado contra la API el 2026-11-01.
-// GET /entidades/{id}/ohlc?periodo=... responde 400 con cualquier otro valor:
-//   "El parámetro periodo admite: Diaria, Mensual o Trimestral."
-// (Nota: el equipo de Backend mencionó diario/quincenal/mensual/semestral/anual,
-//  pero el servidor desplegado sólo admite estos tres. Confirmar con ellos.)
-//
-// 'id' es lo que viaja en ?periodo=, 'nombre' es lo que se muestra en pantalla.
-// Si Backend amplía la lista, se corrige SOLO en este archivo.
+// Periodos y dimensiones documentados en el contrato oficial (docs/api/openapi-v1.json).
+// - GET /api/v1/entidades/{id}/ohlc admite periodo: 'Diaria' | 'Mensual' | 'Trimestral'
+// - GET /api/v1/ranking y GET /api/v1/metricas admiten periodo: 'diario' | 'mensual' | 'trimestral'
+// - GET /api/v1/ranking admite dimension: 'Rentabilidad' | 'Liquidez' | 'Solvencia' | 'Crecimiento'
 
 export const PERIODOS = [
   { id: 'Diaria', nombre: 'Diaria' },
@@ -16,3 +12,10 @@ export const PERIODOS = [
 export const PERIODO_POR_DEFECTO = 'Mensual'
 
 export const nombrePeriodo = (id) => PERIODOS.find((p) => p.id === id)?.nombre ?? id
+
+export const DIMENSIONES_RANKING = [
+  { id: 1, nombre: 'Rentabilidad' },
+  { id: 2, nombre: 'Liquidez' },
+  { id: 3, nombre: 'Solvencia' },
+  { id: 4, nombre: 'Crecimiento' },
+]

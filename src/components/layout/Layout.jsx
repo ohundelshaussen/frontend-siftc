@@ -11,7 +11,7 @@ export default function Layout() {
   const { usuario, logout } = useAuth()
   const nombre = usuario?.nombre ?? usuario?.usuario ?? ''
   const navigate = useNavigate()
-  // El enlace de administracion solo se le muestra al Administrador (HU-FE-07 CA 2)
+  // El enlace de administración solo se muestra al Administrador (HU-FE-07 CA 2)
   const esAdmin = tieneRol(usuario, [ROLES.ADMINISTRADOR])
 
   const salir = () => {
@@ -28,6 +28,8 @@ export default function Layout() {
           <NavLink to="/dashboard">Tablero</NavLink>
           <NavLink to="/grafica">Gráficas</NavLink>
           <NavLink to="/ranking">Ranking</NavLink>
+          <NavLink to="/comparar">Comparar</NavLink>
+          <NavLink to="/diccionario">Diccionario</NavLink>
           {esAdmin && <NavLink to="/administracion">Administración</NavLink>}
         </nav>
         <div className="nav-acciones">

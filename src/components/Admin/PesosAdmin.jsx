@@ -5,7 +5,7 @@ import RutaPendiente from './RutaPendiente'
 import { extraerMensajeError } from '../../services/authService'
 import { PESOS, validarPeso, validarPesos, sumarPesos } from '../../constants/validaciones'
 
-// HU-FE-07 CA 3: el formulario de pesos no deja guardar si no suman 100 %
+// HU-FE-07 CA 3: el formulario de pesos valida estrictamente que sumen exactamente 100 %
 
 const formatoPct = (n) => `${n.toLocaleString('es-CO', { maximumFractionDigits: 1 })} %`
 
@@ -47,7 +47,7 @@ export default function PesosAdmin() {
   const estadoSuma = diferencia === 0 ? 'ok' : diferencia > 0 ? 'falta' : 'sobra'
 
   const cambiar = (indice) => (e) => {
-    // Solo se dejan escribir numeros, punto o coma (maximo 5 caracteres: 100.0)
+    // Solo se dejan escribir números, punto o coma (máximo 5 caracteres: 100.0)
     const valor = e.target.value.replace(/[^\d.,]/g, '').slice(0, 5)
     setPesos((lista) => lista.map((p, i) => (i === indice ? { ...p, peso: valor } : p)))
     if (aviso) setAviso(null)
@@ -60,7 +60,7 @@ export default function PesosAdmin() {
 
   const guardar = async (e) => {
     e.preventDefault()
-    // Doble revision: aunque el boton este bloqueado, no se envia nada si no suman 100
+    // Doble revisión: aunque el botón esté bloqueado, no se envía nada si no suman exactamente 100 %
     if (!revision.valido) {
       setAviso({ tipo: 'error', texto: revision.error })
       return
@@ -146,7 +146,7 @@ export default function PesosAdmin() {
             <span style={{ width: `${Math.min(total, 100)}%` }} />
           </div>
           <p>
-            {estadoSuma === 'ok' && 'La suma es correcta.'}
+            {estadoSuma === 'ok' && 'La suma es correcta (exactamente 100 %).'}
             {estadoSuma === 'falta' && `Faltan ${formatoPct(diferencia)} para llegar a 100 %.`}
             {estadoSuma === 'sobra' && `Sobran ${formatoPct(-diferencia)}: baja algún peso.`}
           </p>
@@ -167,7 +167,7 @@ export default function PesosAdmin() {
             className="adm-btn adm-btn-principal"
             disabled={!puedeGuardar}
             aria-disabled={!puedeGuardar}
-            title={!revision.valido ? 'Los pesos deben sumar 100 % para guardar' : undefined}
+            title={!revision.valido ? 'Los pesos deben sumar exactamente 100 % para guardar' : undefined}
           >
             <Save size={17} aria-hidden="true" /> {guardando ? 'Guardando…' : 'Guardar pesos'}
           </button>

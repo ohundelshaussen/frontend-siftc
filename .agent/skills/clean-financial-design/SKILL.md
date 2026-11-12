@@ -2,13 +2,13 @@
 name: clean-financial-design
 description: >-
   Guía de diseño, métricas visuales exactas y estándares de interfaz financiera institucional (alta densidad,
-  cero prosa explicativa y adaptabilidad responsiva multi-pantalla). Usar obligatoriamente para diseñar,
-  refactorizar o auditar cualquier componente en SIFTC (ALZA).
+  cero prosa explicativa, control de acceso por rol y sensibilidad del dato, y adaptabilidad responsiva multi-pantalla).
+  Usar obligatoriamente para diseñar, refactorizar o auditar cualquier componente en SIFTC (ALZA).
 ---
 
 # 🏛️ Guía y Métricas de Diseño Financiero Institucional: Clean Financial Design (ALZA)
 
-Esta skill define las **métricas numéricas exactas**, reglas de redacción y principios de diseño responsivo para que **SIFTC (ALZA)** mantenga siempre una estética de terminal financiera institucional (inspirada en Koyfin, TradingView, Bloomberg Web y Linear), libre de ruido visual y de vicios típicos de plantillas de IA.
+Esta skill define las **métricas numéricas exactas**, reglas de redacción, principios de diseño responsivo y **control de acceso por rol y sensibilidad del dato** para que **SIFTC (ALZA)** mantenga siempre una estética de terminal financiera institucional (inspirada en Koyfin, TradingView, Bloomberg Web y Linear), libre de ruido visual y de vicios típicos de plantillas de IA.
 
 ---
 
@@ -58,3 +58,19 @@ Todo componente nuevo o refactorizado debe cumplir estrictamente estas medidas:
 1. **Panel Lateral Derecho (`Side Drawer`):** Se abre desde el borde derecho (`position: fixed; top: 0; right: 0; bottom: 0; width: min(280px, 82vw); height: 100dvh; z-index: 1000`) con cabecera propia (título/logo + botón `X`), enlaces verticales y pie de usuario + botón `Salir`.
 2. **Fondo Oscurecido en Segundo Plano (`.nav-backdrop`):** Capa fija (`position: fixed; inset: 0; background: rgba(15, 23, 42, 0.45); backdrop-filter: blur(2px); z-index: 999`). Al tocar o hacer clic fuera del panel lateral (sobre el `.nav-backdrop`), el menú se cierra inmediatamente.
 3. **Bloqueo de Deslizamiento (`Scroll Lock`):** Mientras `menuAbierto === true`, se aplica `document.body.style.overflow = 'hidden'` en un `useEffect` (y se restaura a `''` al cerrar o desmontar) para impedir que la pantalla trasera se deslice.
+
+---
+
+## 4. Matriz de Permisos por Rol y Sensibilidad del Dato (HU-FE-07 CA 1)
+
+1. **6 Roles Canónicos:** `Administrador`, `Data Steward`, `Analista financiero`, `Gerente / Directivo`, `Auditor`, `Usuario móvil`.
+2. **4 Niveles de Sensibilidad:**
+   - **Pública:** Catálogo de entidades, Series históricas OHLC.
+   - **Interna:** IC y valores de métricas, Ranking sin posición, Watchlist personal ver, Aprobaciones bandeja, Parámetros del sistema, Auditoría.
+   - **Confidencial:** Posición en el ranking, Matriz financiera cruda carga, Datos financieros detallados.
+   - **Restringida:** Gestión de usuarios, roles y credenciales.
+3. **Reglas de UI Obligatorias:**
+   - **Decisión D1 (Ranking sin posición para Gerente / Directivo):** El Gerente / Directivo ve el ranking (entidades, sector, IC, variación) pero **sin posición ni cambio de posición**. Ocultar columnas `Pos.` y `Cambio` en la tabla y ocultar la columna `Posición` en el comparador. En `FinancialChart`, el badge `#puesto / total` no se renderiza para Gerente / Directivo ni para Usuario móvil.
+   - **Decisión D2 (Watchlist exclusiva):** Exclusivamente el `Usuario móvil` puede agregar o quitar entidades de la watchlist. Los demás roles solo tienen lectura (`L`).
+   - **Restricción de Usuario móvil:** El `Usuario móvil` no tiene acceso a `/ranking` ni a `/comparar` (recibe 403 del servidor). Ocultar estos enlaces en navegación y proteger las rutas con redirección amigable.
+   - **Manejo de HTTP 403 Forbidden:** Si el backend responde 403, capturarlo limpiamente y mostrar un aviso de restricción institucional (`Tu perfil no tiene permisos para acceder a este recurso`) sin quebrar la interfaz ni generar bucles de petición.

@@ -6,7 +6,11 @@ import logoAlza from '../../assets/logo-alza.png'
 import logoAlzaOscuro from '../../assets/logo-alza-oscuro.png'
 import Ticker from '../ticker/Ticker'
 import BotonTema from '../common/BotonTema'
-import { ROLES, tieneRol } from '../../constants/roles'
+import {
+  puedeConsultarRanking,
+  puedeConsultarComparador,
+  puedeAccederModuloAdministracion,
+} from '../../constants/permisos'
 import './Layout.css'
 
 export default function Layout() {
@@ -23,8 +27,10 @@ export default function Layout() {
     setMenuAbierto(false)
   }
 
-  // El enlace de administración solo se muestra al Administrador (HU-FE-07 CA 2)
-  const esAdmin = tieneRol(usuario, [ROLES.ADMINISTRADOR])
+  // Permisos según la matriz oficial HU-FE-07 CA 1
+  const verRanking = puedeConsultarRanking(usuario)
+  const verComparador = puedeConsultarComparador(usuario)
+  const verAdmin = puedeAccederModuloAdministracion(usuario)
 
   const salir = () => {
     logout()
@@ -64,9 +70,9 @@ export default function Layout() {
         <nav className="nav-links" aria-label="Navegación principal">
           <NavLink to="/dashboard">Tablero</NavLink>
           <NavLink to="/grafica">Gráficas</NavLink>
-          <NavLink to="/ranking">Ranking</NavLink>
-          <NavLink to="/comparar">Comparar</NavLink>
-          {esAdmin && <NavLink to="/administracion">Administración</NavLink>}
+          {verRanking && <NavLink to="/ranking">Ranking</NavLink>}
+          {verComparador && <NavLink to="/comparar">Comparar</NavLink>}
+          {verAdmin && <NavLink to="/administracion">Administración</NavLink>}
         </nav>
 
         {/* Acciones de usuario y tema en escritorio (> 768px) */}
@@ -131,9 +137,9 @@ export default function Layout() {
             <nav className="nav-drawer-links" aria-label="Navegación móvil">
               <NavLink to="/dashboard" onClick={() => setMenuAbierto(false)}>Tablero</NavLink>
               <NavLink to="/grafica" onClick={() => setMenuAbierto(false)}>Gráficas</NavLink>
-              <NavLink to="/ranking" onClick={() => setMenuAbierto(false)}>Ranking</NavLink>
-              <NavLink to="/comparar" onClick={() => setMenuAbierto(false)}>Comparar</NavLink>
-              {esAdmin && (
+              {verRanking && <NavLink to="/ranking" onClick={() => setMenuAbierto(false)}>Ranking</NavLink>}
+              {verComparador && <NavLink to="/comparar" onClick={() => setMenuAbierto(false)}>Comparar</NavLink>}
+              {verAdmin && (
                 <NavLink to="/administracion" onClick={() => setMenuAbierto(false)}>
                   Administración
                 </NavLink>

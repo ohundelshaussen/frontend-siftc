@@ -1,11 +1,14 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
+import { useAuth } from '../../context/AuthContext'
 import { getRanking, getSectores, getDimensiones, getPeriodos } from '../../services/api'
+import { puedeVerPosicionRanking } from '../../constants/permisos'
 import RankingTabla from './RankingTabla'
 import { PERIODO_POR_DEFECTO } from '../../constants/periodos'
 import './Ranking.css'
 
 // HU-FE-04 filtros del ranking
+// HU-FE-07 matriz de permisos por rol (Decisión D1: Gerente ve ranking sin posición)
 
 const POR_DEFECTO = { sector: '', dimension: '', periodo: PERIODO_POR_DEFECTO, orden: 'ic', dir: 'desc' }
 const ORDENABLES = ['posicion', 'entidad', 'sector', 'ic', 'variacionPct']
@@ -29,27 +32,32 @@ function ordenar(items, orden, dir) {
   return [...items].sort((a, b) => {
     const x = a[orden]
     const y = b[orden]
+    if (x === null || x === undefined) return 1
+    if (y === null || y === undefined) return -1
     if (typeof x === 'string') return x.localeCompare(y, 'es') * signo
     return (x - y) * signo
   })
 }
 
 export default function Ranking() {
+  const { usuario } = useAuth()
   const [params, setSearchParams] = useSearchParams()
   const filtros = leerFiltros(params)
   const { sector, dimension, periodo, orden, dir } = filtros
 
   const [catalogos, setCatalogos] = useState({ sectores: [], dimensiones: [], periodos: [] })
   const [resultado, setResultado] = useState({ clave: null, datos: null })
-  const [error, setError] = useState(false)
+  const [error, setError] = useState(null)
   const clave = JSON.stringify([sector, dimension, periodo, orden, dir])
   const datos = resultado.datos
   const cargando = resultado.clave !== clave
 
+  const puedeVerPosicion = puedeVerPosicionRanking(usuario)
+
   useEffect(() => {
     Promise.all([getSectores(), getDimensiones(), getPeriodos()])
       .then(([sectores, dimensiones, periodos]) => setCatalogos({ sectores, dimensiones, periodos }))
-      .catch(() => setError(true))
+      .catch(() => setError('No se pudieron cargar los catálogos del ranking.'))
   }, [])
 
   useEffect(() => {
@@ -61,9 +69,16 @@ export default function Ranking() {
       .then((respuesta) => {
         if (!vigente) return
         setResultado({ clave, datos: respuesta })
-        setError(false)
+        setError(null)
       })
-      .catch(() => vigente && setError(true))
+      .catch((err) => {
+        if (!vigente) return
+        if (err?.response?.status === 403) {
+          setError('Tu rol no tiene autorización para acceder al ranking de competitividad (HTTP 403 Forbidden).')
+        } else {
+          setError('No se pudo cargar el ranking. Intenta de nuevo.')
+        }
+      })
     return () => {
       vigente = false
     }
@@ -87,8 +102,8 @@ export default function Ranking() {
   const cambiar = (cambios) => {
     const siguiente = { ...filtros, ...cambios }
     const limpio = {}
-    Object.entries(siguiente).forEach(([clave, valor]) => {
-      if (valor && valor !== POR_DEFECTO[clave]) limpio[clave] = valor
+    Object.entries(siguiente).forEach(([claveFiltro, valor]) => {
+      if (valor && valor !== POR_DEFECTO[claveFiltro]) limpio[claveFiltro] = valor
     })
     setSearchParams(limpio)
   }
@@ -121,8 +136,6 @@ export default function Ranking() {
 
           <label className="campo">
             <span>Dimensión</span>
-            {/* Sin métricas cargadas en el servidor no hay dimensiones que filtrar:
-                se deshabilita en vez de mostrar opciones que no harían nada. */}
             <select
               value={dimension}
               onChange={(e) => cambiar({ dimension: e.target.value })}
@@ -160,7 +173,7 @@ export default function Ranking() {
       </section>
 
       {error && (
-        <p role="alert" className="estado estado-error">No se pudo cargar el ranking. Intenta de nuevo.</p>
+        <p role="alert" className="estado estado-error">{error}</p>
       )}
       {!error && !filas && <p className="estado" aria-live="polite">Cargando ranking…</p>}
       {!error && filas && (
@@ -174,6 +187,7 @@ export default function Ranking() {
           periodoId={periodo}
           cargando={cargando}
           onOrdenar={ordenarPor}
+          mostrarPosicion={puedeVerPosicion}
         />
       )}
     </div>

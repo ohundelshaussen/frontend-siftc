@@ -4,6 +4,8 @@ import { createChart, ColorType, CandlestickSeries, AreaSeries } from 'lightweig
 import { Trophy } from 'lucide-react';
 import { getEntidades, getOhlc, getRanking, getMetricas } from '../../services/api';
 import { useTema } from '../../context/ThemeContext';
+import { useAuth } from '../../context/AuthContext';
+import { puedeVerPosicionRanking } from '../../constants/permisos';
 import { PERIODOS, PERIODO_POR_DEFECTO, nombrePeriodo } from '../../constants/periodos';
 import { num, pct, fechaIso } from '../../utils/format';
 import MetricasPorDimension from '../ficha/MetricasPorDimension';
@@ -94,10 +96,14 @@ export const FinancialChart = ({ entidadNombre, ticker }) => {
     return listaEntidades[0];
   }, [listaEntidades, parametroUrl]);
 
-  // Consulta ranking oficial para deducir / obtener la posición de la entidad (HU-FE-03 CA 1)
+  const { usuario } = useAuth();
+  const puedeVerPosicion = puedeVerPosicionRanking(usuario);
+
+  // Consulta ranking oficial para deducir / obtener la posición de la entidad (HU-FE-03 CA 1 y HU-FE-07 CA 1)
   const [rankingDatos, setRankingDatos] = useState(null);
 
   useEffect(() => {
+    if (!puedeVerPosicion) return undefined;
     let activo = true;
     getRanking({ periodo, limit: 100 })
       .then((res) => {
@@ -113,10 +119,10 @@ export const FinancialChart = ({ entidadNombre, ticker }) => {
     return () => {
       activo = false;
     };
-  }, [periodo]);
+  }, [periodo, puedeVerPosicion]);
 
   const infoRanking = useMemo(() => {
-    if (!entidadActiva) return null;
+    if (!entidadActiva || !puedeVerPosicion) return null;
     const entidadId = entidadActiva.id;
     const cod = String(entidadActiva.codigo ?? entidadActiva.codigo_entidad ?? '').toUpperCase();
     const nom = String(entidadActiva.nombre ?? entidadActiva.nombre_entidad ?? '').toUpperCase();
@@ -129,7 +135,7 @@ export const FinancialChart = ({ entidadNombre, ticker }) => {
           String(it.codigo ?? '').toUpperCase() === cod ||
           String(it.entidad ?? '').toUpperCase() === nom,
       );
-      if (encontrado) {
+      if (encontrado && encontrado.posicion !== null && encontrado.posicion !== undefined) {
         return {
           puesto: encontrado.posicion,
           total: rankingDatos.total ?? rankingDatos.items.length,
@@ -160,7 +166,7 @@ export const FinancialChart = ({ entidadNombre, ticker }) => {
     }
 
     return null;
-  }, [entidadActiva, rankingDatos, listaEntidades]);
+  }, [entidadActiva, rankingDatos, listaEntidades, puedeVerPosicion]);
 
   // Consulta métricas reales por entidad (HU-FE-03 CA 1 y CA 2)
   const [metricasServidor, setMetricasServidor] = useState([]);
@@ -433,7 +439,7 @@ export const FinancialChart = ({ entidadNombre, ticker }) => {
               <h1 className="grafica-title">{nombreMostrado}</h1>
               <span className="grafica-ticker mono-num">{codigoMostrado}</span>
               <span className="grafica-badge-finanzas">{sectorMostrado}</span>
-              {infoRanking && (
+              {infoRanking && infoRanking.puesto != null && (
                 <span
                   className="grafica-badge-ranking"
                   title={`#${infoRanking.puesto} / ${infoRanking.total} (${nombrePeriodo(periodo)})`}

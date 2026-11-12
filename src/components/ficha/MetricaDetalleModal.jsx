@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { X, Calculator, Calendar, Building2, Gauge } from 'lucide-react'
 import { num, fechaIso } from '../../utils/format'
+import EnlaceDiccionario from '../diccionario/EnlaceDiccionario'
 
 // HU-FE-03 CA 3: Detalle interactivo de métrica (Definición, Fórmula y Linaje)
 export default function MetricaDetalleModal({ metrica, onCerrar }) {
@@ -116,6 +117,11 @@ export default function MetricaDetalleModal({ metrica, onCerrar }) {
 
         {/* Acciones */}
         <div className="ficha-modal-acciones">
+          <EnlaceDiccionario
+            termino={metrica.codigoMetrica || metrica.nombreMetrica}
+            etiqueta="Ver en el diccionario"
+            onClick={onCerrar}
+          />
           <button
             type="button"
             className="ficha-modal-btn-cerrar"

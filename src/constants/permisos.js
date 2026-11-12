@@ -118,3 +118,84 @@ export const puedeLeerParametros = (usuario) => tieneRol(usuario, ROLES_LECTURA_
 
 export const puedeAccederModuloAdministracion = (usuario) =>
   puedeGestionarUsuarios(usuario) || puedeLeerParametros(usuario)
+
+export const puedeConsultarAprobaciones = (usuario) => tieneRol(usuario, ROLES_CONSULTA_APROBACIONES)
+
+export const puedeAprobarLotes = (usuario) => tieneRol(usuario, ROLES_DECISION_APROBACIONES)
+
+/* ==========================================================================
+   Sensibilidad del Dato en el Diccionario (HU-DD-08 / HU-FE-07 CA 1)
+   ========================================================================== */
+
+export const NIVELES_SENSIBILIDAD = Object.freeze({
+  PUBLICO: 'publico',
+  INTERNO: 'interno',
+  CONFIDENCIAL: 'confidencial',
+  RESTRINGIDO: 'restringido',
+})
+
+export const ETIQUETA_SENSIBILIDAD = Object.freeze({
+  [NIVELES_SENSIBILIDAD.PUBLICO]: 'Público',
+  [NIVELES_SENSIBILIDAD.INTERNO]: 'Interno',
+  [NIVELES_SENSIBILIDAD.CONFIDENCIAL]: 'Confidencial',
+  [NIVELES_SENSIBILIDAD.RESTRINGIDO]: 'Restringido',
+})
+
+const SENSIBILIDAD_POR_ROL = Object.freeze({
+  [ROLES.ADMINISTRADOR]: [
+    NIVELES_SENSIBILIDAD.PUBLICO,
+    NIVELES_SENSIBILIDAD.INTERNO,
+    NIVELES_SENSIBILIDAD.CONFIDENCIAL,
+    NIVELES_SENSIBILIDAD.RESTRINGIDO,
+  ],
+  [ROLES.DATA_STEWARD]: [
+    NIVELES_SENSIBILIDAD.PUBLICO,
+    NIVELES_SENSIBILIDAD.INTERNO,
+    NIVELES_SENSIBILIDAD.CONFIDENCIAL,
+  ],
+  [ROLES.ANALISTA]: [
+    NIVELES_SENSIBILIDAD.PUBLICO,
+    NIVELES_SENSIBILIDAD.INTERNO,
+    NIVELES_SENSIBILIDAD.CONFIDENCIAL,
+  ],
+  [ROLES.AUDITOR]: [
+    NIVELES_SENSIBILIDAD.PUBLICO,
+    NIVELES_SENSIBILIDAD.INTERNO,
+    NIVELES_SENSIBILIDAD.CONFIDENCIAL,
+  ],
+  [ROLES.GERENTE]: [
+    NIVELES_SENSIBILIDAD.PUBLICO,
+    NIVELES_SENSIBILIDAD.INTERNO,
+  ],
+  [ROLES.USUARIO_MOVIL]: [
+    NIVELES_SENSIBILIDAD.PUBLICO,
+    NIVELES_SENSIBILIDAD.INTERNO,
+  ],
+})
+
+export function normalizarSensibilidad(valor) {
+  const limpio = String(valor ?? '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .trim()
+    .toLowerCase()
+
+  if (limpio.startsWith('public')) return NIVELES_SENSIBILIDAD.PUBLICO
+  if (limpio.startsWith('intern')) return NIVELES_SENSIBILIDAD.INTERNO
+  if (limpio.startsWith('confidencial')) return NIVELES_SENSIBILIDAD.CONFIDENCIAL
+  if (limpio.startsWith('restring')) return NIVELES_SENSIBILIDAD.RESTRINGIDO
+  return NIVELES_SENSIBILIDAD.PUBLICO
+}
+
+export function nivelesSensibilidadPermitidos(usuario) {
+  if (!usuario) return [NIVELES_SENSIBILIDAD.PUBLICO]
+  for (const [rol, niveles] of Object.entries(SENSIBILIDAD_POR_ROL)) {
+    if (tieneRol(usuario, [rol])) return niveles
+  }
+  return [NIVELES_SENSIBILIDAD.PUBLICO]
+}
+
+export function puedeVerSensibilidad(usuario, clasificacion) {
+  const nivel = normalizarSensibilidad(clasificacion)
+  return nivelesSensibilidadPermitidos(usuario).includes(nivel)
+}

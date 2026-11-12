@@ -273,3 +273,28 @@ export async function quitarDeWatchlist(idEntidad) {
   const res = await conReintentoDeArranque(() => http.delete(ENDPOINTS.watchlistEntidad(idEntidad)))
   return res.data
 }
+
+// --- Aprobaciones de Lotes (HU-FE-08 / HU-BE-08) ---
+
+// GET /api/v1/aprobaciones
+// Roles admitidos: Administrador, Data Steward, Analista financiero, Auditor
+export async function getLotesPendientes() {
+  const res = await conReintentoDeArranque(() => http.get(ENDPOINTS.aprobaciones))
+  return Array.isArray(res.data) ? res.data : []
+}
+
+// POST /api/v1/aprobaciones/{idLote}/aprobar
+// Rol admitido: Analista financiero (segregación de funciones: no puede aprobar su propio lote)
+export async function aprobarLote(idLote) {
+  const res = await conReintentoDeArranque(() => http.post(ENDPOINTS.aprobarLote(idLote)))
+  return res.data
+}
+
+// POST /api/v1/aprobaciones/{idLote}/rechazar
+// Rol admitido: Analista financiero. Cuerpo: { comentario: string } (obligatorio, máx 500 caracteres)
+export async function rechazarLote(idLote, comentario) {
+  const res = await conReintentoDeArranque(() =>
+    http.post(ENDPOINTS.rechazarLote(idLote), { comentario: String(comentario ?? '').trim() }),
+  )
+  return res.data
+}

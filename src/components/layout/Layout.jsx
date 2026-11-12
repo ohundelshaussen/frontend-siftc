@@ -9,6 +9,7 @@ import BotonTema from '../common/BotonTema'
 import {
   puedeConsultarRanking,
   puedeConsultarComparador,
+  puedeConsultarAprobaciones,
   puedeAccederModuloAdministracion,
 } from '../../constants/permisos'
 import './Layout.css'
@@ -30,6 +31,7 @@ export default function Layout() {
   // Permisos según la matriz oficial HU-FE-07 CA 1
   const verRanking = puedeConsultarRanking(usuario)
   const verComparador = puedeConsultarComparador(usuario)
+  const verAprobaciones = puedeConsultarAprobaciones(usuario)
   const verAdmin = puedeAccederModuloAdministracion(usuario)
 
   const salir = () => {
@@ -72,6 +74,8 @@ export default function Layout() {
           <NavLink to="/grafica">Gráficas</NavLink>
           {verRanking && <NavLink to="/ranking">Ranking</NavLink>}
           {verComparador && <NavLink to="/comparar">Comparar</NavLink>}
+          {verAprobaciones && <NavLink to="/aprobaciones">Aprobaciones</NavLink>}
+          <NavLink to="/diccionario">Diccionario</NavLink>
           {verAdmin && <NavLink to="/administracion">Administración</NavLink>}
         </nav>
 
@@ -139,6 +143,12 @@ export default function Layout() {
               <NavLink to="/grafica" onClick={() => setMenuAbierto(false)}>Gráficas</NavLink>
               {verRanking && <NavLink to="/ranking" onClick={() => setMenuAbierto(false)}>Ranking</NavLink>}
               {verComparador && <NavLink to="/comparar" onClick={() => setMenuAbierto(false)}>Comparar</NavLink>}
+              {verAprobaciones && (
+                <NavLink to="/aprobaciones" onClick={() => setMenuAbierto(false)}>
+                  Aprobaciones
+                </NavLink>
+              )}
+              <NavLink to="/diccionario" onClick={() => setMenuAbierto(false)}>Diccionario</NavLink>
               {verAdmin && (
                 <NavLink to="/administracion" onClick={() => setMenuAbierto(false)}>
                   Administración

@@ -20,8 +20,8 @@ export default function Tablero() {
   if (!datos) return <p className="estado" aria-live="polite">Cargando tablero…</p>
 
   const { indice, top, entidades } = datos
-  const suben = entidades.filter((e) => e.variacion_porcentual > 0).length
-  const bajan = entidades.filter((e) => e.variacion_porcentual < 0).length
+  const suben = entidades.filter((e) => (e.variacionPct ?? e.variacion_porcentual) > 0).length
+  const bajan = entidades.filter((e) => (e.variacionPct ?? e.variacion_porcentual) < 0).length
   const mayorSubida = top.ganadores?.[0]
   const mayorBajada = top.perdedores?.[0]
 
@@ -29,7 +29,6 @@ export default function Tablero() {
     <div className="tablero">
       <header>
         <h1 className="titulo-pagina">Tablero de mercado</h1>
-        <p className="texto-suave">Resumen del Índice de Competitividad de las entidades.</p>
       </header>
 
       <div className="fila-principal">
@@ -50,20 +49,20 @@ export default function Tablero() {
 
           <div className="resumen-destacados">
             {mayorSubida && (
-              <Link to={`/grafica?entidad=${mayorSubida.codigo_entidad}`} className="resumen-bloque">
+              <Link to={`/grafica?entidad=${mayorSubida.codigo ?? mayorSubida.codigo_entidad}`} className="resumen-bloque">
                 <span className="etiqueta">Mayor subida</span>
                 <div className="resumen-fila">
-                  <strong>{mayorSubida.nombre_entidad}</strong>
-                  <Variacion valor={mayorSubida.variacion_porcentual} />
+                  <strong>{mayorSubida.nombre ?? mayorSubida.nombre_entidad}</strong>
+                  <Variacion valor={mayorSubida.variacionPct ?? mayorSubida.variacion_porcentual} />
                 </div>
               </Link>
             )}
             {mayorBajada && (
-              <Link to={`/grafica?entidad=${mayorBajada.codigo_entidad}`} className="resumen-bloque">
+              <Link to={`/grafica?entidad=${mayorBajada.codigo ?? mayorBajada.codigo_entidad}`} className="resumen-bloque">
                 <span className="etiqueta">Mayor bajada</span>
                 <div className="resumen-fila">
-                  <strong>{mayorBajada.nombre_entidad}</strong>
-                  <Variacion valor={mayorBajada.variacion_porcentual} />
+                  <strong>{mayorBajada.nombre ?? mayorBajada.nombre_entidad}</strong>
+                  <Variacion valor={mayorBajada.variacionPct ?? mayorBajada.variacion_porcentual} />
                 </div>
               </Link>
             )}
@@ -72,17 +71,10 @@ export default function Tablero() {
       </div>
 
       <div className="fila-listas">
-        <TopLista titulo="Top 5 ganadores del día" entidades={top.ganadores ?? []} />
-        <TopLista titulo="Top 5 perdedores del día" entidades={top.perdedores ?? []} />
+        <TopLista titulo="Top 5 Alzas" entidades={top.ganadores ?? []} />
+        <TopLista titulo="Top 5 Bajas" entidades={top.perdedores ?? []} />
       </div>
 
-      <section className="cta">
-        <div className="cta-texto">
-          <h2>Compara, decide, avanza.</h2>
-          <p>Consulta el ranking completo por sector, dimensión y periodo.</p>
-        </div>
-        <Link to="/ranking" className="cta-boton">Ver ranking →</Link>
-      </section>
     </div>
   )
 }

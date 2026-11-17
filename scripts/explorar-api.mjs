@@ -31,7 +31,7 @@ function leerEnv() {
 }
 
 const env = leerEnv()
-const base = (env.VITE_API_URL || 'http://localhost:7123').replace(/\/$/, '')
+const base = (env.VITE_API_URL || 'https://siftc.onrender.com').replace(/\/$/, '')
 const prefijo = env.VITE_API_PREFIX ?? '/api/v1'
 const api = `${base}${prefijo}`
 const [identificador, password] = process.argv.slice(2)

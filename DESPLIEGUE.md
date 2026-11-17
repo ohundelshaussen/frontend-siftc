@@ -7,11 +7,9 @@ Si cambias `VITE_API_URL`, hay que volver a compilar y volver a subir.
 
 Valores de producción (los que ya tiene `.env`):
 
-    VITE_USE_MOCK=false
     VITE_API_URL=https://siftc.onrender.com
     VITE_API_PREFIX=/api/v1
     VITE_API_TIMEOUT=60000
-    VITE_FALLBACK_MOCK=false
 
 ## Compilar
 
@@ -48,7 +46,7 @@ Síntoma en la consola del navegador: "blocked by CORS policy".
 ## Estado conocido al momento del despliegue (2026-11-01)
 
 - Login, entidades, ranking y series OHLC: datos reales del servidor.
-- Índice general: datos de ejemplo (no existe el endpoint).
-- Filtro de dimensión del ranking: deshabilitado (`/metricas` devuelve 0 filas).
-- Velas: sólo el periodo Trimestral trae rango real; Diaria y Mensual llegan planas.
+- Modo simulado (mock): eliminado; opera 100% contra la API externa en Render.
+- Índice general: derivado de las entidades reales calculando promedio de IC.
+- Filtro de dimensión del ranking: derivado de `/metricas`.
 - Crear usuarios: pendiente de los UUID de rol en `src/services/usuarioApi.js`.

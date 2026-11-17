@@ -38,13 +38,6 @@ export const ENDPOINTS = {
   // --- Cargas (subida de la matriz financiera CSV) ---
   cargas: '/cargas',
 
-<<<<<<< HEAD
-
- // --- --- Aprobaciones por Lote (HU-FE-08 / HU-BE-05) --- ---
-  aprobacionesPendientes: '/aprobaciones',
-  aprobarLote: (idLote) => `/aprobaciones/${idLote}/aprobar`,
-  rechazarLote: (idLote) => `/aprobaciones/${idLote}/rechazar`,
-=======
   // --- Aprobaciones (flujo de aprobación de lotes) ---
   aprobaciones: '/aprobaciones',
   aprobarLote: (idLote) => `/aprobaciones/${idLote}/aprobar`,
@@ -53,7 +46,7 @@ export const ENDPOINTS = {
   // --- Watchlist (favoritos y seguimiento personal - Solo Usuario móvil) ---
   watchlist: '/watchlist',
   watchlistEntidad: (idEntidad) => `/watchlist/${idEntidad}`,
->>>>>>> 724b11401948a0daff4cd5d275a4ad243ba3a932
+
 }
 
 export default ENDPOINTS

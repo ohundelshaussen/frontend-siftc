@@ -3,7 +3,7 @@ import { Routes, Route, Navigate } from 'react-router-dom'
 import Login from '../pages/Login'
 import Layout from '../components/layout/Layout'
 import ProtectedRoute from './ProtectedRoute'
-import BandejaAprobaciones from '../pages/BandejaAprobaciones';
+
 import { ROLES } from '../constants/roles'
 import {
   ROLES_CON_ACCESO_RANKING,

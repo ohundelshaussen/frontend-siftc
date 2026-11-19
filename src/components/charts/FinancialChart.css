@@ -368,3 +368,55 @@ html[data-theme='dark'] .grafica-cards-grid {
   display: none !important;
   pointer-events: none !important;
 }
+
+/* Aviso compacto cuando el usuario elige Velas sobre serie plana (Diaria/Mensual) */
+.grafica-aviso-plana {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+  padding: 8px 12px;
+  border-radius: 6px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  background: #F8F9FA;
+  color: var(--color-text-muted);
+  font-size: 12.5px;
+  font-weight: 500;
+}
+
+.grafica-aviso-btn {
+  height: 30px;
+  padding: 0 10px;
+  border-radius: 6px;
+  border: 1px solid rgba(38, 78, 122, 0.28);
+  background: #FFFFFF;
+  color: var(--color-azul-acero);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background-color 0.15s, border-color 0.15s;
+}
+
+.grafica-aviso-btn:hover {
+  background: rgba(38, 78, 122, 0.06);
+  border-color: var(--color-azul-acero);
+}
+
+html[data-theme='dark'] .grafica-aviso-plana {
+  background: rgba(255, 255, 255, 0.03);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+html[data-theme='dark'] .grafica-aviso-btn {
+  background: rgba(141, 184, 232, 0.10);
+  border-color: rgba(141, 184, 232, 0.25);
+  color: #8DB8E8;
+}
+
+html[data-theme='dark'] .grafica-aviso-btn:hover {
+  background: rgba(141, 184, 232, 0.18);
+  border-color: #8DB8E8;
+}

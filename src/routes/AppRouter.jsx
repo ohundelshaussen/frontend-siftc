@@ -6,7 +6,7 @@ import ProtectedRoute from './ProtectedRoute'
 import {
   ROLES_CON_ACCESO_RANKING,
   ROLES_CON_ACCESO_COMPARADOR,
-  ROLES_LECTURA_PARAMETROS,
+  ROLES_GESTION_USUARIOS,
   ROLES_CONSULTA_APROBACIONES,
 } from '../constants/permisos'
 
@@ -55,8 +55,8 @@ export default function AppRouter() {
           </Route>
         </Route>
 
-        {/* HU-FE-07 Matriz de Permisos: Administración y Parámetros (Administrador, Analista, Auditor) */}
-        <Route element={<ProtectedRoute rolesPermitidos={ROLES_LECTURA_PARAMETROS} />}>
+        {/* HU-FE-07 CA 2: Solo el Administrador puede entrar al módulo de Administración */}
+        <Route element={<ProtectedRoute rolesPermitidos={ROLES_GESTION_USUARIOS} />}>
           <Route element={<Layout />}>
             <Route path="/administracion" element={<Administracion />} />
           </Route>

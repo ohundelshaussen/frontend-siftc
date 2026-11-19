@@ -136,6 +136,21 @@
 .cambio-baja { color: #B83232; background: #FBE8E6; }
 .cambio-igual { color: var(--color-text-muted); background: #F1F3F5; }
 .estado-error { color: #B83232; }
+.ranking-error-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 16px 20px;
+  border-radius: 8px;
+}
+.ranking-error-texto {
+  margin: 0;
+  color: var(--color-bearish, #B83232);
+  font-size: 0.9rem;
+  font-weight: 600;
+}
 .tabla tbody tr { transition: background-color 0.12s ease; }
 .tabla tbody tr:hover { background-color: rgba(0, 0, 0, 0.02); }
 .solo-lector { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }

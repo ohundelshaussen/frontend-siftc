@@ -116,8 +116,10 @@ export const puedeGestionarParametros = (usuario) => tieneRol(usuario, ROLES_ESC
 
 export const puedeLeerParametros = (usuario) => tieneRol(usuario, ROLES_LECTURA_PARAMETROS)
 
+// HU-FE-07 CA 2: Solo el Administrador puede entrar al módulo de Administración (/administracion)
+// Confirmado en docs/api/openapi-v1.json: /api/v1/usuarios/** y /api/v1/ic/configuracion/** exigen rol Administrador
 export const puedeAccederModuloAdministracion = (usuario) =>
-  puedeGestionarUsuarios(usuario) || puedeLeerParametros(usuario)
+  puedeGestionarUsuarios(usuario)
 
 export const puedeConsultarAprobaciones = (usuario) => tieneRol(usuario, ROLES_CONSULTA_APROBACIONES)
 

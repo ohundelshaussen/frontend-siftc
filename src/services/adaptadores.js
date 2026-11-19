@@ -167,31 +167,26 @@ function normalizarVelas(serie) {
       high: aNumero(PRIMER_VALOR(v, ['maximo', 'máximo', 'high'])),
       low: aNumero(PRIMER_VALOR(v, ['minimo', 'mínimo', 'low'])),
       close: aNumero(PRIMER_VALOR(v, ['cierre', 'close', 'valor'])),
+      variacion: aNumero(PRIMER_VALOR(v, ['variacion', 'variation'])),
+      variacionPct: aNumero(PRIMER_VALOR(v, ['variacionPct', 'variacion_porcentual', 'variationPct'])),
     }))
     .filter((v) => v.time && Number.isFinite(v.close))
     .sort((a, b) => String(a.time).localeCompare(String(b.time)))
 
-  // Si los datos del backend vienen planos (open === close === high === low),
-  // se aplica continuidad de mercado: la apertura es el cierre del periodo anterior.
-  return puntosCrudos.map((punto, index) => {
-    let { open, high, low, close } = punto
-    const esPlana = open === close && (high === low || !high)
-
-    if (esPlana && index > 0) {
-      const cierreAnterior = puntosCrudos[index - 1].close
-      if (Number.isFinite(cierreAnterior)) {
-        open = cierreAnterior
-        high = Math.max(open, close)
-        low = Math.min(open, close)
-      }
-    }
+  // El contrato (OhlcPuntoDto en docs/api/openapi-v1.json y HU-FE-03 CA 2) exige que
+  // apertura, máximo, mínimo, cierre y variación coincidan en el 100 % con lo que envía la API.
+  return puntosCrudos.map((punto) => {
+    const { time, open, high, low, close, variacion, variacionPct } = punto
+    const apertura = Number.isFinite(open) ? open : close
 
     return {
-      time: punto.time,
-      open,
-      high,
-      low,
+      time,
+      open: apertura,
+      high: Number.isFinite(high) ? high : Math.max(apertura, close),
+      low: Number.isFinite(low) ? low : Math.min(apertura, close),
       close,
+      variacion: Number.isFinite(variacion) ? variacion : null,
+      variacionPct: Number.isFinite(variacionPct) ? variacionPct : null,
     }
   })
 }

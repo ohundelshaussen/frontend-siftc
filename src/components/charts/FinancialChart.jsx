@@ -31,10 +31,15 @@ export const FinancialChart = ({ entidadNombre, ticker }) => {
   const [serieOhlc, setSerieOhlc] = useState([]);
   const [cargandoOhlc, setCargandoOhlc] = useState(false);
   const [errorOhlc, setErrorOhlc] = useState('');
-  const [tipoGrafica, setTipoGrafica] = useState('velas');
 
   const parametroUrl = searchParams.get('entidad');
   const parametroPeriodo = searchParams.get('periodo');
+
+  // Inicializa Línea para Diaria/Mensual (serie plana) y Velas para Trimestral;
+  // conserva la elección manual del usuario al cambiar entre periodos.
+  const [tipoGrafica, setTipoGrafica] = useState(() =>
+    parametroPeriodo?.toLowerCase() === 'trimestral' ? 'velas' : 'linea',
+  );
 
   // Deriva el periodo directamente de la URL (si es válido) o usa el predeterminado
   const periodo = useMemo(() => {
@@ -112,7 +117,10 @@ export const FinancialChart = ({ entidadNombre, ticker }) => {
       })
       .catch((err) => {
         if (!activo) return;
-        console.warn('[Ficha] Error consultando ranking:', err?.message);
+        const status = err?.response?.status;
+        if (status !== 503 && status !== 403) {
+          console.warn('[Ficha] Error consultando ranking:', err?.message);
+        }
         setRankingDatos(null);
       });
 
@@ -122,51 +130,27 @@ export const FinancialChart = ({ entidadNombre, ticker }) => {
   }, [periodo, puedeVerPosicion]);
 
   const infoRanking = useMemo(() => {
-    if (!entidadActiva || !puedeVerPosicion) return null;
+    if (!entidadActiva || !puedeVerPosicion || !rankingDatos?.items?.length) return null;
     const entidadId = entidadActiva.id;
     const cod = String(entidadActiva.codigo ?? entidadActiva.codigo_entidad ?? '').toUpperCase();
     const nom = String(entidadActiva.nombre ?? entidadActiva.nombre_entidad ?? '').toUpperCase();
 
-    // 1. Buscar en el ranking oficial del servidor
-    if (rankingDatos?.items?.length) {
-      const encontrado = rankingDatos.items.find(
-        (it) =>
-          it.entidadId === entidadId ||
-          String(it.codigo ?? '').toUpperCase() === cod ||
-          String(it.entidad ?? '').toUpperCase() === nom,
-      );
-      if (encontrado && encontrado.posicion !== null && encontrado.posicion !== undefined) {
-        return {
-          puesto: encontrado.posicion,
-          total: rankingDatos.total ?? rankingDatos.items.length,
-          cambioPosicion: encontrado.cambioPosicion ?? 0,
-        };
-      }
-    }
-
-    // 2. Deducir de la lista de entidades ordenadas por IC si el ranking no estuviera disponible
-    if (listaEntidades.length > 0) {
-      const ordenadas = [...listaEntidades].sort((a, b) => {
-        const icA = Number(a.ic ?? a.indice_competitividad ?? 0);
-        const icB = Number(b.ic ?? b.indice_competitividad ?? 0);
-        return icB - icA;
-      });
-      const idx = ordenadas.findIndex(
-        (e) =>
-          e.id === entidadId ||
-          String(e.codigo ?? e.codigo_entidad ?? '').toUpperCase() === cod,
-      );
-      if (idx !== -1) {
-        return {
-          puesto: idx + 1,
-          total: ordenadas.length,
-          cambioPosicion: 0,
-        };
-      }
+    const encontrado = rankingDatos.items.find(
+      (it) =>
+        it.entidadId === entidadId ||
+        String(it.codigo ?? '').toUpperCase() === cod ||
+        String(it.entidad ?? '').toUpperCase() === nom,
+    );
+    if (encontrado && encontrado.posicion !== null && encontrado.posicion !== undefined) {
+      return {
+        puesto: encontrado.posicion,
+        total: rankingDatos.total ?? rankingDatos.items.length,
+        cambioPosicion: encontrado.cambioPosicion ?? 0,
+      };
     }
 
     return null;
-  }, [entidadActiva, rankingDatos, listaEntidades, puedeVerPosicion]);
+  }, [entidadActiva, rankingDatos, puedeVerPosicion]);
 
   // Consulta métricas reales por entidad (HU-FE-03 CA 1 y CA 2)
   const [metricasServidor, setMetricasServidor] = useState([]);
@@ -415,6 +399,11 @@ export const FinancialChart = ({ entidadNombre, ticker }) => {
   const codigoMostrado = entidadActiva?.codigo ?? entidadActiva?.codigo_entidad ?? ticker ?? '—';
   const sectorMostrado = entidadActiva?.sector ?? '—';
 
+  const serieEsPlana = useMemo(
+    () => serieOhlc.length > 0 && serieOhlc.every((v) => v.high === v.low),
+    [serieOhlc],
+  );
+
   const ultimoDato = serieOhlc[serieOhlc.length - 1];
   const datoMostrar = hoverData || ultimoDato;
   const variacionEntidad = entidadActiva?.variacionPct ?? entidadActiva?.variacion_porcentual ?? null;
@@ -423,9 +412,12 @@ export const FinancialChart = ({ entidadNombre, ticker }) => {
   const simboloVar = variacionEntidad === null ? '–' : sube ? '▲' : baja ? '▼' : '–';
   const claseVariacion = baja ? 'baja' : !sube ? 'igual' : '';
 
-  const variacionVela = datoMostrar && datoMostrar.open
-    ? ((datoMostrar.close - datoMostrar.open) / datoMostrar.open) * 100
-    : null;
+  const variacionVela =
+    datoMostrar && Number.isFinite(datoMostrar.variacionPct)
+      ? datoMostrar.variacionPct
+      : datoMostrar && datoMostrar.open
+        ? ((datoMostrar.close - datoMostrar.open) / datoMostrar.open) * 100
+        : null;
   const subeVela = Number(variacionVela) > 0;
   const bajaVela = Number(variacionVela) < 0;
 
@@ -556,6 +548,24 @@ export const FinancialChart = ({ entidadNombre, ticker }) => {
                 }}
               >
                 {errorOhlc}
+              </div>
+            )}
+
+            {!cargando && !errorOhlc && serieEsPlana && tipoGrafica === 'velas' && (
+              <div className="grafica-aviso-plana" role="status">
+                <span>
+                  Serie sin rango OHLC en {nombrePeriodo(periodo)} (apertura = cierre).
+                </span>
+                <button
+                  type="button"
+                  className="grafica-aviso-btn"
+                  onClick={() => {
+                    setTipoGrafica('velas');
+                    handlePeriodoChange('trimestral');
+                  }}
+                >
+                  Ver velas en Trimestral
+                </button>
               </div>
             )}
 

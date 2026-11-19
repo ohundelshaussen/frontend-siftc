@@ -32,56 +32,6 @@ export const aEntidad = (e) => {
 
 export const aEntidades = (lista) => (Array.isArray(lista) ? lista.map(aEntidad) : [])
 
-// /mercado/top no trae código ni sector: se completan con la lista de entidades (por id).
-export function aTop(top, entidades) {
-  const porId = new Map(entidades.map((e) => [e.id, e]))
-  const completar = (t) => {
-    const base = porId.get(t.id)
-    const codigo = t.codigo ?? base?.codigo ?? base?.codigo_entidad ?? ''
-    const nombre = t.nombre ?? base?.nombre ?? base?.nombre_entidad ?? ''
-    const sector = t.sector ?? base?.sector ?? ''
-    const ic = Number(t.ic ?? base?.ic ?? base?.indice_competitividad ?? 0)
-    const variacion = Number(t.variacion ?? base?.variacion ?? 0)
-    const varPct = Number(t.variacionPct ?? t.variacion_porcentual ?? 0)
-
-    return {
-      id: t.id,
-      // Nombres canónicos oficiales OpenAPI (docs/api/openapi-v1.json)
-      codigo,
-      nombre,
-      sector,
-      ic,
-      variacion,
-      variacionPct: varPct,
-      direccion: direccion(varPct),
-
-      // Alias heredados para garantizar cero errores en componentes que aún los lean
-      codigo_entidad: codigo,
-      nombre_entidad: nombre,
-      indice_competitividad: ic,
-      variacion_porcentual: varPct,
-    }
-  }
-  return {
-    fecha: top?.fecha,
-    ganadores: Array.isArray(top?.ganadores) ? top.ganadores.map(completar) : [],
-    perdedores: Array.isArray(top?.perdedores) ? top.perdedores.map(completar) : [],
-  }
-}
-
-// /indice-general solo trae valor y variación; apertura, máximo, mínimo, cierre y serie son opcionales.
-export const aIndiceGeneral = (i) => ({
-  fecha: i.fecha,
-  valor: i.valor,
-  variacion: i.variacionPct,
-  puntos: i.variacion,
-  apertura: i.apertura,
-  maximo: i.maximo,
-  minimo: i.minimo,
-  cierre: i.cierre,
-  serie: i.serie,
-})
-
 // Normaliza la respuesta de autenticación del Backend .NET (AuthResponseDto en docs/api/openapi-v1.json)
 // Contrato: { token: string, expiraEn: int32, usuario: { id: uuid, nombre: string, rol: string } }
 export function aSesion(respuestaApi) {

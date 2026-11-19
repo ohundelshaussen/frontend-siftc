@@ -19,8 +19,12 @@ export function num(valor, decimales = 1) {
 
 // Porcentaje de un valor que YA viene expresado en porcentaje (ej. variacionPct).
 export function pct(valor, decimales = 2) {
-  const signo = valor > 0 ? '+' : ''
-  return `${signo}${num(valor, decimales)} %`
+  if (valor === null || valor === undefined || Number.isNaN(Number(valor))) return '—'
+
+  const factor = 10 ** decimales
+  const redondeado = Math.round(Number(valor) * factor) / factor
+  const signo = redondeado > 0 ? '+' : ''
+  return `${signo}${num(redondeado, decimales)} %`
 }
 
 // Porcentaje de un valor que viene como PROPORCIÓN (0.0634 -> "6,34 %").
@@ -47,5 +51,7 @@ export function valorMetrica(metrica) {
 }
 
 export function fechaIso(texto) {
-  return texto ? texto.split('-').reverse().join('/') : ''
+  if (!texto) return ''
+  const iso = String(texto).slice(0, 10)
+  return /^\d{4}-\d{2}-\d{2}$/.test(iso) ? iso.split('-').reverse().join('/') : String(texto)
 }

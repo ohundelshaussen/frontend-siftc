@@ -108,7 +108,7 @@ export default function Ranking() {
 
   if (!tieneAcceso) {
     return (
-      <div className="pagina-ranking">
+      <div className="ranking">
         <p role="alert" className="estado estado-error">
           Acceso denegado: tu perfil ({usuario?.rol || 'Usuario móvil'}) no tiene autorización para consultar el ranking de competitividad.
         </p>
@@ -140,15 +140,15 @@ export default function Ranking() {
   }
 
   return (
-    <div className="pagina-ranking">
+    <div className="ranking">
       <header className="encabezado-ranking">
         <div>
           <h1 className="titulo-pagina">Ranking de competitividad</h1>
         </div>
       </header>
 
-      <section className="tarjeta barra-filtros" aria-label="Filtros del ranking">
-        <div className="filtros-grid">
+      <section className="tarjeta filtros" aria-label="Filtros del ranking">
+        <div className="filtros-fila">
           <label className="campo">
             <span className="etiqueta">Sector</span>
             <select value={sector} onChange={(e) => cambiar({ sector: e.target.value })}>

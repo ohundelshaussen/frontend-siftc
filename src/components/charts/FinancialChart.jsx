@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { createChart, ColorType, CandlestickSeries, AreaSeries } from 'lightweight-charts';
 import { Trophy } from 'lucide-react';
-import { getEntidades, getOhlc, getRanking, getMetricas } from '../../services/api';
+import { getEntidades, getOhlc, getRanking, getMetricas, limpiarCacheApi } from '../../services/api';
 import { useTema } from '../../context/ThemeContext';
 import { useAuth } from '../../context/AuthContext';
 import { puedeVerPosicionRanking } from '../../constants/permisos';
@@ -21,7 +21,7 @@ const PALETTE = {
   textoGris: '#5A6375',
 };
 
-export const FinancialChart = ({ entidadNombre, ticker }) => {
+export const FinancialChart = () => {
   const chartContainerRef = useRef(null);
   const chartRef = useRef(null);
   const [searchParams, setSearchParams] = useSearchParams();
@@ -31,6 +31,7 @@ export const FinancialChart = ({ entidadNombre, ticker }) => {
   const [serieOhlc, setSerieOhlc] = useState([]);
   const [cargandoOhlc, setCargandoOhlc] = useState(false);
   const [errorOhlc, setErrorOhlc] = useState('');
+  const [intentoOhlc, setIntentoOhlc] = useState(0);
 
   const parametroUrl = searchParams.get('entidad');
   const parametroPeriodo = searchParams.get('periodo');
@@ -152,7 +153,8 @@ export const FinancialChart = ({ entidadNombre, ticker }) => {
     return null;
   }, [entidadActiva, rankingDatos, puedeVerPosicion]);
 
-  // Consulta métricas reales por entidad (HU-FE-03 CA 1 y CA 2)
+  // Consulta métricas reales por entidad (HU-FE-03 CA 1 y CA 2) sin filtrar por periodo OHLC,
+  // ya que en /api/v1/metricas cada indicador tiene su propia frecuencia intrínseca (Diaria, Mensual o Trimestral).
   const [metricasServidor, setMetricasServidor] = useState([]);
   const [cargandoMetricas, setCargandoMetricas] = useState(false);
   const [errorMetricas, setErrorMetricas] = useState('');
@@ -184,22 +186,11 @@ export const FinancialChart = ({ entidadNombre, ticker }) => {
       baseParams.sector = entidadActiva.sector;
     }
 
-    getMetricas({ ...baseParams, periodo })
-      .then(async (res) => {
+    getMetricas(baseParams)
+      .then((res) => {
         if (!activo) return;
         const lista = Array.isArray(res) ? res : res?.items ?? [];
-        const propias = filtrarDeEntidad(lista);
-
-        if (propias.length > 0) {
-          setMetricasServidor(propias);
-          return;
-        }
-
-        // Fallback automático de frecuencia si el backend solo tiene corte mensual consolidado
-        const resFallback = await getMetricas(baseParams);
-        if (!activo) return;
-        const listaFallback = Array.isArray(resFallback) ? resFallback : resFallback?.items ?? [];
-        setMetricasServidor(filtrarDeEntidad(listaFallback));
+        setMetricasServidor(filtrarDeEntidad(lista));
       })
       .catch((err) => {
         if (!activo) return;
@@ -214,7 +205,7 @@ export const FinancialChart = ({ entidadNombre, ticker }) => {
     return () => {
       activo = false;
     };
-  }, [periodo, entidadActiva]);
+  }, [entidadActiva]);
 
   const metricasEntidad = useMemo(() => {
     if (!entidadActiva || metricasServidor.length === 0) return [];
@@ -267,7 +258,7 @@ export const FinancialChart = ({ entidadNombre, ticker }) => {
     return () => {
       activo = false;
     };
-  }, [idConsulta, periodo]);
+  }, [idConsulta, periodo, intentoOhlc]);
 
   // Colores de la gráfica según el tema (claro u oscuro)
   const { tema } = useTema();
@@ -394,9 +385,15 @@ export const FinancialChart = ({ entidadNombre, ticker }) => {
     setSearchParams(params);
   };
 
+  const reintentarOhlc = () => {
+    limpiarCacheApi();
+    setErrorOhlc('');
+    setIntentoOhlc((n) => n + 1);
+  };
+
   const cargando = cargandoEntidades || cargandoOhlc;
-  const nombreMostrado = entidadActiva?.nombre ?? entidadActiva?.nombre_entidad ?? entidadNombre ?? (cargando ? 'Cargando…' : 'Sin entidad');
-  const codigoMostrado = entidadActiva?.codigo ?? entidadActiva?.codigo_entidad ?? ticker ?? '—';
+  const nombreMostrado = entidadActiva?.nombre ?? entidadActiva?.nombre_entidad ?? (cargando ? 'Cargando…' : 'Sin entidad');
+  const codigoMostrado = entidadActiva?.codigo ?? entidadActiva?.codigo_entidad ?? '—';
   const sectorMostrado = entidadActiva?.sector ?? '—';
 
   const serieEsPlana = useMemo(
@@ -512,42 +509,17 @@ export const FinancialChart = ({ entidadNombre, ticker }) => {
 
             {/* Lienzo de la Gráfica o Estados de Carga / Error */}
             {cargando && serieOhlc.length === 0 && (
-              <div
-                role="status"
-                style={{
-                  height: '380px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  borderRadius: '8px',
-                  border: '1px dashed var(--color-border)',
-                  color: 'var(--color-text-muted)',
-                  fontSize: '14px',
-                }}
-              >
+              <div className="grafica-lienzo-estado" role="status">
                 Cargando serie histórica OHLC…
               </div>
             )}
 
             {!cargando && errorOhlc && (
-              <div
-                role="alert"
-                style={{
-                  height: '380px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  borderRadius: '8px',
-                  border: '1px solid var(--rojo-bajada, #D9534F)',
-                  backgroundColor: 'rgba(217, 83, 79, 0.08)',
-                  color: 'var(--rojo-bajada, #D9534F)',
-                  padding: '24px',
-                  textAlign: 'center',
-                  fontSize: '14px',
-                  fontWeight: 500,
-                }}
-              >
-                {errorOhlc}
+              <div className="grafica-lienzo-error" role="alert">
+                <p>{errorOhlc}</p>
+                <button type="button" className="grafica-retry-btn" onClick={reintentarOhlc}>
+                  Reintentar
+                </button>
               </div>
             )}
 
@@ -571,12 +543,7 @@ export const FinancialChart = ({ entidadNombre, ticker }) => {
 
             <div
               ref={chartContainerRef}
-              style={{
-                width: '100%',
-                borderRadius: '8px',
-                overflow: 'hidden',
-                display: serieOhlc.length > 0 ? 'block' : 'none',
-              }}
+              className={`grafica-lienzo ${serieOhlc.length > 0 ? '' : 'oculto'}`}
             />
 
             {/* Tira OHLC compacta continua (Data Ribbon) */}
@@ -633,5 +600,4 @@ export const FinancialChart = ({ entidadNombre, ticker }) => {
   );
 };
 
-export const GraficaEntidad = FinancialChart;
 export default FinancialChart;

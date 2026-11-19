@@ -19,7 +19,6 @@ export const ENDPOINTS = {
   editarUsuario: (id) => `/usuarios/${id}`,
   // DELETE es baja lógica: deja el usuario en estado 'inactivo', no borra la fila.
   eliminarUsuario: (id) => `/usuarios/${id}`,
-  roles: null,
 
   // --- Entidades (grupo "Entidades") ---
   entidades: '/entidades',
@@ -33,9 +32,6 @@ export const ENDPOINTS = {
   ranking: '/ranking',
 
   // --- Parámetros e IC (grupo "Parametros" y "ConfiguracionIC") ---
-  sectores: null,
-  dimensiones: null,
-  periodos: null,
   parametros: '/parametros',
   actualizarUmbral: '/parametros/actualizar-umbral',
   icConfiguracion: '/ic/configuracion',

@@ -1,5 +1,5 @@
 .ranking { display: flex; flex-direction: column; gap: 20px; }
-.titulo-pagina { font-size: 1.6rem; font-weight: 700; color: var(--color-text-on-light); letter-spacing: -0.02em; }
+.titulo-pagina { font-size: clamp(1.30rem, 1.8vw, 1.55rem); font-weight: 700; color: var(--color-text-on-light); letter-spacing: -0.02em; }
 .texto-suave { color: var(--color-text-muted); font-size: .85rem; }
 .estado { padding: 24px; color: var(--color-text-muted); }
 .tarjeta {
@@ -50,7 +50,6 @@
 }
 .boton-limpiar:hover:not(:disabled) { background: #F1F3F5; color: var(--color-text-on-light); }
 .boton-limpiar:disabled { opacity: .4; cursor: default; }
-.url { font-family: var(--font-mono); background: var(--color-blanco-hueso); border: 1px solid var(--color-border); border-radius: var(--radius-sm); padding: 2px 8px; word-break: break-all; }
 
 .tabla-tarjeta {
   padding: 0;

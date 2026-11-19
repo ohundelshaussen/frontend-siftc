@@ -79,8 +79,9 @@ export default function UsuariosAdmin() {
     }
   }
 
-  const cargar = () =>
-    listarUsuarios()
+  const cargar = () => {
+    setErrorCarga('')
+    return listarUsuarios()
       .then((lista) => {
         setErrorCarga('')
         setUsuarios(lista)
@@ -90,6 +91,7 @@ export default function UsuariosAdmin() {
         setErrorCarga(extraerMensajeError(err, 'No se pudo cargar la lista de usuarios.'))
         setUsuarios([])
       })
+  }
 
   useEffect(() => {
     let vigente = true
@@ -238,7 +240,14 @@ export default function UsuariosAdmin() {
       </div>
 
       <div className="adm-tarjeta adm-tabla-tarjeta">
-        {errorCarga && <p className="adm-alerta adm-alerta-error adm-margen" role="alert">{errorCarga}</p>}
+        {errorCarga && (
+          <div className="adm-alerta adm-alerta-error adm-margen adm-error-barra" role="alert">
+            <span>{errorCarga}</span>
+            <button type="button" className="adm-btn-tabla" onClick={cargar}>
+              Reintentar
+            </button>
+          </div>
+        )}
         {!usuarios ? (
           <p className="adm-estado">Cargando usuarios…</p>
         ) : visibles.length === 0 ? (
@@ -277,7 +286,7 @@ export default function UsuariosAdmin() {
                         </span>
                       </td>
                       <td className="adm-col-acciones">
-                        <div className="adm-acciones-fila">
+                        <div className="adm-acciones">
                           <button
                             type="button"
                             className="adm-btn-tabla"

@@ -69,6 +69,9 @@ const esErrorDominioServidor = (err) =>
   Boolean(err?.response?.data && typeof err.response.data === 'object' && err.response.data.code)
 
 const esFalloDeArranque = (err) => {
+  if (err?.code === 'ERR_CANCELED' || err?.name === 'CanceledError' || err?.name === 'AbortError') {
+    return false
+  }
   if (err?.code === 'ECONNABORTED' || err?.code === 'ERR_NETWORK' || !err?.response) return true
   if (esErrorDominioServidor(err)) return false
   return ESTADOS_REINTENTABLES.includes(err.response.status)
@@ -76,7 +79,7 @@ const esFalloDeArranque = (err) => {
 
 const esperar = (ms) => new Promise((ok) => setTimeout(ok, ms))
 
-async function conReintentoDeArranque(peticion, intentos = 4) {
+export async function conReintentoDeArranque(peticion, intentos = 4) {
   let ultimoError
   for (let i = 0; i < intentos; i += 1) {
     try {
@@ -227,12 +230,13 @@ export async function getIndiceGeneral() {
   const prom = (campo, alt) => validas.reduce((s, e) => s + (Number(e[campo] ?? (alt ? e[alt] : 0)) || 0), 0) / validas.length
   const valor = prom('ic', 'indice_competitividad')
   const puntos = prom('variacion')
-  const anterior = valor - puntos
+  const variacion = prom('variacionPct', 'variacion_porcentual')
   return {
     fecha: new Date().toISOString().slice(0, 10),
     valor,
     puntos,
-    variacion: anterior ? (puntos / anterior) * 100 : 0,
+    variacion,
+    totalEntidades: validas.length,
   }
 }
 

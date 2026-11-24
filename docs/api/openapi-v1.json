@@ -1,0 +1,4442 @@
+{
+  "openapi": "3.1.1",
+  "info": {
+    "title": "SIFTC.Api | v1",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "https://siftc.onrender.com/"
+    }
+  ],
+  "paths": {
+    "/api/v1/aprobaciones": {
+      "get": {
+        "tags": [
+          "Aprobaciones"
+        ],
+        "summary": "Lista los lotes pendientes de aprobación",
+        "description": "Roles admitidos para consultar: Administrador, Data Steward, Analista financiero y Auditor.\nGerente / Directivo y Usuario móvil no tienen acceso.\n\nDevuelve los lotes en estado pendiente con sus datos de carga.\nUn lote solo puede ser aprobado o rechazado por un Analista financiero.\nValores de estado: pendiente, publicado, rechazado.\nValores de estadoCarga: Exitoso, Fallido.",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PublicacionPendienteDto"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PublicacionPendienteDto"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PublicacionPendienteDto"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [ ]
+          }
+        ]
+      }
+    },
+    "/api/v1/aprobaciones/{idLote}/aprobar": {
+      "post": {
+        "tags": [
+          "Aprobaciones"
+        ],
+        "summary": "Aprueba un lote de cálculo",
+        "description": "Rol admitido: Analista financiero.\n\nAprueba un lote pendiente y publica sus resultados en las tablas analíticas.\nEl aprobador se obtiene del claim sub del JWT; no se recibe idUsuario por parámetro.\nUn analista no puede aprobar un lote que él mismo ejecutó.",
+        "parameters": [
+          {
+            "name": "idLote",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [ ]
+          }
+        ]
+      }
+    },
+    "/api/v1/aprobaciones/{idLote}/rechazar": {
+      "post": {
+        "tags": [
+          "Aprobaciones"
+        ],
+        "summary": "Rechaza un lote de cálculo",
+        "description": "Rol admitido: Analista financiero.\n\nRechaza un lote pendiente. El comentario es obligatorio y se registra en la\nnotificación para el equipo de Análisis de datos.\nEl usuario se obtiene del claim sub del JWT.",
+        "parameters": [
+          {
+            "name": "idLote",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RechazarPublicacionRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RechazarPublicacionRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/RechazarPublicacionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [ ]
+          }
+        ]
+      }
+    },
+    "/api/v1/auditoria": {
+      "get": {
+        "tags": [
+          "Auditoria"
+        ],
+        "summary": "Consulta la bitácora de auditoría",
+        "description": "Roles admitidos: Administrador y Auditor.\n\nDevuelve los eventos críticos más recientes: login fallido, aprobación y rechazo de publicaciones,\ny carga de matriz. Solo lectura.\nParámetro limit: entero entre 1 y 200. Por defecto 50.",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AuditoriaDto"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AuditoriaDto"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AuditoriaDto"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [ ]
+          }
+        ]
+      }
+    },
+    "/api/v1/ic/configuracion": {
+      "get": {
+        "tags": [
+          "ConfiguracionIc"
+        ],
+        "summary": "Obtiene la configuracion vigente del IC",
+        "description": "Rol admitido: Administrador.\n\nDevuelve la version vigente con:\n- pesos por dimension en proporcion (por ejemplo 0.35),\n- umbrales por metrica,\n- frecuencia del IC: Diaria, Mensual o Trimestral.",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConfiguracionIcDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConfiguracionIcDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConfiguracionIcDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [ ]
+          }
+        ]
+      }
+    },
+    "/api/v1/ic/configuracion/versiones": {
+      "get": {
+        "tags": [
+          "ConfiguracionIc"
+        ],
+        "summary": "Lista las versiones de configuracion del IC",
+        "description": "Rol admitido: Administrador.\n\nDevuelve el historial de versiones, de la mas reciente a la mas antigua.\nCada version incluye motivo, fecha de vigencia, usuario, pesos, umbrales y frecuencia.",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ConfiguracionIcDto"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ConfiguracionIcDto"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ConfiguracionIcDto"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [ ]
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "ConfiguracionIc"
+        ],
+        "summary": "Crea una nueva version de configuracion del IC",
+        "description": "Rol admitido: Administrador.\n\nCuerpo JSON:\n- motivo: obligatorio, maximo 500 caracteres.\n- frecuencia: Diaria, Mensual o Trimestral.\n- pesos: arreglo de { dimension, peso }. Los pesos usan proporcion (0.35) y deben sumar 1.000000 con tolerancia 0.000001.\n- umbrales: arreglo de { codigoMetrica, limiteInferior, limiteSuperior, severidad }.\n  Severidad permitida: Informativa, Advertencia, Critica.\n\nLa fecha de vigencia la asigna el servidor y la version aplica a calculos posteriores.",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CrearVersionIcRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CrearVersionIcRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/CrearVersionIcRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created"
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [ ]
+          }
+        ]
+      }
+    },
+    "/api/v1/diccionario/cargar": {
+      "post": {
+        "tags": [
+          "Diccionario"
+        ],
+        "summary": "Carga diccionario.csv y reemplaza la tabla",
+        "description": "Roles admitidos: Administrador y Data Steward (403 para el resto).\n\nRecibe el archivo diccionario.csv en el campo multipart 'file' y reemplaza\nel contenido completo de la tabla analitica.diccionario: el cargue siempre\ndeja la tabla igual al Excel de Frell.\n\nFormato del CSV: separador punto y coma (;), UTF-8 y fila de encabezado con\nlas 8 columnas (codigo, tipo, nombre, definicion, sinonimos, formula, unidad,\nclasificacion). El orden de las columnas no importa y las que sobren se ignoran.\n\nRespuesta 200: {\"registros\": n} con las filas insertadas.\nRespuesta 422: el archivo no es válido; la tabla NO se modifica. Códigos:\ndiccionario.csv.vacio, diccionario.columnas.faltan (faltan columnas del\nencabezado), diccionario.fila.invalida (valores fuera de catálogo o vacíos\nobligatorios), diccionario.codigo.duplicado, diccionario.csv.ilegible.\nRespuesta 503: diccionario.carga.error (fallo al reemplazar la tabla).",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "required": [
+                  "file"
+                ],
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/CargaDiccionarioResponseDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CargaDiccionarioResponseDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CargaDiccionarioResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Service Unavailable",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [ ]
+          }
+        ]
+      }
+    },
+    "/api/v1/diccionario": {
+      "get": {
+        "tags": [
+          "Diccionario"
+        ],
+        "summary": "Busca términos del diccionario por nombre, código o sinónimo",
+        "description": "Cualquier usuario con sesión. Búsqueda sin distinguir mayúsculas (ILIKE)\nsobre nombre, código y sinónimos.\n\nParámetros:\n- buscar (obligatorio): texto a buscar.\n- tipo (opcional): dato, metrica o termino.\n\nDevuelve como máximo 20 resultados, como arreglo con los campos\ncodigo, tipo, nombre y definicion.\n\nFiltro por clasificación de sensibilidad (HU-DD-06, sección 2.4 de la HU):\n- Público e Interno: los seis roles.\n- Confidencial: Administrador, Data Steward, Analista financiero y Auditor.\n- Restringido: nadie vía API (nunca aparece en los resultados).\n\nRespuesta 422: diccionario.buscar.required o diccionario.tipo.invalid.",
+        "parameters": [
+          {
+            "name": "buscar",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "tipo",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DiccionarioResultadoDto"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DiccionarioResultadoDto"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DiccionarioResultadoDto"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [ ]
+          }
+        ]
+      }
+    },
+    "/api/v1/diccionario/{codigo}": {
+      "get": {
+        "tags": [
+          "Diccionario"
+        ],
+        "summary": "Devuelve la ficha completa de un término del diccionario",
+        "description": "Cualquier usuario con sesión. Devuelve codigo, tipo, nombre, definicion,\nformula, unidad, sinonimos (arreglo) y clasificacion.\n\nRespuesta 404 cuando el código no existe Y cuando el rol no puede ver la\nclasificación (Confidencial solo para Administrador, Data Steward, Analista\nfinanciero y Auditor; Restringido para nadie). Es el mismo 404 en ambos\ncasos a propósito: así ningún usuario puede enumerar los términos que no\nle corresponden.",
+        "parameters": [
+          {
+            "name": "codigo",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/DiccionarioFichaDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DiccionarioFichaDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DiccionarioFichaDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [ ]
+          }
+        ]
+      }
+    },
+    "/api/v1/entidades": {
+      "get": {
+        "tags": [
+          "Entidades"
+        ],
+        "summary": "Lista las entidades con su cotización actual",
+        "description": "Roles admitidos: Administrador, Data Steward, Analista financiero, Gerente / Directivo, Auditor y Usuario móvil.\n\nDevuelve el ticker y el tablero de entidades con su último IC y variación.\nParámetros:\n- sector: nombre exacto del sector. Ejemplo: Energía. Vacío = todos.\n- page: entero >= 1. Por defecto 1.\n- size: entero entre 1 y 100. Por defecto 100.\n- sort: codigo, nombre, sector, ic o variacionPct. Por defecto codigo.\n- dir: asc o desc. Por defecto asc.\nValores permitidos de sort: codigo, nombre, sector, ic, variacionPct.\nValores permitidos de dir: asc, desc.\nEl total de registros viaja en la cabecera X-Total-Count.\n\nRespuesta: arreglo de { id, codigo, nombre, sector, ic, variacion, variacionPct }.",
+        "parameters": [
+          {
+            "name": "sector",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "dir",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/EntidadDto"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/EntidadDto"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/EntidadDto"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [ ]
+          }
+        ]
+      }
+    },
+    "/api/v1/entidades/{id}": {
+      "get": {
+        "tags": [
+          "Entidades"
+        ],
+        "summary": "Obtiene una entidad con su cotización actual",
+        "description": "Roles admitidos: Administrador, Data Steward, Analista financiero, Gerente / Directivo, Auditor y Usuario móvil.\n\nParámetro de ruta:\n- id: UUID de la entidad. Ejemplo: 4ebbf629-0d2d-46ef-b233-93421e13eaee.\n\nDevuelve { id, codigo, nombre, sector, ic, variacion, variacionPct }.\nResponde 404 si la entidad no existe.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/EntidadDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EntidadDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EntidadDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [ ]
+          }
+        ]
+      }
+    },
+    "/api/v1/entidades/{id}/ohlc": {
+      "get": {
+        "tags": [
+          "Entidades"
+        ],
+        "summary": "Obtiene la serie OHLC de una entidad",
+        "description": "Roles admitidos: Administrador, Data Steward, Analista financiero, Gerente / Directivo, Auditor y Usuario móvil.\n\nParámetros:\n- id: UUID de la entidad.\n- periodo: Diaria, Mensual o Trimestral. Vacío = Diaria.\nValores permitidos de periodo: Diaria, Mensual, Trimestral.\nLa serie se devuelve de la fecha más antigua a la más reciente.\n\nNota: el CSV es mensual. En Diaria y Mensual cada punto tiene apertura=máximo=mínimo=cierre;\nen Trimestral se agrupan tres meses y la vela tiene rango real. Para gráficas de línea usar Mensual;\npara velas usar Trimestral.\n\nRespuesta: { entidadId, entidad, periodo, serie: [{ fecha, apertura, maximo, minimo, cierre, variacion, variacionPct }] }.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "periodo",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/OhlcResponseDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OhlcResponseDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OhlcResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [ ]
+          }
+        ]
+      }
+    },
+    "/api/v1/exportar": {
+      "get": {
+        "tags": [
+          "Exportar"
+        ],
+        "summary": "Exporta rankings o series a CSV",
+        "description": "Descarga el resultado de una consulta como archivo CSV con separador ';' y decimales\ncon coma (la misma convención que el CSV de carga), UTF-8 con BOM.\n\nParámetros:\n- tipo: obligatorio. Valores: ranking o serie.\n- formato: opcional. Valor por defecto csv; solo csv está soportado hoy.\n\ntipo=ranking usa exactamente los mismos filtros de GET /api/v1/ranking:\n- sector, dimension, periodo, orden, dir, limit, offset.\n\ntipo=serie usa exactamente los mismos filtros de GET /api/v1/entidades/{id}/ohlc:\n- idEntidad (obligatorio) y periodo.\n\nPermisos (Matriz de permisos SIFTC v1.1 y HU-BE-02):\n- ranking: Administrador, Data Steward, Analista financiero, Gerente / Directivo y Auditor.\n  Usuario móvil: 403.\n- serie: los seis roles (las series OHLC son de sensibilidad Pública).\n- Gerente / Directivo exporta el ranking con posicion y cambioPosicion vacíos.\n\nBitácora (HU-BE-06): cada exportación exitosa queda registrada en seguridad.auditorias\ncon accion=exportacion. Si el registro falla, la exportación responde 503 y no se\nentrega el archivo.\n\nRespuesta 200: text/csv con Content-Disposition y nombre de archivo\nranking_aaaaMMdd_HHmmss.csv o serie_<entidad>_<periodo>_aaaaMMdd_HHmmss.csv.",
+        "parameters": [
+          {
+            "name": "tipo",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "formato",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "sector",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "dimension",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "periodo",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "orden",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "dir",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
+          },
+          {
+            "name": "idEntidad",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/csv": {
+                "schema": {
+                  "type": "string",
+                  "format": "byte"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/csv": { }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/csv": { }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/csv": { }
+            }
+          },
+          "503": {
+            "description": "Service Unavailable",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/csv": { }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [ ]
+          }
+        ]
+      }
+    },
+    "/health": {
+      "get": {
+        "tags": [
+          "Health"
+        ],
+        "summary": "Health check",
+        "description": "Endpoint público. Devuelve 200 con { status: \"ok\" } cuando la API está en ejecución. No requiere token.",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/v1/cargas": {
+      "post": {
+        "tags": [
+          "Matriz"
+        ],
+        "summary": "Carga y valida la matriz CSV",
+        "description": "Roles admitidos: Analista financiero y Administrador.\n\nRecibe el archivo CSV de la matriz en el campo multipart 'file' y lo reenvía al microservicio Python.\nEl CSV debe estar separado por punto y coma (;), codificado en UTF-8 y contener las 15 columnas del diccionario.\n\nRespuesta 200: el resultado del ETL.\nRespuesta 422: el CSV tiene errores; la lista viaja en la extensión 'errores'.\nRespuesta 503: el microservicio Python no está disponible.",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "required": [
+                  "file"
+                ],
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Service Unavailable",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [ ]
+          }
+        ]
+      }
+    },
+    "/api/v1/matriz-cruda": {
+      "get": {
+        "tags": [
+          "MatrizCruda"
+        ],
+        "summary": "Lee las filas de la matriz financiera cruda",
+        "description": "Roles admitidos: Data Steward y Auditor.\n\nSolo lectura. Devuelve las filas tal como llegaron en la carga, sin transformar.\nLos datos son confidenciales: no se exponen a ningún otro rol.\nParámetro limit: entero entre 1 y 200. Por defecto 50.",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/MatrizCrudaDto"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/MatrizCrudaDto"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/MatrizCrudaDto"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [ ]
+          }
+        ]
+      }
+    },
+    "/api/v1/metricas": {
+      "get": {
+        "tags": [
+          "Metricas"
+        ],
+        "summary": "Lista las métricas calculadas por entidad y fecha",
+        "description": "Roles admitidos: Administrador, Data Steward, Analista financiero, Gerente / Directivo, Auditor y Usuario móvil.\n\nDevuelve una fila por métrica calculada por la capa analítica.\nParámetros:\n- sector: nombre exacto del sector. Vacío = todos.\n- periodo: frecuencia de la métrica: Diaria, Mensual o Trimestral. Vacío = todas.\n- fecha: periodo exacto en ISO 8601 (yyyy-MM-dd). Ejemplo: 2026-09-01. Vacío = todos.\n- dimension: Rentabilidad, Liquidez, Solvencia, Crecimiento, Mercado o Trazabilidad.\n- page: entero >= 1. Por defecto 1.\n- size: entero entre 1 y 100. Por defecto 100.\n- sort: fecha, codigo, nombre, sector, dimension, codigoMetrica, valor o valorNormalizado.\n- dir: asc o desc.\nValores permitidos de periodo: Diaria, Mensual, Trimestral. También se aceptan diario/diaria como alias.\nValores permitidos de dimension: Rentabilidad, Liquidez, Solvencia, Crecimiento, Mercado, Trazabilidad.\nValores permitidos de sort: fecha, codigo, nombre, sector, dimension, codigoMetrica, valor, valorNormalizado.\nValores permitidos de dir: asc, desc.\nEl total de registros viaja en la cabecera X-Total-Count.\n\nLa fecha de los datos del corte va del 2024-10-01 al 2026-09-01. Una fecha fuera de ese rango devuelve 0 filas.\nRespuesta: arreglo de { entidadId, codigo, nombre, sector, fecha, codigoMetrica, nombreMetrica, dimension, formula, frecuencia, valor, valorNormalizado }.",
+        "parameters": [
+          {
+            "name": "sector",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "periodo",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "fecha",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "dimension",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "dir",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/MetricaDto"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/MetricaDto"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/MetricaDto"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [ ]
+          }
+        ]
+      }
+    },
+    "/api/v1/notificaciones/reglas": {
+      "get": {
+        "tags": [
+          "Notificaciones"
+        ],
+        "summary": "Lista las reglas de notificación propias",
+        "description": "CA2. Devuelve las reglas activas del usuario autenticado: canal\n(correo, push o ambos), entidad (null = todas) y umbral (null = cualquier cambio).",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/NotificacionReglaDto"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/NotificacionReglaDto"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/NotificacionReglaDto"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [ ]
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "Notificaciones"
+        ],
+        "summary": "Crea una regla de notificación propia",
+        "description": "CA2. Cuerpo: {\"canal\":\"correo|push|ambos\",\"idEntidad\":\"uuid opcional\",\"umbral\":2.5}.\n\n- idEntidad ausente o null = todas las entidades.\n- umbral ausente o null = cualquier cambio; si viene, debe ser >= 0 y se\n  interpreta como variación mínima en porcentaje (valor absoluto).\n- Una regla repetida (mismo canal y entidad) devuelve 409; si estaba\n  desactivada, se reactiva con el umbral nuevo.",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CrearReglaRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CrearReglaRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/CrearReglaRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificacionReglaDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificacionReglaDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificacionReglaDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [ ]
+          }
+        ]
+      }
+    },
+    "/api/v1/notificaciones/reglas/{idRegla}": {
+      "delete": {
+        "tags": [
+          "Notificaciones"
+        ],
+        "summary": "Desactiva una regla propia",
+        "description": "CA2. Regla de otro usuario o inexistente: 404 (no se filtra información).",
+        "parameters": [
+          {
+            "name": "idRegla",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [ ]
+          }
+        ]
+      }
+    },
+    "/api/v1/notificaciones/tokens": {
+      "post": {
+        "tags": [
+          "Notificaciones"
+        ],
+        "summary": "Registra el token FCM del dispositivo",
+        "description": "Cuerpo: {\"plataforma\":\"web|android|ios\",\"token\":\"<token FCM>\"}.\n\nEl token es único: si ya existía se reasigna al usuario autenticado.",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegistrarTokenRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegistrarTokenRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegistrarTokenRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificacionTokenDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificacionTokenDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificacionTokenDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [ ]
+          }
+        ]
+      }
+    },
+    "/api/v1/notificaciones/tokens/{token}": {
+      "delete": {
+        "tags": [
+          "Notificaciones"
+        ],
+        "summary": "Da de baja un token FCM propio",
+        "parameters": [
+          {
+            "name": "token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [ ]
+          }
+        ]
+      }
+    },
+    "/api/v1/notificaciones/envios": {
+      "get": {
+        "tags": [
+          "Notificaciones"
+        ],
+        "summary": "Consulta la cola y el log de envíos",
+        "description": "CA1/CA3. El Administrador ve todos los envíos; los demás roles solo los propios.\n\nParámetros:\n- estado (opcional): pendiente, enviado o fallido.\n- limite (opcional): 1 a 200; por defecto 50.\n\nCada fila trae intentos, maxIntentos, ultimoError, fechaCreacion y fechaEnvio:\ncon fechaCreacion → fechaEnvio se verifica el envío en menos de 1 minuto.",
+        "parameters": [
+          {
+            "name": "estado",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limite",
+            "in": "query",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/NotificacionEnvioDto"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/NotificacionEnvioDto"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/NotificacionEnvioDto"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [ ]
+          }
+        ]
+      }
+    },
+    "/api/v1/notificaciones/eventos": {
+      "post": {
+        "tags": [
+          "Notificaciones"
+        ],
+        "summary": "Registra un evento relevante y evalúa las reglas",
+        "description": "CA1/CA2. Punto de entrada para el ETL/backend: {\"idEntidad\":\"uuid\",\n\"variacionPct\":3.2,\"nombreEntidad\":\"opcional\"}.\n\nEvalúa las reglas activas de todos los usuarios y encola los envíos que\ncorrespondan (una regla 'ambos' genera dos filas). El worker los envía en\nla siguiente pasada (≤ 10 s por defecto). Responde {\"encolados\": n}.\n\nRoles admitidos: Administrador y Analista financiero.",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegistrarEventoRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegistrarEventoRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegistrarEventoRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/RegistrarEventoResponseDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RegistrarEventoResponseDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RegistrarEventoResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [ ]
+          }
+        ]
+      }
+    },
+    "/api/v1/parametros": {
+      "get": {
+        "tags": [
+          "Parametros"
+        ],
+        "summary": "Lee los pesos del IC, las fórmulas y las frecuencias",
+        "description": "Roles admitidos: Administrador, Analista financiero y Auditor.\n\nSolo lectura. Devuelve los pesos de cada dimensión del Índice de Competitividad\ny el catálogo de métricas con su fórmula y su frecuencia. No incluye credenciales\nni configuración de infraestructura.",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ParametrosDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ParametrosDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ParametrosDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [ ]
+          }
+        ]
+      }
+    },
+    "/api/v1/parametros/actualizar-umbral": {
+      "post": {
+        "tags": [
+          "Parametros"
+        ],
+        "summary": "Actualiza el umbral de un parámetro",
+        "description": "Roles admitidos: Analista financiero y Administrador.\n\nEndpoint de administración de parámetros. Actualmente devuelve un mensaje de confirmación;\nel parámetro y su valor se conectarán en la HU de administración.",
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [ ]
+          }
+        ]
+      }
+    },
+    "/api/v1/ranking": {
+      "get": {
+        "tags": [
+          "Ranking"
+        ],
+        "summary": "Obtiene el ranking general o por dimensión",
+        "description": "Roles admitidos: Administrador, Data Steward, Analista financiero, Gerente / Directivo y Auditor.\nUsuario móvil no tiene acceso al ranking.\n\nDevuelve el ranking de entidades por IC. Si se envía dimension, calcula el puntaje de esa dimensión\n(promedio de sus métricas normalizadas) y ordena por ese puntaje.\nPara Gerente / Directivo, posicion y cambioPosicion se devuelven en null.\nParámetros:\n- sector: nombre exacto del sector. Vacío = todos.\n- dimension: Rentabilidad, Liquidez, Solvencia o Crecimiento. Vacío = IC general.\n - periodo: Diaria, Mensual o Trimestral. Se devuelve en la respuesta.\n- orden: posicion, entidad, sector, ic o variacionPct. Por defecto ic.\n- dir: asc o desc. Por defecto desc.\n- limit: entero entre 1 y 200. Por defecto 50.\n- offset: entero >= 0. Por defecto 0.\nValores permitidos de dimension: Rentabilidad, Liquidez, Solvencia, Crecimiento.\nValores permitidos de periodo: Diaria, Mensual, Trimestral.\nValores permitidos de orden: posicion, entidad, sector, ic, variacionPct.\nValores permitidos de dir: asc, desc.\n\nRespuesta: { periodo, total, items: [{ posicion, cambioPosicion, entidadId, entidad, sector, ic, variacionPct }] }.\ncambioPosicion > 0 significa que subió; < 0 que bajó; 0 que mantuvo.",
+        "parameters": [
+          {
+            "name": "sector",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "dimension",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "periodo",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "orden",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "dir",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/RankingResponseDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RankingResponseDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RankingResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Service Unavailable",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [ ]
+          }
+        ]
+      }
+    },
+    "/api/v1/tiempo-real/emisiones-prueba": {
+      "post": {
+        "tags": [
+          "TiempoReal"
+        ],
+        "summary": "Emite una actualización de prueba por el hub de cotizaciones",
+        "description": "Rol admitido: Administrador. Solo existe si TiempoReal:EmisionPruebaHabilitada es true;\nsi no, responde 404.\n\nLo usa la prueba de carga de HU-BE-04 (SIFTC.LoadTests): envía el estado actual del ticker\na todos los clientes de /hubs/cotizaciones con motivo \"prueba\". No modifica datos ni la\nsecuencia, así que un frontend que descarta secuencias repetidas lo ignora.",
+        "responses": {
+          "202": {
+            "description": "Accepted",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/EmisionPruebaResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EmisionPruebaResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EmisionPruebaResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [ ]
+          }
+        ]
+      }
+    },
+    "/api/v1/auth/login": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Inicia sesión y devuelve el token JWT",
+        "description": "Endpoint público (no requiere token).\n\nCuerpo JSON:\n- usuario: correo registrado. El backend usa el correo como identificador de login.\n- password: contraseña en texto plano.\n\nRespuesta 200: { token, expiraEn, usuario: { id, nombre, rol } }.\nEl token debe enviarse como Bearer en los demás endpoints.\nRespuesta 401: credenciales incorrectas.",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AutenticarUsuarioCommand"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AutenticarUsuarioCommand"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/AutenticarUsuarioCommand"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthResponseDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthResponseDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/usuarios": {
+      "get": {
+        "tags": [
+          "Usuarios"
+        ],
+        "summary": "Lista los usuarios activos",
+        "description": "Roles admitidos: Administrador.\n\nDevuelve solo los usuarios con estado 'activo', ordenados por apellido y\nnombre. Las bajas lógicas (estado 'inactivo') no aparecen en el listado.\n\nCada fila trae idUsuario, email, nombres, apellidos, idRol, rol y estado.\nNunca incluye el hash de la contraseña.",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/UsuarioDto"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/UsuarioDto"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/UsuarioDto"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [ ]
+          }
+        ]
+      }
+    },
+    "/api/v1/usuarios/registrar": {
+      "post": {
+        "tags": [
+          "Usuarios"
+        ],
+        "summary": "Registra un usuario",
+        "description": "Roles admitidos: Administrador.\n\nCuerpo JSON:\n- email: correo único del usuario.\n- password: contraseña en texto plano; se guarda con bcrypt.\n- primerNombre: primer nombre.\n- primerApellido: primer apellido.\n- idRol: UUID de un rol existente en seguridad.roles.\n\nRespuesta 200: UUID del usuario creado.\nRespuesta 409: el correo ya existe.",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CrearUsuarioCommand"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CrearUsuarioCommand"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/CrearUsuarioCommand"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string",
+                  "format": "uuid"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "string",
+                  "format": "uuid"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "string",
+                  "format": "uuid"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [ ]
+          }
+        ]
+      }
+    },
+    "/api/v1/usuarios/{id}": {
+      "put": {
+        "tags": [
+          "Usuarios"
+        ],
+        "summary": "Edita los datos de un usuario",
+        "description": "Roles admitidos: Administrador.\n\nCuerpo JSON (todos los datos se reemplazan; el id va en la ruta):\n- email: correo único; si cambia, no puede estar usado por otro usuario.\n- primerNombre, primerApellido: obligatorios.\n- segundoNombre, segundoApellido: opcionales.\n- idRol: UUID de un rol existente.\n- password: opcional; si viene, se guarda el nuevo hash. Si se omite o\n  llega vacío, la contraseña actual se conserva.\n\nRespuesta 200: el usuario actualizado (sin el hash de la contraseña).\nRespuesta 404: usuario.no.encontrado.\nRespuesta 409: usuario.duplicado (correo de otro usuario).\nRespuesta 422: datos inválidos o usuario.rol.invalido.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ActualizarUsuarioSolicitud"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ActualizarUsuarioSolicitud"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/ActualizarUsuarioSolicitud"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/UsuarioDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UsuarioDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UsuarioDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [ ]
+          }
+        ]
+      },
+      "delete": {
+        "tags": [
+          "Usuarios"
+        ],
+        "summary": "Da de baja un usuario (borrado lógico)",
+        "description": "Roles admitidos: Administrador.\n\nNO borra la fila: cambia estado a 'inactivo', de modo que el usuario\ndesaparece del listado y ya no puede iniciar sesión, pero conserva sus\nreglas, envíos y auditoría.\n\nRespuesta 200: baja aplicada (o ya estaba inactivo; es idempotente).\nRespuesta 404: usuario.no.encontrado.\nRespuesta 409: usuario.ultimo.administrador (no se puede dejar el\nsistema sin administradores activos).\nRespuesta 422: usuario.autoeliminar (un administrador no puede\ndesactivarse a sí mismo).",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [ ]
+          }
+        ]
+      }
+    },
+    "/api/v1/watchlist": {
+      "get": {
+        "tags": [
+          "Watchlist"
+        ],
+        "summary": "Lista las entidades seguidas por el usuario autenticado",
+        "description": "Roles admitidos: Administrador, Data Steward, Analista financiero, Gerente / Directivo, Auditor y Usuario móvil.\n\nDevuelve la watchlist personal con la cotización actual de cada entidad.\nEl usuario se obtiene del claim sub del JWT; no se recibe idUsuario por parámetro.\nCada usuario solo puede ver su propia lista.\n\nRespuesta: arreglo de { id, codigo, nombre, sector, ic, variacion, variacionPct }.\nEjemplo:\n[\n  { \"id\": \"4ebbf629-0d2d-46ef-b233-93421e13eaee\", \"codigo\": \"ENT001\", \"nombre\": \"Andina Energía S.A.\", \"sector\": \"Energía\", \"ic\": 55.042, \"variacion\": -0.531, \"variacionPct\": -0.9555 }\n]",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/EntidadDto"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/EntidadDto"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/EntidadDto"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [ ]
+          }
+        ]
+      }
+    },
+    "/api/v1/watchlist/{idEntidad}": {
+      "post": {
+        "tags": [
+          "Watchlist"
+        ],
+        "summary": "Agrega una entidad a la watchlist",
+        "description": "Roles admitidos: solo Usuario móvil. Los demás roles reciben 403.\n\nAgrega la entidad indicada a la watchlist del usuario autenticado.\nParámetro de ruta:\n- idEntidad: UUID de una entidad existente.\n\nEs idempotente: si ya está seguida, responde 204.\nResponde 404 si la entidad no existe.",
+        "parameters": [
+          {
+            "name": "idEntidad",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [ ]
+          }
+        ]
+      },
+      "delete": {
+        "tags": [
+          "Watchlist"
+        ],
+        "summary": "Quita una entidad de la watchlist",
+        "description": "Roles admitidos: solo Usuario móvil. Los demás roles reciben 403.\n\nQuita la entidad indicada de la watchlist del usuario autenticado.\nParámetro de ruta:\n- idEntidad: UUID de la entidad.\n\nEs idempotente: si no estaba seguida, responde 204.",
+        "parameters": [
+          {
+            "name": "idEntidad",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [ ]
+          }
+        ]
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "ActualizarUsuarioSolicitud": {
+        "required": [
+          "email",
+          "primerNombre",
+          "segundoNombre",
+          "primerApellido",
+          "segundoApellido",
+          "idRol",
+          "password"
+        ],
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string"
+          },
+          "primerNombre": {
+            "type": "string"
+          },
+          "segundoNombre": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "primerApellido": {
+            "type": "string"
+          },
+          "segundoApellido": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "idRol": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "password": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
+      "AuditoriaDto": {
+        "required": [
+          "idBitacora",
+          "accion",
+          "detalle",
+          "fechaEvento",
+          "idUsuario"
+        ],
+        "type": "object",
+        "properties": {
+          "idBitacora": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "accion": {
+            "type": "string"
+          },
+          "detalle": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "fechaEvento": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "idUsuario": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          }
+        }
+      },
+      "AutenticarUsuarioCommand": {
+        "required": [
+          "usuario",
+          "password"
+        ],
+        "type": "object",
+        "properties": {
+          "usuario": {
+            "type": "string",
+            "description": "Correo o usuario registrado. Es el identificador de login."
+          },
+          "password": {
+            "type": "string",
+            "description": "Contraseña en texto plano; se valida contra el hash bcrypt."
+          }
+        }
+      },
+      "AuthResponseDto": {
+        "required": [
+          "token",
+          "expiraEn",
+          "usuario"
+        ],
+        "type": "object",
+        "properties": {
+          "token": {
+            "type": "string",
+            "description": "JWT que debe enviarse como Bearer en los demás endpoints."
+          },
+          "expiraEn": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "description": "Vigencia del token en segundos.",
+            "format": "int32"
+          },
+          "usuario": {
+            "$ref": "#/components/schemas/AuthUsuarioDto"
+          }
+        }
+      },
+      "AuthUsuarioDto": {
+        "required": [
+          "id",
+          "nombre",
+          "rol"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Identificador UUID del usuario.",
+            "format": "uuid"
+          },
+          "nombre": {
+            "type": "string",
+            "description": "Nombre completo."
+          },
+          "rol": {
+            "type": "string",
+            "description": "Rol del sistema; determina los permisos."
+          }
+        }
+      },
+      "CargaDiccionarioResponseDto": {
+        "required": [
+          "registros"
+        ],
+        "type": "object",
+        "properties": {
+          "registros": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          }
+        }
+      },
+      "ConfiguracionIcDto": {
+        "required": [
+          "idVersion",
+          "numeroVersion",
+          "fechaVigencia",
+          "motivo",
+          "idUsuario",
+          "frecuenciaIc",
+          "pesos",
+          "umbrales"
+        ],
+        "type": "object",
+        "properties": {
+          "idVersion": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "numeroVersion": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "fechaVigencia": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "motivo": {
+            "type": "string"
+          },
+          "idUsuario": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "frecuenciaIc": {
+            "type": "string"
+          },
+          "pesos": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PesoIcDto"
+            }
+          },
+          "umbrales": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UmbralIcDto"
+            }
+          }
+        }
+      },
+      "CrearReglaRequest": {
+        "required": [
+          "canal",
+          "idEntidad",
+          "umbral"
+        ],
+        "type": "object",
+        "properties": {
+          "canal": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "idEntidad": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "umbral": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "format": "double"
+          }
+        },
+        "description": "Cuerpo de POST /api/v1/notificaciones/reglas (CA2)."
+      },
+      "CrearUsuarioCommand": {
+        "required": [
+          "email",
+          "password",
+          "primerNombre",
+          "primerApellido",
+          "idRol"
+        ],
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "description": "Correo único del usuario."
+          },
+          "password": {
+            "type": "string",
+            "description": "Contraseña en texto plano; el backend la guarda con bcrypt."
+          },
+          "primerNombre": {
+            "type": "string",
+            "description": "Primer nombre."
+          },
+          "primerApellido": {
+            "type": "string",
+            "description": "Primer apellido."
+          },
+          "idRol": {
+            "type": "string",
+            "description": "UUID del rol existente en seguridad.roles.",
+            "format": "uuid"
+          }
+        }
+      },
+      "CrearVersionIcRequest": {
+        "required": [
+          "motivo",
+          "frecuencia",
+          "pesos",
+          "umbrales"
+        ],
+        "type": "object",
+        "properties": {
+          "motivo": {
+            "type": "string"
+          },
+          "frecuencia": {
+            "type": "string"
+          },
+          "pesos": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PesoIcDto"
+            }
+          },
+          "umbrales": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/UmbralIcDto"
+            }
+          }
+        }
+      },
+      "DiccionarioFichaDto": {
+        "required": [
+          "codigo",
+          "tipo",
+          "nombre",
+          "definicion",
+          "formula",
+          "unidad",
+          "sinonimos",
+          "clasificacion"
+        ],
+        "type": "object",
+        "properties": {
+          "codigo": {
+            "type": "string"
+          },
+          "tipo": {
+            "type": "string"
+          },
+          "nombre": {
+            "type": "string"
+          },
+          "definicion": {
+            "type": "string"
+          },
+          "formula": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "unidad": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "sinonimos": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "clasificacion": {
+            "type": "string"
+          }
+        }
+      },
+      "DiccionarioResultadoDto": {
+        "required": [
+          "codigo",
+          "tipo",
+          "nombre",
+          "definicion"
+        ],
+        "type": "object",
+        "properties": {
+          "codigo": {
+            "type": "string"
+          },
+          "tipo": {
+            "type": "string"
+          },
+          "nombre": {
+            "type": "string"
+          },
+          "definicion": {
+            "type": "string"
+          }
+        }
+      },
+      "DimensionParametroDto": {
+        "required": [
+          "nombre",
+          "pesoIc"
+        ],
+        "type": "object",
+        "properties": {
+          "nombre": {
+            "type": "string"
+          },
+          "pesoIc": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          }
+        }
+      },
+      "EmisionPruebaResponse": {
+        "required": [
+          "secuencia",
+          "generadoEn",
+          "entidades"
+        ],
+        "type": "object",
+        "properties": {
+          "secuencia": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "description": "Secuencia del estado enviado (la misma de la última publicación).",
+            "format": "int64"
+          },
+          "generadoEn": {
+            "type": "string",
+            "description": "Momento UTC en que el servidor armó el mensaje.",
+            "format": "date-time"
+          },
+          "entidades": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "description": "Cantidad de entidades incluidas en el mensaje.",
+            "format": "int32"
+          }
+        },
+        "description": "Resumen de la emisión de prueba."
+      },
+      "EntidadDto": {
+        "required": [
+          "id",
+          "codigo",
+          "nombre",
+          "sector",
+          "ic",
+          "variacion",
+          "variacionPct"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Identificador UUID de la entidad.",
+            "format": "uuid"
+          },
+          "codigo": {
+            "type": "string",
+            "description": "Ticker o código único de la entidad, por ejemplo ENT001."
+          },
+          "nombre": {
+            "type": "string",
+            "description": "Nombre comercial o razón social."
+          },
+          "sector": {
+            "type": "string",
+            "description": "Sector económico al que pertenece."
+          },
+          "ic": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "description": "Último Índice de Competitividad (0 a 100).",
+            "format": "double"
+          },
+          "variacion": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "description": "Variación absoluta frente al cierre anterior.",
+            "format": "double"
+          },
+          "variacionPct": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "description": "Variación porcentual frente al cierre anterior.",
+            "format": "double"
+          }
+        }
+      },
+      "MatrizCrudaDto": {
+        "required": [
+          "idCruda",
+          "idLote",
+          "codigoEntidad",
+          "nombreEntidad",
+          "sector",
+          "periodo",
+          "utilidadNeta",
+          "patrimonio",
+          "activosTotales",
+          "ebitda",
+          "ingresos",
+          "activoCorriente",
+          "pasivoCorriente",
+          "inventarios",
+          "pasivoTotal",
+          "ebit",
+          "gastosFinancieros",
+          "fechaCarga"
+        ],
+        "type": "object",
+        "properties": {
+          "idCruda": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "idLote": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "codigoEntidad": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "nombreEntidad": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "sector": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "periodo": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "utilidadNeta": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "patrimonio": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "activosTotales": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "ebitda": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "ingresos": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "activoCorriente": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "pasivoCorriente": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "inventarios": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "pasivoTotal": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "ebit": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "gastosFinancieros": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "fechaCarga": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "MetricaDto": {
+        "required": [
+          "entidadId",
+          "codigo",
+          "nombre",
+          "sector",
+          "fecha",
+          "codigoMetrica",
+          "nombreMetrica",
+          "dimension",
+          "formula",
+          "frecuencia",
+          "valor",
+          "valorNormalizado"
+        ],
+        "type": "object",
+        "properties": {
+          "entidadId": {
+            "type": "string",
+            "description": "Identificador UUID de la entidad.",
+            "format": "uuid"
+          },
+          "codigo": {
+            "type": "string",
+            "description": "Ticker de la entidad."
+          },
+          "nombre": {
+            "type": "string",
+            "description": "Nombre de la entidad."
+          },
+          "sector": {
+            "type": "string",
+            "description": "Sector económico."
+          },
+          "fecha": {
+            "type": "string",
+            "description": "Periodo del dato en formato ISO 8601 (yyyy-MM-dd).",
+            "format": "date"
+          },
+          "codigoMetrica": {
+            "type": "string",
+            "description": "Código del catálogo: RNT-01, LIQ-01, END-01, CRE-01, etc."
+          },
+          "nombreMetrica": {
+            "type": "string",
+            "description": "Nombre legible de la métrica."
+          },
+          "dimension": {
+            "type": "string",
+            "description": "Dimensión del catálogo: Rentabilidad, Liquidez, Solvencia, Crecimiento, Mercado o Trazabilidad."
+          },
+          "formula": {
+            "type": "string",
+            "description": "Fórmula usada para el cálculo."
+          },
+          "frecuencia": {
+            "type": "string",
+            "description": "Frecuencia de la métrica: Diaria, Mensual o Trimestral."
+          },
+          "valor": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "description": "Valor calculado como proporción o veces, según la métrica.",
+            "format": "double"
+          },
+          "valorNormalizado": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "description": "Valor llevado a escala 0 a 1 para el cálculo del IC.",
+            "format": "double"
+          }
+        }
+      },
+      "MetricaParametroDto": {
+        "required": [
+          "codigo",
+          "nombre",
+          "dimension",
+          "formula",
+          "frecuencia"
+        ],
+        "type": "object",
+        "properties": {
+          "codigo": {
+            "type": "string"
+          },
+          "nombre": {
+            "type": "string"
+          },
+          "dimension": {
+            "type": "string"
+          },
+          "formula": {
+            "type": "string"
+          },
+          "frecuencia": {
+            "type": "string"
+          }
+        }
+      },
+      "NotificacionEnvioDto": {
+        "required": [
+          "idEnvio",
+          "idRegla",
+          "canal",
+          "asunto",
+          "estado",
+          "intentos",
+          "maxIntentos",
+          "ultimoError",
+          "fechaCreacion",
+          "fechaUltimoIntento",
+          "fechaEnvio"
+        ],
+        "type": "object",
+        "properties": {
+          "idEnvio": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "idRegla": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "canal": {
+            "type": "string"
+          },
+          "asunto": {
+            "type": "string"
+          },
+          "estado": {
+            "type": "string"
+          },
+          "intentos": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "maxIntentos": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "ultimoError": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "fechaCreacion": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "fechaUltimoIntento": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "fechaEnvio": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          }
+        }
+      },
+      "NotificacionReglaDto": {
+        "required": [
+          "idRegla",
+          "canal",
+          "idEntidad",
+          "umbral",
+          "activa",
+          "fechaCreacion"
+        ],
+        "type": "object",
+        "properties": {
+          "idRegla": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "canal": {
+            "type": "string"
+          },
+          "idEntidad": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "umbral": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "activa": {
+            "type": "boolean"
+          },
+          "fechaCreacion": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "NotificacionTokenDto": {
+        "required": [
+          "idToken",
+          "plataforma",
+          "activo",
+          "fechaRegistro"
+        ],
+        "type": "object",
+        "properties": {
+          "idToken": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "plataforma": {
+            "type": "string"
+          },
+          "activo": {
+            "type": "boolean"
+          },
+          "fechaRegistro": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "OhlcPuntoDto": {
+        "required": [
+          "fecha",
+          "apertura",
+          "maximo",
+          "minimo",
+          "cierre",
+          "variacion",
+          "variacionPct"
+        ],
+        "type": "object",
+        "properties": {
+          "fecha": {
+            "type": "string",
+            "description": "Fecha del periodo en formato ISO 8601.",
+            "format": "date"
+          },
+          "apertura": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "description": "Primer valor del IC en el periodo.",
+            "format": "double"
+          },
+          "maximo": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "description": "Valor máximo del IC en el periodo.",
+            "format": "double"
+          },
+          "minimo": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "description": "Valor mínimo del IC en el periodo.",
+            "format": "double"
+          },
+          "cierre": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "description": "Último valor del IC en el periodo.",
+            "format": "double"
+          },
+          "variacion": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "description": "Variación absoluta frente al cierre anterior.",
+            "format": "double"
+          },
+          "variacionPct": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "description": "Variación porcentual frente al cierre anterior.",
+            "format": "double"
+          }
+        }
+      },
+      "OhlcResponseDto": {
+        "required": [
+          "entidadId",
+          "entidad",
+          "periodo",
+          "serie"
+        ],
+        "type": "object",
+        "properties": {
+          "entidadId": {
+            "type": "string",
+            "description": "Identificador UUID de la entidad.",
+            "format": "uuid"
+          },
+          "entidad": {
+            "type": "string",
+            "description": "Nombre de la entidad."
+          },
+          "periodo": {
+            "type": "string",
+            "description": "Frecuencia usada: Diaria, Mensual o Trimestral."
+          },
+          "serie": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OhlcPuntoDto"
+            },
+            "description": "Puntos OHLC ordenados de la fecha más antigua a la más reciente."
+          }
+        }
+      },
+      "ParametrosDto": {
+        "required": [
+          "dimensiones",
+          "metricas"
+        ],
+        "type": "object",
+        "properties": {
+          "dimensiones": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DimensionParametroDto"
+            }
+          },
+          "metricas": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MetricaParametroDto"
+            }
+          }
+        }
+      },
+      "PesoIcDto": {
+        "required": [
+          "dimension",
+          "peso"
+        ],
+        "type": "object",
+        "properties": {
+          "dimension": {
+            "type": "string"
+          },
+          "peso": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          }
+        }
+      },
+      "ProblemDetails": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "title": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "status": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "detail": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "instance": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
+      "PublicacionPendienteDto": {
+        "required": [
+          "idLote",
+          "nombreArchivo",
+          "fechaCarga",
+          "registrosTotales",
+          "registrosValidos",
+          "estadoCarga",
+          "estado",
+          "idUsuarioEjecutor",
+          "idUsuarioDecision",
+          "fechaDecision",
+          "comentario"
+        ],
+        "type": "object",
+        "properties": {
+          "idLote": {
+            "type": "string",
+            "description": "Identificador UUID del lote.",
+            "format": "uuid"
+          },
+          "nombreArchivo": {
+            "type": "string",
+            "description": "Nombre del CSV cargado."
+          },
+          "fechaCarga": {
+            "type": "string",
+            "description": "Fecha de registro del lote.",
+            "format": "date-time"
+          },
+          "registrosTotales": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "description": "Filas leídas del CSV.",
+            "format": "int32"
+          },
+          "registrosValidos": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "description": "Filas procesadas por el ETL.",
+            "format": "int32"
+          },
+          "estadoCarga": {
+            "type": "string",
+            "description": "Exitoso o Fallido."
+          },
+          "estado": {
+            "type": "string",
+            "description": "pendiente, publicado o rechazado."
+          },
+          "idUsuarioEjecutor": {
+            "type": "string",
+            "description": "Usuario que ejecutó la carga.",
+            "format": "uuid"
+          },
+          "idUsuarioDecision": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Usuario que aprobó o rechazó; null si está pendiente.",
+            "format": "uuid"
+          },
+          "fechaDecision": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Fecha de la decisión; null si está pendiente.",
+            "format": "date-time"
+          },
+          "comentario": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Comentario de rechazo, si existe."
+          }
+        }
+      },
+      "RankingItemDto": {
+        "required": [
+          "posicion",
+          "cambioPosicion",
+          "entidadId",
+          "entidad",
+          "sector",
+          "ic",
+          "variacionPct"
+        ],
+        "type": "object",
+        "properties": {
+          "posicion": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "description": "Posición actual (1 es la mejor); null para Gerente / Directivo.",
+            "format": "int32"
+          },
+          "cambioPosicion": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "description": "Positivo si subió, negativo si bajó, 0 si mantuvo; null para Gerente / Directivo.",
+            "format": "int32"
+          },
+          "entidadId": {
+            "type": "string",
+            "description": "Identificador UUID de la entidad.",
+            "format": "uuid"
+          },
+          "entidad": {
+            "type": "string",
+            "description": "Nombre de la entidad."
+          },
+          "sector": {
+            "type": "string",
+            "description": "Sector económico."
+          },
+          "ic": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "description": "IC general o puntaje de la dimensión (0 a 100).",
+            "format": "double"
+          },
+          "variacionPct": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "description": "Variación porcentual frente al periodo anterior.",
+            "format": "double"
+          }
+        }
+      },
+      "RankingResponseDto": {
+        "required": [
+          "periodo",
+          "total",
+          "items"
+        ],
+        "type": "object",
+        "properties": {
+          "periodo": {
+            "type": "string",
+            "description": "Frecuencia solicitada: diario, mensual o trimestral."
+          },
+          "total": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "description": "Cantidad total de entidades que cumplen los filtros.",
+            "format": "int32"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RankingItemDto"
+            },
+            "description": "Filas ordenadas según orden y dir."
+          }
+        }
+      },
+      "RechazarPublicacionRequest": {
+        "required": [
+          "comentario"
+        ],
+        "type": "object",
+        "properties": {
+          "comentario": {
+            "type": "string",
+            "description": "Motivo del rechazo; obligatorio y máximo 500 caracteres."
+          }
+        }
+      },
+      "RegistrarEventoRequest": {
+        "required": [
+          "idEntidad",
+          "variacionPct",
+          "nombreEntidad"
+        ],
+        "type": "object",
+        "properties": {
+          "idEntidad": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "variacionPct": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "nombreEntidad": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "description": "Cuerpo de POST /api/v1/notificaciones/eventos (entrada del ETL)."
+      },
+      "RegistrarEventoResponseDto": {
+        "required": [
+          "encolados"
+        ],
+        "type": "object",
+        "properties": {
+          "encolados": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          }
+        }
+      },
+      "RegistrarTokenRequest": {
+        "required": [
+          "plataforma",
+          "token"
+        ],
+        "type": "object",
+        "properties": {
+          "plataforma": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "token": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "description": "Cuerpo de POST /api/v1/notificaciones/tokens."
+      },
+      "UmbralIcDto": {
+        "required": [
+          "codigoMetrica",
+          "limiteInferior",
+          "limiteSuperior",
+          "severidad"
+        ],
+        "type": "object",
+        "properties": {
+          "codigoMetrica": {
+            "type": "string"
+          },
+          "limiteInferior": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "limiteSuperior": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "severidad": {
+            "type": "string"
+          }
+        }
+      },
+      "UsuarioDto": {
+        "required": [
+          "idUsuario",
+          "email",
+          "primerNombre",
+          "segundoNombre",
+          "primerApellido",
+          "segundoApellido",
+          "idRol",
+          "rol",
+          "estado"
+        ],
+        "type": "object",
+        "properties": {
+          "idUsuario": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "email": {
+            "type": "string"
+          },
+          "primerNombre": {
+            "type": "string"
+          },
+          "segundoNombre": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "primerApellido": {
+            "type": "string"
+          },
+          "segundoApellido": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "idRol": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "rol": {
+            "type": "string"
+          },
+          "estado": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "securitySchemes": {
+      "Bearer": {
+        "type": "http",
+        "description": "Token JWT devuelto por /api/v1/auth/login",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "Aprobaciones"
+    },
+    {
+      "name": "Auditoria"
+    },
+    {
+      "name": "ConfiguracionIc"
+    },
+    {
+      "name": "Diccionario"
+    },
+    {
+      "name": "Entidades"
+    },
+    {
+      "name": "Exportar"
+    },
+    {
+      "name": "Health"
+    },
+    {
+      "name": "Matriz"
+    },
+    {
+      "name": "MatrizCruda"
+    },
+    {
+      "name": "Metricas"
+    },
+    {
+      "name": "Notificaciones"
+    },
+    {
+      "name": "Parametros"
+    },
+    {
+      "name": "Ranking"
+    },
+    {
+      "name": "TiempoReal"
+    },
+    {
+      "name": "Auth"
+    },
+    {
+      "name": "Usuarios"
+    },
+    {
+      "name": "Watchlist"
+    }
+  ]
+}

@@ -1,85 +1,74 @@
 # Justificación y Catálogo de Librerías - Frontend SIFTC
 
 > **Sistema de Información Financiera de Trazabilidad y Competitividad (SIFTC)**  
-> **Framework Base:** React 19 + Vite  
-> **Corte:** Momento 2 (Sprints 1 y 2)
+> **Framework Base:** React `19.2` + Vite `8`  
+> **Estado:** Producción (100 % API Real en Render)
 
-Este documento detalla cada una de las librerías seleccionadas para el proyecto, explicando de forma precisa **para qué sirve**, **por qué fue elegida frente a otras alternativas** y **en qué requerimiento específico se utiliza**.
+Este documento detalla cada una de las librerías seleccionadas para el proyecto, explicando **para qué sirve**, **por qué fue elegida frente a otras alternativas** y **en qué requerimiento se utiliza**.
 
 ---
 
-## 1. Librerías Principales a Instalar
+## 1. Librerías Principales
 
 ### 1.1 `lightweight-charts` (TradingView)
 - **¿Para qué sirve?**  
-  Es la biblioteca especializada de alto rendimiento desarrollada por TradingView para renderizar gráficos financieros interactivos (velas japonesas/candlestick, líneas, áreas y barras de volumen).
+  Biblioteca especializada desarrollada por TradingView para renderizar gráficos financieros interactivos (velas japonesas/candlestick, área y líneas comparativas).
 - **¿Por qué se elige?**  
-  - **Requisito explícito del proyecto:** La guía del proyecto Frontend y el documento de requerimientos exigen específicamente *Lightweight Charts* para la Historia **HU-FE-02** ("Gráficas de velas y líneas").
-  - **Rendimiento:** Está construida en HTML5 Canvas nativo, optimizada para responder en milisegundos con miles de puntos de datos sin congelar la interfaz.
-  - **Interactividad bursátil nativa:** Trae de fábrica soporte para scroll, zoom temporal, escalas de precios y tiempos, tooltips y formateo financiero.
-- **Alternativas descartadas:**  
-  - *Chart.js*: Aunque es popular, no está especializada en trading y el soporte para velas japonesas requiere plugins externos inestables.
-  - *ApexCharts / Recharts*: Tienen un rendimiento notablemente más lento cuando se manejan series históricas largas con navegación fluida.
+  - **Requisito del proyecto:** Historias **HU-FE-02** (Gráficas OHLC de velas y líneas) y **HU-FE-05** (Comparador multi-entidad).
+  - **Rendimiento:** Construida sobre HTML5 Canvas nativo con `ResizeObserver` para responder sin bloqueos en pantallas de `360px` a `1440px+`.
+  - **Interactividad bursátil nativa:** Zoom temporal, escalas de precios, crosshair sincronizado y formateo tabular.
 
 ---
 
 ### 1.2 `axios`
 - **¿Para qué sirve?**  
-  Es un cliente HTTP basado en promesas para realizar peticiones (GET, POST, etc.) a la API REST construida por el equipo de Backend (FastAPI).
+  Cliente HTTP basado en promesas para consumir la API REST del Backend .NET desplegado en Render (`https://siftc.onrender.com/api/v1`, contrato [`docs/api/openapi-v1.json`](./docs/api/openapi-v1.json)).
 - **¿Por qué se elige?**  
-  - **Interceptores de petición y respuesta:** Permite inyectar de forma centralizada y automática el header `Authorization: Bearer <TOKEN>` en cada consulta sin repetir código en cada componente.
-  - **Gestión centralizada de errores (401/403):** Permite capturar automáticamente cuando un token JWT ha expirado o no es válido, cerrando la sesión y redirigiendo al usuario al login.
-  - **Transformación de datos y timeouts:** Manejo más predecible de respuestas JSON y tiempos de espera en comparación con la API nativa `fetch`.
-- **Alternativas descartadas:**  
-  - *Fetch nativo de JavaScript*: Requiere escribir lógica manual repetitiva para manejo de cabeceras, serialización JSON y captura de códigos de estado HTTP de error.
+  - **Interceptores de petición y respuesta:** Inyecta automáticamente `Authorization: Bearer <TOKEN>` solo si el JWT sigue vigente y redirige ante sesiones expiradas (`401`, excluyendo `/auth/login`).
+  - **Tolerancia a infraestructura y dominio:** Soporta backoff para arranque en frío de Render (`502`/`503`/`504` sin `code` de dominio), control de concurrencia y *Problem Details* RFC 9457.
+  - **Subida multipart y cancelación:** Maneja `AbortController` (`ERR_CANCELED`) y carga de archivos CSV (`POST /api/v1/diccionario/cargar`).
 
 ---
 
-### 1.3 `lucide-react`
+### 1.3 `@microsoft/signalr`
 - **¿Para qué sirve?**  
-  Es una colección completa y moderna de iconos SVG limpios, accesibles y optimizados para React.
+  Cliente oficial para conectarse en tiempo real al hub `/hubs/cotizaciones` del Backend .NET (**HU-BE-04**).
 - **¿Por qué se elige?**  
-  - **Requisito de accesibilidad (HU-FE-09 y HU-FE-01):** El documento exige que las variaciones de mercado **nunca dependan solo del color**, sino que siempre vayan acompañadas de símbolos obligatorios ($\blacktriangle$ / $\blacktriangledown$).
-  - **Iconos necesarios en el proyecto:** Flechas de subida/bajada (`TrendingUp`, `TrendingDown`), filtros (`Filter`, `SlidersHorizontal`), ordenamiento de columnas (`ArrowUpDown`, `ChevronUp`, `ChevronDown`), navegación (`LayoutDashboard`, `Trophy`, `LogOut`, `User`).
-  - **Cero impacto en peso (Tree-shaking):** Solo se incluyen en el empaquetado final los iconos que realmente importamos, manteniendo el peso del bundle mínimo para cumplir la meta de carga `< 3 segundos`.
-- **Alternativas descartadas:**  
-  - *FontAwesome*: Muy pesada y requiere configuraciones complejas de fuentes o paquetes gigantes.
-  - *React Icons*: Paquete con dependencias pesadas e inconsistencia de diseño entre librerías heterogéneas.
+  - Compatibilidad nativa con ASP.NET Core SignalR, negociación WebSocket con fallback automático y `withAutomaticReconnect` (`src/services/cotizacionesSignalR.js` y `src/hooks/useCotizacionesSignalR.js`).
+  - Deduplicación por `secuencia` para mantener actualizada la cinta bursátil (`Ticker`) sin recargar la vista.
 
 ---
 
-## 2. Dependencias Ya Instaladas en el Proyecto
-
-### 2.1 `react` y `react-dom` (v19)
+### 1.4 `lucide-react`
 - **¿Para qué sirve?**  
-  Núcleo de la interfaz basada en componentes declarativos y renderizado reactivo del DOM.
-- **¿Por qué se utiliza?**  
-  Es el estándar moderno de la industria para desarrollo web modular y la base solicitada para el cliente web del SIFTC.
-
-### 2.2 `react-router-dom` (v7)
-- **¿Para qué sirve?**  
-  Enrutamiento dinámico en aplicaciones de una sola página (SPA).
-- **¿Por qué se utiliza?**  
-  - Permite navegar entre `/login`, `/dashboard` y `/ranking` sin recargar la página completa.
-  - Soporta **Query Parameters** para cumplir el requerimiento de la historia **HU-FE-04** (guardar filtros de sector, dimensión y periodo en la URL para compartir o recargar).
-  - Facilita la creación de rutas protegidas mediante componentes de orden superior (`ProtectedRoute`).
-
-### 2.3 `vite`
-- **¿Para qué sirve?**  
-  Servidor de desarrollo ultrarrápido y empaquetador para producción (bundler).
-- **¿Por qué se utiliza?**  
-  Ofrece recarga en caliente instantánea (*Hot Module Replacement - HMR*), tiempos de compilación casi inmediatos y genera archivos estáticos optimizados para la evaluación final ante el docente.
+  Colección de iconos SVG limpios, accesibles y con *tree-shaking* automático.
+- **¿Por qué se elige?**  
+  - Acompaña indicadores financieros, navegación móvil (*side drawer*), acciones CRUD, bandeja de aprobaciones y estados de seguridad sin inflar el bundle.
 
 ---
 
-## 3. Resumen de Dependencias del Proyecto
+## 2. Dependencias Base del Framework
+
+### 2.1 `react` y `react-dom` (`^19.2.8`)
+- Núcleo de la interfaz basada en componentes y renderizado reactivo, empaquetado en chunk dedicado `vendor-react`.
+
+### 2.2 `react-router-dom` (`^7.18.4`)
+- Enrutamiento SPA con rutas protegidas por rol (`ProtectedRoute`), sincronización de filtros mediante *Query Parameters* (`ranking`, `grafica`, `comparar`, `diccionario`, `administracion`) y `<Layout />` único persistente.
+
+### 2.3 `vite` (`^8.3.0`)
+- Servidor de desarrollo con HMR y empaquetador de producción con *code-splitting* por vista y separación explícita de chunks (`vendor-react`, `vendor-charts`, `vendor-signalr`).
+
+---
+
+## 3. Dependencias Declaradas (`package.json`)
 
 ```json
 {
   "dependencies": {
-    "axios": "^1.7.x",
-    "lightweight-charts": "^4.2.x",
-    "lucide-react": "^0.475.x",
+    "@microsoft/signalr": "^11.0.0",
+    "axios": "^1.20.0",
+    "lightweight-charts": "^5.2.1",
+    "lucide-react": "^1.57.0",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "react-router-dom": "^7.18.4"
